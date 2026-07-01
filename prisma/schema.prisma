@@ -125,7 +125,7 @@ model Laporan_karyawan {
   kategori_id       String
   deskripsi_kendala String   @db.Text
   status            String
-  foto_url          String?
+  foto_url          String
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
 
@@ -144,7 +144,7 @@ model Histori_pekerjaan {
   laporan_karyawan_id String
   ob_id                String
   status_aksi          String
-  keterangan           String?  @db.Text
+  foto_selesai String
   created_at           DateTime @default(now())
 
   laporan Laporan_karyawan @relation(fields: [laporan_karyawan_id], references: [id])
