@@ -1,13 +1,119 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id           String      @id @default(uuid())
+  username     String   @unique
+  password     String
+  nama_lengkap String
+  role_id       String
+  is_deleted   Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  
+  checklist_harian Checklist_harian[]
+  role         Role @relation(fields: [role_id], references: [id])
+  laporan_pelapor  Laporan_karyawan[]        @relation("LaporanPelapor")
+
+  @@map("user")
+}
+
+model Role {
+  id          String      @id @default(uuid())
+  nama_role   String
+  created_at  DateTime @default(now())
+
+  User       User[]
+  @@map("role")
+}
+
+
+model Gedung {
+  id          String      @id @default(uuid())
+  nama_gedung String
+  created_at  DateTime @default(now())
+
+  
+  lantai      Lantai[]
+
+  @@map("gedung")
+}
+
+
+model Kategori {
+  id            String      @id @default(uuid())
+  nama_kategori String
+  created_at    DateTime @default(now())
+
+  
+  checklist_harian Checklist_harian[]
+  laporan          Laporan_karyawan[]
+
+  @@map("kategori")
+}
+
+model Lantai {
+  id           String      @id @default(uuid())
+  gedung_id    String
+  nomor_lantai Int      
+
+  created_at   DateTime @default(now())
+
+
+  gedung       Gedung   @relation(fields: [gedung_id], references: [id])
+
+
+  checklist_harian Checklist_harian[]
+  laporan          Laporan_karyawan[]
+
+  @@map("lantai")
+}
+
+
+model Checklist_harian {
+  id          String      @id @default(uuid())
+  tanggal     DateTime @db.Date
+  ob_id       String
+  lantai_id   String
+  kategori_id String
+  jenis_tugas String   @db.Text
+  status      String
+  notes       String?  @db.Text
+
+  
+  ob          User     @relation(fields: [ob_id], references: [id])
+  lantai      Lantai   @relation(fields: [lantai_id], references: [id])
+  kategori    Kategori @relation(fields: [kategori_id], references: [id])
+
+  @@map("checklist_harian")
+}
+
+
+model Laporan_karyawan {
+  id                String     @id @default(uuid())
+  pelapor_id        String
+  lantai_id         String
+  kategori_id       String
+  deskripsi_kendala String   @db.Text
+  status            String
+  created_at        DateTime @default(now())
+
+
+  pelapor           User     @relation("LaporanPelapor", fields: [pelapor_id], references: [id])
+  lantai            Lantai   @relation(fields: [lantai_id], references: [id])
+  kategori          Kategori @relation(fields: [kategori_id], references: [id])
+
+
+
+  @@map("laporan_karyawan")
 }
