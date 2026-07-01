@@ -125,7 +125,7 @@ model Laporan_karyawan {
   kategori_id       String
   deskripsi_kendala String   @db.Text
   status            String
-  foto_url          String
+  foto_masalah          String
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
 
