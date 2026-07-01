@@ -3,117 +3,152 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id           String      @id @default(uuid())
+  id           String   @id @default(uuid())
   username     String   @unique
   password     String
   nama_lengkap String
-  role_id       String
+  role_id      String
   is_deleted   Boolean  @default(false)
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
 
-  
-  checklist_harian Checklist_harian[]
-  role         Role @relation(fields: [role_id], references: [id])
-  laporan_pelapor  Laporan_karyawan[]        @relation("LaporanPelapor")
+  role                    Role               @relation(fields: [role_id], references: [id])
+  checklist_harian        Checklist_harian[]
+  laporan_sebagai_pelapor Laporan_karyawan[] @relation("LaporanPelapor")
+  laporan_sebagai_ob      Laporan_karyawan[] @relation("LaporanOb")
+  histori_pekerjaan                 Histori_pekerjaan[]
+  tugas_dibuat            Tugas[]            @relation("TugasCreatedBy")
 
   @@map("user")
 }
 
 model Role {
-  id          String      @id @default(uuid())
-  nama_role   String
-  created_at  DateTime @default(now())
+  id         String   @id @default(uuid())
+  nama_role  String   @unique
+  created_at DateTime @default(now())
 
-  User       User[]
+  users User[]
+
   @@map("role")
 }
 
-
-model Gedung {
-  id          String      @id @default(uuid())
-  nama_gedung String
+model Lokasi {
+  id          String   @id @default(uuid())
+  nama_lokasi String
   created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
-  
-  lantai      Lantai[]
+  lantai Lantai[]
 
-  @@map("gedung")
-}
-
-
-model Kategori {
-  id            String      @id @default(uuid())
-  nama_kategori String
-  created_at    DateTime @default(now())
-
-  
-  checklist_harian Checklist_harian[]
-  laporan          Laporan_karyawan[]
-
-  @@map("kategori")
+  @@map("lokasi")
 }
 
 model Lantai {
-  id           String      @id @default(uuid())
-  gedung_id    String
-  nomor_lantai Int      
-
+  id           String   @id @default(uuid())
+  lokasi_id    String
+  nomor_lantai Int
   created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
 
-
-  gedung       Gedung   @relation(fields: [gedung_id], references: [id])
-
+  lokasi Lokasi @relation(fields: [lokasi_id], references: [id])
 
   checklist_harian Checklist_harian[]
-  laporan          Laporan_karyawan[]
+  laporan_karyawan Laporan_karyawan[]
 
   @@map("lantai")
 }
 
+model Kategori {
+  id            String   @id @default(uuid())
+  nama_kategori String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  tugas            Tugas[]
+  laporan_karyawan Laporan_karyawan[]
+  checklist_harian Checklist_harian[]
+
+  @@map("kategori")
+}
+
+model Tugas {
+  id            String   @id @default(uuid())
+  kategori_id   String
+  nama_tugas    String
+  is_active     Boolean  @default(true)
+  created_by_id String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  kategori   Kategori @relation(fields: [kategori_id], references: [id])
+  created_by User?    @relation("TugasCreatedBy", fields: [created_by_id], references: [id])
+
+  checklist_harian Checklist_harian[]
+
+  @@map("tugas")
+}
 
 model Checklist_harian {
-  id          String      @id @default(uuid())
+  id          String   @id @default(uuid())
   tanggal     DateTime @db.Date
   ob_id       String
   lantai_id   String
   kategori_id String
-  jenis_tugas String   @db.Text
+  tugas_id    String
   status      String
   notes       String?  @db.Text
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
-  
-  ob          User     @relation(fields: [ob_id], references: [id])
-  lantai      Lantai   @relation(fields: [lantai_id], references: [id])
-  kategori    Kategori @relation(fields: [kategori_id], references: [id])
+  ob       User     @relation(fields: [ob_id], references: [id])
+  lantai   Lantai   @relation(fields: [lantai_id], references: [id])
+  kategori Kategori @relation(fields: [kategori_id], references: [id])
+  tugas    Tugas    @relation(fields: [tugas_id], references: [id])
 
   @@map("checklist_harian")
 }
 
-
 model Laporan_karyawan {
-  id                String     @id @default(uuid())
+  id                String   @id @default(uuid())
   pelapor_id        String
+  ob_id             String?
   lantai_id         String
   kategori_id       String
   deskripsi_kendala String   @db.Text
   status            String
+  foto_url          String?
   created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
 
+  pelapor  User     @relation("LaporanPelapor", fields: [pelapor_id], references: [id])
+  ob       User?    @relation("LaporanOb", fields: [ob_id], references: [id])
+  lantai   Lantai   @relation(fields: [lantai_id], references: [id])
+  kategori Kategori @relation(fields: [kategori_id], references: [id])
 
-  pelapor           User     @relation("LaporanPelapor", fields: [pelapor_id], references: [id])
-  lantai            Lantai   @relation(fields: [lantai_id], references: [id])
-  kategori          Kategori @relation(fields: [kategori_id], references: [id])
-
-
+  histori_pekerjaan Histori_pekerjaan[]
 
   @@map("laporan_karyawan")
+}
+
+model Histori_pekerjaan {
+  id                  String   @id @default(uuid())
+  laporan_karyawan_id String
+  ob_id                String
+  status_aksi          String
+  keterangan           String?  @db.Text
+  created_at           DateTime @default(now())
+
+  laporan Laporan_karyawan @relation(fields: [laporan_karyawan_id], references: [id])
+  ob      User             @relation(fields: [ob_id], references: [id])
+
+  @@map("histori_pekerjaan")
 }
