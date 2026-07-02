@@ -1,5 +1,5 @@
 import type { LoginReq, LoginRes } from "../dto/auth.js";
 
-export interface IAauthService {
+export interface IAuthService {
     login(req: LoginReq): Promise<LoginRes>;
 }

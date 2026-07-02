@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
 
@@ -144,7 +144,7 @@ model Histori_pekerjaan {
   laporan_karyawan_id String
   ob_id                String
   status_aksi          String
-  foto_selesai String
+  foto_selesai        String?
   created_at           DateTime @default(now())
 
   laporan Laporan_karyawan @relation(fields: [laporan_karyawan_id], references: [id])

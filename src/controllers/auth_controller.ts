@@ -1,12 +1,12 @@
 import type { Request, Response } from "express";
-import type { IAauthService } from "../services/auth_service.interface.js";
 import { LoginSchema } from "../dto/auth.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
+import type { IAuthService } from "../services/auth_service.interface.js";
 
 export class AuthController {
-    private authService: IAauthService
+    private authService: IAuthService
 
-    constructor(authService: IAauthService) {
+    constructor(authService: IAuthService) {
         this.authService = authService
     }
 
