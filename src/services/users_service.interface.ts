@@ -6,7 +6,6 @@ export interface IUsersService {
     getAll(page: number, limit: number, search?: string | null): Promise<PaginatedResponse<User>>
     getByID(userId: string): Promise<User | null>
     create(req: CreateUserReq): Promise<CreateUserRes>;
-    update(userId: string, req: UpdateUserReq): Promise<void>;
+    update(userId: string, req: UpdateUserReq, file?: Express.Multer.File): Promise<void>;
     delete(userId: string): Promise<void>;
-
 }
