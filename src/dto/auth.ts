@@ -1,6 +1,7 @@
 import z from "zod";
 
 export const LoginSchema = z.object({
+    email: z.string().email(),
     password: z.string().min(1, 'password required'),
 })
 
@@ -13,6 +14,7 @@ export type LoginUserData = {
     username: string;
     nama_lengkap: string;
     password: string;
+    is_active: boolean;
     role: {
         id: string;
         nama_role: string;

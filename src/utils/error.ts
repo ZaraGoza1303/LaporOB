@@ -1,4 +1,4 @@
-import { PrismaClientKnownRequestError } from "../generated/prisma/runtime/library.js";
+import { PrismaClientKnownRequestError } from "../generated/prisma/internal/prismaNamespace.js";
 
 export class AppError extends Error {
     public statusCode: number;

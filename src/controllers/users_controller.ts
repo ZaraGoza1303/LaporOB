@@ -46,10 +46,10 @@ export class UsersController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
             }
             
-            await this.usersService.create(validate.data)
-            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data user"));
+            const response = await this.usersService.create(validate.data)
+            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data user", response.activationUrl));
         } catch (err: any) {
-            return res.status(400).json(sendErrorResponse("Gagal mendapatkan data user", err.message))
+            return res.status(400).json(sendErrorResponse("Gagal menambahkan data user", err.message))
         }
     }
 
@@ -70,7 +70,7 @@ export class UsersController {
             await this.usersService.update(userId, validate.data)
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengubah data user"));
         } catch (err: any) {
-            return res.status(400).json(sendErrorResponse("Gagal mendapatkan data user", err.message))
+            return res.status(400).json(sendErrorResponse("Gagal mengubah data user", err.message))
         }
     }
     
@@ -81,7 +81,7 @@ export class UsersController {
             await this.usersService.delete(userId)
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data user"));
         } catch (err: any) {
-            return res.status(400).json(sendErrorResponse("Gagal mendapatkan data user", err.message))
+            return res.status(400).json(sendErrorResponse("Gagal menghapus data user", err.message))
         }
     }
 }
