@@ -12,12 +12,12 @@ export class AuthController {
 
     async login(req: Request, res: Response) {
         try {
-            if(!req.body){
+            if (!req.body) {
                 return res.status(400).json(sendErrorResponse("Request body empty"))
             };
 
             const validate = LoginSchema.safeParse(req.body);
-            if(!validate.success){
+            if (!validate.success) {
                 const formattedErr = validate.error.flatten().fieldErrors;
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr))
             }
@@ -28,4 +28,27 @@ export class AuthController {
             return res.status(400).json(sendErrorResponse("Login Gagal", err.message))
         }
     }
+
+    async loginActivation(req: Request, res: Response) {
+        try {
+            const activationToken = req.query.token as string;
+
+            if (!req.body) {
+                return res.status(400).json(sendErrorResponse("Request body empty"))
+            };
+
+            const validate = LoginSchema.safeParse(req.body);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr))
+            }
+
+            const response = await this.authService.loginActivation(validate.data, activationToken);
+            return res.status(200).json(sendSuccessfullResponse("Login Berhasil", response))
+        } catch (err: any) {
+            return res.status(400).json(sendErrorResponse("Login Gagal", err.message))
+        }
+    }
+
+
 }

@@ -4,6 +4,7 @@ import multer from 'multer';
 import cors from 'cors';
 import connectDB from './src/database/db.js';
 import userRouter from './src/routes/user.js';
+import authRouter from './src/routes/auth.js';
 
 dotenv.config();
 
@@ -24,15 +25,17 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '5mb' }));
+app.use('/uploads', express.static('uploads'));
 
 const initRouter = () => {
-   app.use('/api/user', userRouter);
+    app.use('/api/user', userRouter);
+    app.use('/api/auth', authRouter);
 }
 
 const startApp = async () => {
     await connectDB();
     initRouter();
-    app.listen(process.env.APP_PORT, () => {console.log("Server Nyala cik")})
+    app.listen(process.env.APP_PORT, () => { console.log("Server Nyala cik") })
 }
 
 startApp();

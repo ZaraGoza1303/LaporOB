@@ -1,6 +1,6 @@
 import type { PaginatedResponse } from "../dto/response.js";
 import type { PrismaClient, User } from "../generated/prisma/client.js";
-import type { UserCreateInput } from "../generated/prisma/models.js";
+import type { UserCreateInput, UserTokenCreateInput } from "../generated/prisma/models.js";
 import type { IUsersRepository } from "./users_repository.interface.js";
 
 export class UsersRepository implements IUsersRepository {
@@ -59,12 +59,13 @@ export class UsersRepository implements IUsersRepository {
         return user
     }
 
-    async insert(req: UserCreateInput): Promise<void> {
-        await this.db.user.create({
-            data: req
-        })
+    async insert(req: UserCreateInput): Promise<User> {
+        const user = await this.db.user.create({
+            data: req,
+        });
+        return user;
     }
-
+    
     async update(userId: string, req: User): Promise<void> {
         await this.db.user.update({
             where: {
@@ -75,12 +76,31 @@ export class UsersRepository implements IUsersRepository {
     }
 
     async delete(userId: string): Promise<void> {
-        await this.db.user.delete({
+        await this.db.user.update({
             where: {
                 id: userId
+            }, 
+            data: {
+                is_deleted: true
             }
         })
     }
 
+    async insertActivationToken(activationToken: UserTokenCreateInput): Promise<void> {
+        await this.db.userToken.create({
+            data: activationToken
+        })
+    }
+
+    async markTokenAsUsed(tokenId: string): Promise<void> {
+        await this.db.userToken.update({
+            where: {
+                id: tokenId
+            },
+            data: {
+                used_at: new Date(),
+            }
+        })
+    }
     
 }

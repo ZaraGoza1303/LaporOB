@@ -1,9 +1,11 @@
 import type { PaginatedResponse } from "../dto/response.js";
-import type { CreateUserReq, UpdateUserReq } from "../dto/users.js";
+import type { CreateUserReq, CreateUserRes, UpdateUserReq } from "../dto/users.js";
 import type { User } from "../generated/prisma/client.js";
-import type { UserCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
+import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
 import type { IUsersRepository } from "../repositories/users_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
+import { generateActivationToken } from "../utils/token.js";
+import { buildActivationUrl } from "../utils/url.js";
 import type { IUsersService } from "./users_service.interface.js";
 import bcrypt from 'bcrypt';
 
@@ -32,20 +34,40 @@ export class UsersService implements IUsersService {
         }
     }
 
-    async create(req: CreateUserReq): Promise<void> {
+    async create(req: CreateUserReq): Promise<CreateUserRes> {
         try {
             const hashedPassword = await bcrypt.hash(req.password, 16);
+            const activationToken = generateActivationToken(1);
 
             const userReq: UserCreateInput = {
                 role: {
                     connect: {id: req.role_id}
                 },
                 username: req.username,
+                email: req.email,
                 password: hashedPassword,
                 nama_lengkap: req.nama_lengkap,
             }
 
-            await this.usersRepo.insert(userReq);
+            const createdUser = await this.usersRepo.insert(userReq);
+
+            const activationUserReq: UserTokenCreateInput = {
+                user: {
+                    connect: {id: createdUser.id}
+                },
+                token_hash: activationToken.tokenHash,
+                type: "activation",
+                expired_at: activationToken.expiredAt,
+            }
+
+            await this.usersRepo.insertActivationToken(activationUserReq);
+            const activationUrl = buildActivationUrl(activationToken.token);
+            
+            const res: CreateUserRes = {
+                activationUrl
+            }
+
+            return res;
         } catch(err) {
             handlePrismaError(err)
         }
