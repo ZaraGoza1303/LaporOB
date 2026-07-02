@@ -5,6 +5,7 @@ import cors from 'cors';
 import connectDB from './src/database/db.js';
 import userRouter from './src/routes/user.js';
 import authRouter from './src/routes/auth.js';
+import kategoriRouter from './src/routes/kategori.js';
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use('/uploads', express.static('uploads'));
 const initRouter = () => {
     app.use('/api/user', userRouter);
     app.use('/api/auth', authRouter);
+    app.use('/api/kategori', kategoriRouter);
 }
 
 const startApp = async () => {
