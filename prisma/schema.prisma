@@ -12,14 +12,16 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  username     String   @unique
-  password     String
-  nama_lengkap String
-  role_id      String
+  id           String   @id @default(uuid()) @db.Uuid
+  username     String   @unique @db.VarChar(50)
+  email        String   @unique @db.VarChar(100)
+  password     String   @db.VarChar(255)
+  nama_lengkap String   @db.VarChar(100)
+  profile_picture String? @db.VarChar(255) 
+  role_id      String   @db.Uuid
   is_deleted   Boolean  @default(false)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  created_at   DateTime @default(now()) @db.Timestamp(6)
+  updated_at   DateTime @updatedAt @db.Timestamp(6)
 
   role                    Role               @relation(fields: [role_id], references: [id])
   checklist_harian        Checklist_harian[]
@@ -27,14 +29,28 @@ model User {
   laporan_sebagai_ob      Laporan_karyawan[] @relation("LaporanOb")
   histori_pekerjaan                 Histori_pekerjaan[]
   tugas_dibuat            Tugas[]            @relation("TugasCreatedBy")
+  tokens UserToken[]
 
   @@map("user")
 }
 
+model UserToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  user_id    String    @db.Uuid
+  token_hash String    @unique @db.VarChar(255)
+  type       String    @db.VarChar(30) 
+  expired_at DateTime  @db.Timestamp(6)
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("user_token")
+}
+
 model Role {
-  id         String   @id @default(uuid())
-  nama_role  String   @unique
-  created_at DateTime @default(now())
+  id         String   @id @default(uuid()) @db.Uuid
+  nama_role  String   @unique @db.VarChar(50)
+  created_at DateTime @default(now()) @db.Timestamp(6)
 
   users User[]
 
@@ -42,10 +58,10 @@ model Role {
 }
 
 model Lokasi {
-  id          String   @id @default(uuid())
-  nama_lokasi String
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  id          String   @id @default(uuid()) @db.Uuid
+  nama_lokasi String   @db.VarChar(100)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @updatedAt @db.Timestamp(6)
 
   lantai Lantai[]
 
@@ -53,11 +69,11 @@ model Lokasi {
 }
 
 model Lantai {
-  id           String   @id @default(uuid())
-  lokasi_id    String
+  id           String   @id @default(uuid()) @db.Uuid
+  lokasi_id    String   @db.Uuid
   nomor_lantai Int
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  created_at   DateTime @default(now()) @db.Timestamp(6)
+  updated_at   DateTime @updatedAt @db.Timestamp(6)
 
   lokasi Lokasi @relation(fields: [lokasi_id], references: [id])
 
@@ -68,10 +84,10 @@ model Lantai {
 }
 
 model Kategori {
-  id            String   @id @default(uuid())
-  nama_kategori String
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  id            String   @id @default(uuid()) @db.Uuid
+  nama_kategori String   @db.VarChar(100)
+  created_at    DateTime @default(now()) @db.Timestamp(6)
+  updated_at    DateTime @updatedAt @db.Timestamp(6)
 
   tugas            Tugas[]
   laporan_karyawan Laporan_karyawan[]
@@ -81,13 +97,13 @@ model Kategori {
 }
 
 model Tugas {
-  id            String   @id @default(uuid())
-  kategori_id   String
-  nama_tugas    String
+  id            String   @id @default(uuid()) @db.Uuid
+  kategori_id   String   @db.Uuid
+  nama_tugas    String   @db.VarChar(150)
   is_active     Boolean  @default(true)
-  created_by_id String?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  created_by_id String?  @db.Uuid
+  created_at    DateTime @default(now()) @db.Timestamp(6)
+  updated_at    DateTime @updatedAt @db.Timestamp(6)
 
   kategori   Kategori @relation(fields: [kategori_id], references: [id])
   created_by User?    @relation("TugasCreatedBy", fields: [created_by_id], references: [id])
@@ -98,16 +114,16 @@ model Tugas {
 }
 
 model Checklist_harian {
-  id          String   @id @default(uuid())
+  id          String   @id @default(uuid()) @db.Uuid
   tanggal     DateTime @db.Date
-  ob_id       String
-  lantai_id   String
-  kategori_id String
-  tugas_id    String
-  status      String
+  ob_id       String   @db.Uuid
+  lantai_id   String   @db.Uuid
+  kategori_id String   @db.Uuid
+  tugas_id    String   @db.Uuid
+  status      String   @db.VarChar(30)
   notes       String?  @db.Text
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @updatedAt @db.Timestamp(6)
 
   ob       User     @relation(fields: [ob_id], references: [id])
   lantai   Lantai   @relation(fields: [lantai_id], references: [id])
@@ -118,16 +134,16 @@ model Checklist_harian {
 }
 
 model Laporan_karyawan {
-  id                String   @id @default(uuid())
-  pelapor_id        String
-  ob_id             String?
-  lantai_id         String
-  kategori_id       String
+  id                String   @id @default(uuid()) @db.Uuid
+  pelapor_id        String   @db.Uuid
+  ob_id             String?  @db.Uuid
+  lantai_id         String   @db.Uuid
+  kategori_id       String   @db.Uuid
   deskripsi_kendala String   @db.Text
-  status            String
-  foto_masalah          String
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
+  status            String   @db.VarChar(30)
+  foto_masalah      String   @db.VarChar(255)
+  created_at        DateTime @default(now()) @db.Timestamp(6)
+  updated_at        DateTime @updatedAt @db.Timestamp(6)
 
   pelapor  User     @relation("LaporanPelapor", fields: [pelapor_id], references: [id])
   ob       User?    @relation("LaporanOb", fields: [ob_id], references: [id])
@@ -140,12 +156,12 @@ model Laporan_karyawan {
 }
 
 model Histori_pekerjaan {
-  id                  String   @id @default(uuid())
-  laporan_karyawan_id String
-  ob_id                String
-  status_aksi          String
-  foto_selesai        String?
-  created_at           DateTime @default(now())
+  id                  String   @id @default(uuid()) @db.Uuid
+  laporan_karyawan_id String   @db.Uuid
+  ob_id               String   @db.Uuid
+  status_aksi         String   @db.VarChar(30)
+  foto_selesai        String?  @db.VarChar(255)
+  created_at          DateTime @default(now()) @db.Timestamp(6)
 
   laporan Laporan_karyawan @relation(fields: [laporan_karyawan_id], references: [id])
   ob      User             @relation(fields: [ob_id], references: [id])
