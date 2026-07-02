@@ -19,6 +19,7 @@ model User {
   nama_lengkap String   @db.VarChar(100)
   profile_picture String? @db.VarChar(255) 
   role_id      String   @db.Uuid
+  is_active   Boolean  @default(false)
   is_deleted   Boolean  @default(false)
   created_at   DateTime @default(now()) @db.Timestamp(6)
   updated_at   DateTime @updatedAt @db.Timestamp(6)
