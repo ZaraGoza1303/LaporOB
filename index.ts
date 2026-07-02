@@ -3,6 +3,7 @@ import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
 import connectDB from './src/database/db.js';
+import userRouter from './src/routes/user.js';
 
 dotenv.config();
 
@@ -25,12 +26,12 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '5mb' }));
 
 const initRouter = () => {
-   
+   app.use('/api/user', userRouter);
 }
 
 const startApp = async () => {
     await connectDB();
-    // initRouter();
+    initRouter();
     app.listen(process.env.APP_PORT, () => {console.log("Server Nyala cik")})
 }
 
