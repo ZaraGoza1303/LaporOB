@@ -69,6 +69,16 @@ export class CloudStorageService implements IStorageService {
         }
     }
 
+    async updateFile(newFile: Express.Multer.File, oldFileUrlOrKey: string): Promise<string> {
+        const newPath = await this.uploadFile(newFile);
+
+        if (oldFileUrlOrKey) {
+            await this.deleteFile(oldFileUrlOrKey);
+        }
+
+        return newPath;
+    }
+
     async deleteFile(fileUrlOrKey: string): Promise<void> {
         try {
             console.log(`Menghapus file dari cloud: ${fileUrlOrKey}`);
