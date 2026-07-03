@@ -1,8 +1,10 @@
 import type { IObService } from "./ob_service.interface.js";
 import type { IObRepository } from "../repositories/ob_repository.interface.js";
-import type { ObHomeRes } from "../dto/ob.js";
+import type { ObHomeRes, UpdateLaporanReq } from "../dto/ob.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { handlePrismaError } from "../utils/error.js";
+import type { Laporan_karyawan } from "../generated/prisma/client.js";
+import type strict from "node:assert/strict";
 
 export class ObService implements IObService {
     private obRepo: IObRepository;
@@ -84,6 +86,17 @@ export class ObService implements IObService {
             
         } catch (err: any) {
             handlePrismaError(err);
+        }
+    }
+    async updatelaporStatus(laporanId: string, obId: string, dto: UpdateLaporanReq): Promise<void> {
+        try {
+            const payload: {catatan?: string; foto_masalah?: string} = {},
+            if (dto.keterangan) payload.catatan = dto.keterangan;
+            if (dto.foto) payload.foto_masalah = dto.foto;
+            
+            await this.obRepo.updateLaporStatus( laporanId, obId, dto.status, payload);
+        }catch (err: any) {
+            throw handlePrismaError(err);
         }
     }
 }

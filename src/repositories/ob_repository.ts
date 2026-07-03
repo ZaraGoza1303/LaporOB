@@ -1,4 +1,4 @@
-import type { PrismaClient, User } from "../generated/prisma/client.js";
+import type { Laporan_karyawan, PrismaClient, User } from "../generated/prisma/client.js";
 import type { IObRepository } from "./ob_repository.interface.js";
 
 export class ObRepository implements IObRepository {
@@ -89,6 +89,25 @@ export class ObRepository implements IObRepository {
                 created_at: 'desc'
             },
             take: 3
+        });
+    }
+
+   async updateLaporStatus(laporanId: string, obId: string, status: string, tambahanData: { catatan?: string; foto_masalah?: string; }): Promise<void> {
+    await this.db.laporan_karyawan.update({
+            where: {id: laporanId},
+            data: {
+                status: status,
+                ob_id: obId,
+                ...(tambahanData.catatan && { catatan: tambahanData.catatan}),
+
+            histori_pekerjaan: {
+                create: {
+                    ob_id : obId,
+                    status_aksi: status,
+                    foto_selesai: tambahanData.foto_masalah ?? null
+                    }
+                }
+            }
         });
     }
 }
