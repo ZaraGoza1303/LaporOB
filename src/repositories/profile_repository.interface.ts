@@ -18,4 +18,5 @@ export type ProfileReport = Laporan_karyawan & {
 export interface IProfileRepository {
     getUserById(userId: string): Promise<ProfileUser | null>;
     getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
+    getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
 }
