@@ -123,6 +123,7 @@ model Checklist_harian {
   kategori_id String   @db.Uuid
   tugas_id    String   @db.Uuid
   status      String   @db.VarChar(30)
+  alasan_gagal String?  @db.Text 
   notes       String?  @db.Text
   created_at  DateTime @default(now()) @db.Timestamp(6)
   updated_at  DateTime @updatedAt @db.Timestamp(6)
@@ -143,6 +144,7 @@ model Laporan_karyawan {
   kategori_id       String   @db.Uuid
   deskripsi_kendala String   @db.Text
   status            String   @db.VarChar(30)
+  prioritas         String   @default("STANDARD") @db.VarChar(20)
   foto_masalah      String   @db.VarChar(255)
   created_at        DateTime @default(now()) @db.Timestamp(6)
   updated_at        DateTime @updatedAt @db.Timestamp(6)

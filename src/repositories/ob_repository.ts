@@ -1,0 +1,74 @@
+import type { PrismaClient, User } from "../generated/prisma/client.js";
+import type { IObRepository } from "./ob_repository.interface.js";
+
+export class ObRepository implements IObRepository {
+    private db: PrismaClient;
+
+    constructor(db: PrismaClient) {
+        this.db = db;
+    }
+
+    async getObById(obId: string): Promise<User | null> {
+        return this.db.user.findFirst({
+            where: {
+                id: obId,
+                role: {
+                    nama_role: {
+                        equals: "ob",
+                        mode: "insensitive"
+                    }
+                },
+                is_deleted: false
+            }
+        });
+    }
+
+    async getTodayChecklists(obId: string, tanggal: Date): Promise<any[]> {
+        const startOfDay = new Date(tanggal);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(tanggal);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        return this.db.checklist_harian.findMany({
+            where: {
+                ob_id: obId,
+                tanggal: {
+                    gte: startOfDay,
+                    lte: endOfDay
+                }
+            },
+            include: {
+                tugas: true,
+                kategori: true,
+                lantai: {
+                    include: {
+                        lokasi: true
+                    }
+                }
+            },
+            orderBy: {
+                created_at: 'asc'
+            }
+        });
+    }
+
+    async getReports(obId: string): Promise<any[]> {
+        return this.db.laporan_karyawan.findMany({
+            where: {
+                ob_id: obId
+            },
+            include: {
+                kategori: true,
+                lantai: {
+                    include: {
+                        lokasi: true
+                    }
+                }
+            },
+            orderBy: {
+                created_at: 'desc'
+            }
+        });
+    }
+}

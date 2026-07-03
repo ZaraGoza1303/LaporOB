@@ -22,21 +22,35 @@ export class LocalStorageService implements IStorageService {
         const filePath = path.join(this.uploadDir, filename);
         await fs.writeFile(filePath, file.buffer);
 
-        // Return url
-        const baseUrl = process.env.BACKEND_BASE_URL || `http://localhost:${process.env.APP_PORT || 8000}`;
-        return `${baseUrl}/uploads/${filename}`;
+        // Return relative path
+        return `uploads/${filename}`;
+    }
+
+    async updateFile(newFile: Express.Multer.File, oldFileUrlOrKey: string): Promise<string> {
+        const newPath = await this.uploadFile(newFile);
+
+        if (oldFileUrlOrKey) {
+            await this.deleteFile(oldFileUrlOrKey);
+        }
+
+        return newPath;
     }
 
     async deleteFile(fileUrlOrKey: string): Promise<void> {
         try {
-            // Extract filename from URL
-            const parts = fileUrlOrKey.split('/uploads/');
-            if (parts.length > 1) {
-                const filename = parts[1];
-                if (filename) {
-                    const filePath = path.join(this.uploadDir, filename);
-                    await fs.unlink(filePath);
-                }
+            let filename: string | undefined;
+
+            if (fileUrlOrKey.includes('/uploads/')) {
+                // Format full URL: "http://localhost:8000/uploads/filename.jpg"
+                filename = fileUrlOrKey.split('/uploads/')[1];
+            } else if (fileUrlOrKey.startsWith('uploads/')) {
+                // Format relative path: "uploads/filename.jpg"
+                filename = fileUrlOrKey.replace('uploads/', '');
+            }
+
+            if (filename) {
+                const filePath = path.join(this.uploadDir, filename);
+                await fs.unlink(filePath);
             }
         } catch (err: any) {
             console.error(`Failed to delete local file ${fileUrlOrKey}:`, err.message);

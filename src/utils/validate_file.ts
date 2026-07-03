@@ -1,6 +1,8 @@
 import { fileTypeFromBuffer } from "file-type";
+import sharp from "sharp";
+import type {Request, Response, NextFunction} from 'express';
 
-const ALLOWED_EXT = ['jpg', 'jpeg', 'png'];
+const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp'];
 const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1mb
 
 export async function validateImageFile(file: Express.Multer.File) {
@@ -10,8 +12,47 @@ export async function validateImageFile(file: Express.Multer.File) {
 
   const detectedType = await fileTypeFromBuffer(file.buffer);
   if (!detectedType || !ALLOWED_EXT.includes(detectedType.ext)) {
-    return { ok: false, message: "Format gambar harus JPEG, JPG, atau PNG asli!" };
+    return { ok: false, message: "Format gambar harus JPEG, JPG, WEBP, atau PNG asli" };
   }
 
   return { ok: true, ext: detectedType.ext };
+}
+
+export async function compressImageIfNeeded(file: Express.Multer.File) {
+  const ONE_MB = 1024 * 1024;
+
+    if (file.size <= ONE_MB) {
+        return file;
+    }
+
+    let sharpInstance = sharp(file.buffer);
+    const metadata = await sharpInstance.metadata();
+
+    if ((metadata.width && metadata.width > 1200) || (metadata.height && metadata.height > 1200)) {
+        sharpInstance = sharpInstance.resize(1200, 1200, {
+            fit: 'inside',
+            withoutEnlargement: true
+        });
+    }
+
+    let compressedBuffer: Buffer;
+    if (metadata.format === 'png') {
+        // PNG dikompres menggunakan compressionLevel 
+        compressedBuffer = await sharpInstance.png({ compressionLevel: 8, quality: 80 }).toBuffer();
+    } else {
+        // JPEG/JPG/WEBP menggunakan kualitas persen 
+        compressedBuffer = await sharpInstance.jpeg({ quality: 75, progressive: true }).toBuffer();
+    }
+
+    file.buffer = compressedBuffer;
+    file.size = compressedBuffer.length; 
+
+    return file;
+}
+
+export function validateOnlyOneFile(req: Request, res: Response, next: NextFunction) {
+  if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+        req.file = req.files[0];
+    }
+    next();
 }
