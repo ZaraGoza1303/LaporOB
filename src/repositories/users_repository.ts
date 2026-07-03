@@ -1,4 +1,5 @@
 import type { PaginatedResponse } from "../dto/response.js";
+import type { UserActivityRes } from "../dto/users.js";
 import type { PrismaClient, User } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput } from "../generated/prisma/models.js";
 import type { IUsersRepository } from "./users_repository.interface.js";
@@ -84,6 +85,28 @@ export class UsersRepository implements IUsersRepository {
                 is_deleted: true
             }
         })
+    }
+
+    async getActivity(userId: string): Promise<UserActivityRes[]> {
+        const data = await this.db.laporan_karyawan.findMany({
+            where: {
+                pelapor_id: userId
+            },
+            include: {
+                lantai: {
+                    include: {
+                        lokasi: true
+                    }
+                },
+                kategori: true
+            },
+            orderBy : {
+                created_at: 'desc'
+            },
+            take: 2
+        });
+
+        return data;
     }
 
     async insertActivationToken(activationToken: UserTokenCreateInput): Promise<void> {

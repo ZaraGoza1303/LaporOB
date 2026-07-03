@@ -11,13 +11,10 @@ export class ObController {
 
     async getHomeStats(req: Request, res: Response) {
         try {
-            const obId = req.user?.id;
-            if (!obId) {
-                return res.status(401).json(sendErrorResponse("Unauthorized - ID user tidak ditemukan dalam token"));
-            }
+            const obId = req.user?.id as string;
 
             const response = await this.obService.getHomeStats(obId);
-            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data dashboard OB/beranda", response));
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data home OB", response));
         } catch (err: any) {
             return res.status(400).json(sendErrorResponse("Gagal mendapatkan data dashboard OB", err.message));
         }
