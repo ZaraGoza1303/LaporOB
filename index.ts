@@ -6,6 +6,7 @@ import connectDB from './src/database/db.js';
 import userRouter from './src/routes/user.js';
 import authRouter from './src/routes/auth.js';
 import obRouter from './src/routes/ob.js';
+import profileRouter from './src/routes/profile.js';
 import { validateOnlyOneFile } from './src/utils/validate_file.js';
 
 const app = express();
@@ -33,6 +34,7 @@ const initRouter = () => {
     app.use('/api/user', userRouter);
     app.use('/api/auth', authRouter);
     app.use('/api/ob', obRouter);
+    app.use('/api/profile', profileRouter);
 }
 
 const startApp = async () => {
