@@ -25,7 +25,7 @@ export class AuthController {
             const response = await this.authService.login(validate.data);
             return res.status(200).json(sendSuccessfullResponse("Login Berhasil", response))
         } catch (err: any) {
-            return res.status(400).json(sendErrorResponse("Login Gagal", err.message))
+            return res.status(500).json(sendErrorResponse("Login Gagal", err.message))
         }
     }
 
@@ -46,7 +46,7 @@ export class AuthController {
             const response = await this.authService.loginActivation(validate.data, activationToken);
             return res.status(200).json(sendSuccessfullResponse("Login Berhasil", response))
         } catch (err: any) {
-            return res.status(400).json(sendErrorResponse("Login Gagal", err.message))
+            return res.status(500).json(sendErrorResponse("Login Gagal", err.message))
         }
     }
 
