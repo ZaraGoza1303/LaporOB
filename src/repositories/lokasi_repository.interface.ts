@@ -1,0 +1,9 @@
+import type { LokasiWithLantai, CreateLokasiReq, UpdateLokasiReq } from "../dto/lokasi.js";
+
+export interface ILokasiRepository {
+    getAll(): Promise<LokasiWithLantai[]>;
+    getByID(lokasiId: string): Promise<LokasiWithLantai | null>;
+    insert(req: CreateLokasiReq): Promise<void>;
+    update(lokasiId: string, req: UpdateLokasiReq): Promise<void>;
+    delete(lokasiId: string): Promise<void>;
+}
