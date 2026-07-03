@@ -17,12 +17,12 @@ const storageService = StorageServiceFactory.getProvider();
 const userController = new UsersController(userService, storageService);
 
 userRouter.use(verifyJWTToken);
-userRouter.use(requireRole("admin"));
 
-userRouter.get("/", (req, res) => userController.getAll(req, res));
-userRouter.get("/:user_id", (req, res) => userController.getByID(req, res));
-userRouter.post("/", (req, res) => userController.create(req, res));
-userRouter.patch("/:user_id",(req, res) => userController.update(req, res));
-userRouter.delete("/:user_id", (req, res) => userController.delete(req, res));
+userRouter.get("/", requireRole("admin"), (req, res) => userController.getAll(req, res));
+userRouter.get("/:user_id", requireRole("admin"), (req, res) => userController.getByID(req, res));
+userRouter.get("/dashboard", requireRole("karyawan"), (req, res) => userController.getHomeStats(req, res));
+userRouter.post("/", requireRole("admin"), (req, res) => userController.create(req, res));
+userRouter.patch("/:user_id", requireRole("admin"),(req, res) => userController.update(req, res));
+userRouter.delete("/:user_id", requireRole("admin"),(req, res) => userController.delete(req, res));
 
 export default userRouter;
