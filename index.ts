@@ -7,6 +7,7 @@ import userRouter from './src/routes/user.js';
 import authRouter from './src/routes/auth.js';
 import obRouter from './src/routes/ob.js';
 import lokasiRouter from './src/routes/lokasi.js';
+import checklistHarianRouter from './src/routes/checklistHarian.js';
 
 const app = express();
 const upload = multer();
@@ -33,6 +34,7 @@ const initRouter = () => {
     app.use('/api/auth', authRouter);
     app.use('/api/ob', obRouter);
     app.use('/api/lokasi', lokasiRouter);
+    app.use('/api/checklist-harian', checklistHarianRouter);
 }
 
 const startApp = async () => {
