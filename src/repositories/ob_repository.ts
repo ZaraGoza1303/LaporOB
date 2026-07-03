@@ -49,6 +49,25 @@ export class ObRepository implements IObRepository {
             },
             orderBy: {
                 created_at: 'asc'
+            },
+            take: 2
+        });
+    }
+
+    async countTodayChecklists(obId: string, tanggal: Date): Promise<number> {
+        const startOfDay = new Date(tanggal);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(tanggal);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        return this.db.checklist_harian.count({
+            where: {
+                ob_id: obId,
+                tanggal: {
+                    gte: startOfDay,
+                    lte: endOfDay
+                }
             }
         });
     }
@@ -68,7 +87,8 @@ export class ObRepository implements IObRepository {
             },
             orderBy: {
                 created_at: 'desc'
-            }
+            },
+            take: 3
         });
     }
 }

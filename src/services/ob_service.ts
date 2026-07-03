@@ -1,6 +1,6 @@
 import type { IObService } from "./ob_service.interface.js";
 import type { IObRepository } from "../repositories/ob_repository.interface.js";
-import type { ObDashboardRes } from "../dto/ob.js";
+import type { ObHomeRes } from "../dto/ob.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { handlePrismaError } from "../utils/error.js";
 
@@ -11,7 +11,7 @@ export class ObService implements IObService {
         this.obRepo = obRepo;
     }
 
-    async getHomeStats(obId: string): Promise<ObDashboardRes> {
+    async getHomeStats(obId: string): Promise<ObHomeRes> {
         try {
             const obUser = await this.obRepo.getObById(obId);
             if (!obUser) {
@@ -19,9 +19,11 @@ export class ObService implements IObService {
             }
 
             const today = new Date();
-            const checklists = await this.obRepo.getTodayChecklists(obId, today);
-
-            const reports = await this.obRepo.getReports(obId);
+            const [checklists, totalChecklists, reports] = await Promise.all([
+                this.obRepo.getTodayChecklists(obId, today),
+                this.obRepo.countTodayChecklists(obId, today),
+                this.obRepo.getReports(obId)
+            ]);
 
             let resolvedCount = 0;
             let pendingCount = 0;
@@ -65,16 +67,12 @@ export class ObService implements IObService {
                 };
             });
 
-            const response: ObDashboardRes = {
+            const response: ObHomeRes = {
                 ob: {
-                    id: obUser.id,
                     nama_lengkap: obUser.nama_lengkap,
-                    username: obUser.username,
-                    email: obUser.email,
-                    profile_picture: resolveFileUrl(obUser.profile_picture)
                 },
                 tugas_harian_stats: {
-                    total: checklists.length,
+                    total: totalChecklists,
                     resolved: resolvedCount,
                     pending: pendingCount
                 },
@@ -83,6 +81,7 @@ export class ObService implements IObService {
             }
 
             return response;
+            
         } catch (err: any) {
             handlePrismaError(err);
         }
