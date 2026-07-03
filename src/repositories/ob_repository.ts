@@ -92,21 +92,13 @@ export class ObRepository implements IObRepository {
         });
     }
 
-   async updateLaporStatus(laporanId: string, obId: string, status: string, tambahanData: { catatan?: string; foto_masalah?: string; }): Promise<void> {
+   async updateLaporStatus(laporanId: string, obId: string, status: string, payload: { catatan?: string; foto_masalah?: string; }): Promise<void> {
     await this.db.laporan_karyawan.update({
             where: {id: laporanId},
             data: {
                 status: status,
                 ob_id: obId,
-                ...(tambahanData.catatan && { catatan: tambahanData.catatan}),
-
-            histori_pekerjaan: {
-                create: {
-                    ob_id : obId,
-                    status_aksi: status,
-                    foto_selesai: tambahanData.foto_masalah ?? null
-                    }
-                }
+                ...payload
             }
         });
     }

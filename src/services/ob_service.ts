@@ -90,7 +90,7 @@ export class ObService implements IObService {
     }
     async updatelaporStatus(laporanId: string, obId: string, dto: UpdateLaporanReq): Promise<void> {
         try {
-            const payload: {catatan?: string; foto_masalah?: string} = {},
+            const payload: {catatan?: string; foto_masalah?: string} = {}
             if (dto.keterangan) payload.catatan = dto.keterangan;
             if (dto.foto) payload.foto_masalah = dto.foto;
             
