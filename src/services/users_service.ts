@@ -9,13 +9,16 @@ import { buildActivationUrl, resolveFileUrl } from "../utils/url.js";
 import type { IUsersService } from "./users_service.interface.js";
 import { StorageServiceFactory } from "./storage_service.factory.js";
 import bcrypt from 'bcrypt';
+import type { IKategoriService } from "./kategori_service.interface.js";
 
 export class UsersService implements IUsersService {
     private usersRepo: IUsersRepository;
+    private kategoriService: IKategoriService;
     private storageService = StorageServiceFactory.getProvider();
 
-    constructor(usersRepo: IUsersRepository) {
-        this.usersRepo = usersRepo
+    constructor(usersRepo: IUsersRepository, kategoriService: IKategoriService) {
+        this.usersRepo = usersRepo;
+        this.kategoriService = kategoriService;
     }
 
     async getAll(page: number, limit: number, search?: string | null): Promise<PaginatedResponse<User>> {
@@ -139,15 +142,13 @@ export class UsersService implements IUsersService {
                 };
             })
 
-            const kategoriSet = new Set<string>();
-            activity.forEach((item) => kategoriSet.add(item.kategori.nama_kategori));
-            const kategoriMapped = Array.from(kategoriSet).map((nama_kategori) => ({ nama_kategori }));
+            const kategori = await this.kategoriService.getKategoriLimit(6);
 
             const response: UserHomeRes = {
                 karyawan : {
                     nama_lengkap: karyawanUser?.nama_lengkap
                 },
-                kategori: kategoriMapped,
+                kategori: kategori,
                 acitivity : activityMapped
             }
 

@@ -6,7 +6,7 @@ import connectDB from './src/database/db.js';
 import userRouter from './src/routes/user.js';
 import authRouter from './src/routes/auth.js';
 import obRouter from './src/routes/ob.js';
-import { validateOnlyOneFile } from './src/utils/validate_file.js';
+import lokasiRouter from './src/routes/lokasi.js';
 
 const app = express();
 const upload = multer();
@@ -27,12 +27,12 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '5mb' }));
 app.use('/uploads', express.static('uploads'));
 app.use(upload.any());
-app.use(validateOnlyOneFile);
 
 const initRouter = () => {
     app.use('/api/user', userRouter);
     app.use('/api/auth', authRouter);
     app.use('/api/ob', obRouter);
+    app.use('/api/lokasi', lokasiRouter);
 }
 
 const startApp = async () => {

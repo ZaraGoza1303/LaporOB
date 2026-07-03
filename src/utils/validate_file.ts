@@ -50,9 +50,3 @@ export async function compressImageIfNeeded(file: Express.Multer.File) {
     return file;
 }
 
-export function validateOnlyOneFile(req: Request, res: Response, next: NextFunction) {
-  if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-        req.file = req.files[0];
-    }
-    next();
-}
