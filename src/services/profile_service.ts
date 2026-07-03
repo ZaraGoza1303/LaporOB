@@ -1,4 +1,4 @@
-import type { ProfileRes, MappedProfileReport } from "../dto/profile.js";
+import type { ProfileRes, MappedProfileReport, GetProfileReq } from "../dto/profile.js";
 import type { IProfileRepository, ProfileReport } from "../repositories/profile_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import { resolveFileUrl } from "../utils/url.js";
@@ -11,21 +11,21 @@ export class ProfileService implements IProfileService {
         this.profileRepo = profileRepo;
     }
 
-    async getProfile(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<ProfileRes> {
+    async getProfile(userId: string, limit: number, req: GetProfileReq): Promise<ProfileRes> {
         try {
             const user = await this.profileRepo.getUserById(userId);
             if (!user) {
                 throw new Error("User tidak ditemukan");
             }
 
-            const reportsData = await this.profileRepo.getReportsByUserId(userId, limit, cursor, search, status);
-            
+            const reportsData = req.role.toLowerCase() === "ob"
+                ? await this.profileRepo.getReportsByObId(userId, limit, req.cursor, req.search, req.status)
+                : await this.profileRepo.getReportsByUserId(userId, limit, req.cursor, req.search, req.status);
+
             const laporanMapped: MappedProfileReport[] = reportsData.items.map((item: ProfileReport) => {
-                const shortId = String(item.id).slice(0, 8).toUpperCase();
 
                 return {
                     id: item.id,
-                    kode_laporan: `#REP-${shortId}`,
                     kategori: item.kategori?.nama_kategori || "",
                     deskripsi_kendala: item.deskripsi_kendala || "",
                     status: item.status,
@@ -58,7 +58,7 @@ export class ProfileService implements IProfileService {
                         total_pages: 0
                     }
                 }
-            };  
+            };
         } catch (err) {
             handlePrismaError(err);
         }

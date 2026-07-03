@@ -1,9 +1,14 @@
-// dto/profile.ts
 import type { PaginatedResponse } from "./response.js";
+
+export interface GetProfileReq {
+    role: string;
+    cursor?: string | null;
+    search?: string | null;
+    status?: string | null;
+}
 
 export interface MappedProfileReport {
     id: string;
-    kode_laporan: string;
     kategori: string;
     deskripsi_kendala: string;
     status: string;
@@ -25,5 +30,5 @@ export interface ProfileRes {
         role: string;
         profile_picture: string | null;
     };
-    laporan: PaginatedResponse<MappedProfileReport>; // <-- Pakai PaginatedResponse di sini
+    laporan: PaginatedResponse<MappedProfileReport>;
 }

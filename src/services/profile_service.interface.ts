@@ -1,5 +1,9 @@
-import type { ProfileRes } from "../dto/profile.js";
+import type { GetProfileReq, ProfileRes } from "../dto/profile.js";
 
 export interface IProfileService {
-    getProfile(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<ProfileRes>;
+    getProfile(
+        userId: string,
+        limit: number,
+        req: GetProfileReq
+    ): Promise<ProfileRes>;
 }

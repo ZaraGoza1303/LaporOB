@@ -3,14 +3,6 @@ import type { PrismaClient, Prisma } from "../generated/prisma/client.js";
 import type { IProfileRepository, ProfileReport, ProfileUser } from "./profile_repository.interface.js";
 import type { PaginatedResponse } from "../dto/response.js";
 
-export type LaporanWithRelations = Prisma.Laporan_karyawanGetPayload<{
-    include: {
-        kategori: true;
-        lantai: { include: { lokasi: true } };
-        ob: true;
-    };
-}>;
-
 export class ProfileRepository implements IProfileRepository {
     private db: PrismaClient;
 
@@ -30,11 +22,18 @@ export class ProfileRepository implements IProfileRepository {
         });
     }
 
-    async getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null
-    ): Promise<PaginatedResponse<ProfileReport>> {
-        
-        const whereCondition = this.buildWhereClause(userId, search, status);
+    async getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>> {
+        const whereCondition = this.buildWhereClause({ pelapor_id: userId }, search, status);
+        return this.executePaginatedReports(whereCondition, limit, cursor);
+    }
 
+    async getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>> {
+        const whereCondition = this.buildWhereClause({ ob_id: obId }, search, status);
+        return this.executePaginatedReports(whereCondition, limit, cursor);
+    }
+
+
+    private async executePaginatedReports(whereCondition: Prisma.Laporan_karyawanWhereInput, limit: number, cursor?: string | null): Promise<PaginatedResponse<ProfileReport>> {
         const [reports, total] = await Promise.all([
             this.db.laporan_karyawan.findMany({
                 where: whereCondition,
@@ -72,8 +71,8 @@ export class ProfileRepository implements IProfileRepository {
         };
     }
 
-    private buildWhereClause(userId: string, search?: string | null, status?: string | null): Prisma.Laporan_karyawanWhereInput {
-        const where: Prisma.Laporan_karyawanWhereInput = { pelapor_id: userId };
+    private buildWhereClause(baseFilter: Prisma.Laporan_karyawanWhereInput, search?: string | null, status?: string | null): Prisma.Laporan_karyawanWhereInput {
+        const where: Prisma.Laporan_karyawanWhereInput = { ...baseFilter };
 
         if (search) {
             const isUuid = z.string().uuid().safeParse(search).success;
@@ -86,10 +85,7 @@ export class ProfileRepository implements IProfileRepository {
         }
 
         if (status) {
-            where.status = {
-                equals: status,
-                mode: "insensitive" as const
-            };
+            where.status = { equals: status, mode: "insensitive" as const };
         }
 
         return where;
