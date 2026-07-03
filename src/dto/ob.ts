@@ -1,4 +1,4 @@
-import z, { refine } from "zod";
+import z from "zod";
 
 export interface ObHomeRes {
     ob: {
@@ -34,7 +34,7 @@ export interface ObHomeRes {
 }
 
 export const UpdateLaporanSchema = z.object({
-    status: z.enum (["Sedang_Diprose", "Pending", "Selesai", "Ditolak"]),
+    status: z.enum (["Belum_Dikerjakan", "Pending", "Selesai", "Ditolak"]),
     keterangan: z.string().optional(),
     foto: z.string().optional(),
 }).refine((data) => {
