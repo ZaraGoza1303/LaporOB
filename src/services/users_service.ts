@@ -1,5 +1,5 @@
 import type { PaginatedResponse } from "../dto/response.js";
-import type { CreateUserReq, CreateUserRes, UpdateUserReq } from "../dto/users.js";
+import type { CreateUserReq, CreateUserRes, UpdateUserReq, UserHomeRes } from "../dto/users.js";
 import type { User } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
 import type { IUsersRepository } from "../repositories/users_repository.interface.js";
@@ -115,6 +115,44 @@ export class UsersService implements IUsersService {
         try {
             await this.usersRepo.delete(userId);
         } catch (err) {
+            handlePrismaError(err)
+        }
+    }
+    
+    async getHomeStats(userId: string): Promise<UserHomeRes> {
+        try {
+            const karyawanUser = await this.usersRepo.getByID(userId);
+            if (!karyawanUser) {
+                throw new Error("Karyawan tidak ditemukan")
+            }
+
+            const activity = await this.usersRepo.getActivity(userId);
+            const activityMapped = activity.map((item) => {
+                return {
+                    id: item.id,
+                    deskripsi_kendala: item.deskripsi_kendala,
+                    status: item.status,
+                    foto_masalah: item.foto_masalah,
+                    lokasi: item.lantai?.lokasi?.nama_lokasi ?? "", 
+                    nomor_lantai: item.lantai?.nomor_lantai ?? 0, 
+                    created_at: item.created_at ? item.created_at.toISOString() : ""
+                };
+            })
+
+            const kategoriSet = new Set<string>();
+            activity.forEach((item) => kategoriSet.add(item.kategori.nama_kategori));
+            const kategoriMapped = Array.from(kategoriSet).map((nama_kategori) => ({ nama_kategori }));
+
+            const response: UserHomeRes = {
+                karyawan : {
+                    nama_lengkap: karyawanUser?.nama_lengkap
+                },
+                kategori: kategoriMapped,
+                acitivity : activityMapped
+            }
+
+            return response;
+        } catch (err){
             handlePrismaError(err)
         }
     }

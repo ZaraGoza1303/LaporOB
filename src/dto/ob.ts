@@ -1,10 +1,6 @@
-export interface ObDashboardRes {
+export interface ObHomeRes {
     ob: {
-        id: string;
         nama_lengkap: string;
-        username: string;
-        email: string;
-        profile_picture: string | null;
     };
     tugas_harian_stats: {
         total: number;
@@ -32,3 +28,4 @@ export interface ObDashboardRes {
         created_at: string;
     }>;
 }
+

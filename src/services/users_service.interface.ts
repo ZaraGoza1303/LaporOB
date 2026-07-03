@@ -1,5 +1,5 @@
 import type { PaginatedResponse } from '../dto/response.js';
-import type { CreateUserReq, CreateUserRes, UpdateUserReq } from '../dto/users.js';
+import type { CreateUserReq, CreateUserRes, UpdateUserReq, UserHomeRes } from '../dto/users.js';
 import type { User } from '../generated/prisma/client.js';
 
 export interface IUsersService {
@@ -8,4 +8,6 @@ export interface IUsersService {
     create(req: CreateUserReq): Promise<CreateUserRes>;
     update(userId: string, req: UpdateUserReq, file?: Express.Multer.File): Promise<void>;
     delete(userId: string): Promise<void>;
+
+    getHomeStats(userId: string): Promise<UserHomeRes>
 }
