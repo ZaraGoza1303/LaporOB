@@ -12,7 +12,6 @@ export const CreateChecklistHarianSchema = z.object({
     kategori_id: z.string().min(1, "Kategori ID wajib diisi"),
     lokasi_id: z.string().min(1, "Lokasi ID wajib diisi"),
     lantai_id: z.string().min(1, "Lantai ID wajib diisi"),
-    ob_id: z.string().min(1, "OB ID wajib diisi"),
     status: z.enum(["BELUM_DIKERJAKAN", "SEDANG_DIKERJAKAN", "SELESAI", "TERLEWAT"]).optional(),
     bukti_foto: z.string().optional(),
     catatan: z.string().optional(),

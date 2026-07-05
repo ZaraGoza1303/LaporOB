@@ -3,6 +3,7 @@ import type { PaginatedResponse } from "../dto/response.js";
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
+import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 
 export class ChecklistHarianService implements IChecklistHarianService {
     private checklistRepo: IChecklistHarianRepository;
@@ -54,8 +55,14 @@ export class ChecklistHarianService implements IChecklistHarianService {
 
     async create(req: CreateChecklistHarianReq): Promise<void> {
         try {
-            const { lokasi_id, ...createData } = req;
-            await this.checklistRepo.insert(createData as any);
+            const dataToInsert: Checklist_harianUncheckedCreateInput = {
+                tugas_id: req.tugas_id,
+                kategori_id: req.kategori_id,
+                lantai_id: req.lantai_id,
+                tanggal: new Date(),
+                status: req.status || "BELUM_DIKERJAKAN",
+            };
+            await this.checklistRepo.insert(dataToInsert);
         } catch (err) {
             handlePrismaError(err);
         }
@@ -63,8 +70,15 @@ export class ChecklistHarianService implements IChecklistHarianService {
 
     async update(checklistId: string, req: UpdateChecklistHarianReq): Promise<void> {
         try {
-            const { lokasi_id, ...updateData } = req;
-            await this.checklistRepo.update(checklistId, updateData as any);
+            const dataToUpdate: Checklist_harianUncheckedUpdateInput = {};
+            if (req.tugas_id !== undefined) dataToUpdate.tugas_id = req.tugas_id;
+            if (req.kategori_id !== undefined) dataToUpdate.kategori_id = req.kategori_id;
+            if (req.lantai_id !== undefined) dataToUpdate.lantai_id = req.lantai_id;
+            if (req.status !== undefined) dataToUpdate.status = req.status;
+
+            if (req.ob_id !== undefined) dataToUpdate.ob_id = req.ob_id ?? null;
+
+            await this.checklistRepo.update(checklistId, dataToUpdate);
         } catch (err) {
             handlePrismaError(err);
         }
