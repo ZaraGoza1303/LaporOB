@@ -1,13 +1,13 @@
 import type { ChecklistHarianQuery } from "../dto/checklist_harian.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { Checklist_harian, PrismaClient } from "../generated/prisma/client.js";
-import type { Checklist_harianCreateInput, Checklist_harianUpdateInput } from "../generated/prisma/models.js";
+import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import type { IChecklistHarianRepository } from "./checklistHarian_repository.interface.js";
 
 export class ChecklistHarianRepository implements IChecklistHarianRepository {
     private db: PrismaClient;
 
-    constructor(db: PrismaClient){
+    constructor(db: PrismaClient) {
         this.db = db
     }
 
@@ -66,13 +66,13 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
         return data
     }
 
-    async insert(req: Checklist_harianCreateInput): Promise<void> {
+    async insert(req: Checklist_harianUncheckedCreateInput): Promise<void> {
         await this.db.checklist_harian.create({
             data: req,
         });
     }
-    
-    async update(checklist_harianId: string, req: Checklist_harianUpdateInput): Promise<void> {
+
+    async update(checklist_harianId: string, req: Checklist_harianUncheckedUpdateInput): Promise<void> {
         await this.db.checklist_harian.update({
             where: {
                 id: checklist_harianId,
