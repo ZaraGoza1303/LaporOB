@@ -60,7 +60,7 @@ export class AuthService implements IAuthService {
 
             const record = await this.validateActivationToken(token);
             await this.usersRepo.markTokenAsUsed(record.id);
-
+            
         } catch (err) {
             handlePrismaError(err)
         }
