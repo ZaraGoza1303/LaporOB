@@ -15,7 +15,7 @@ const db = new PrismaClient();
 const userRepo = new UsersRepository(db);
 const kategoriRepo = new KategoriRepository(db);
 
-const kategoriService = new KategoriService(kategoriRepo);
+const kategoriService = new KategoriService(kategoriRepo)
 const userService = new UsersService(userRepo, kategoriService);
 
 const storageService = StorageServiceFactory.getProvider();
@@ -27,7 +27,8 @@ userRouter.get("/", requireRole("admin"), (req, res) => userController.getAll(re
 userRouter.get("/:user_id", requireRole("admin"), (req, res) => userController.getByID(req, res));
 userRouter.get("/dashboard", requireRole("karyawan"), (req, res) => userController.getHomeStats(req, res));
 userRouter.post("/", requireRole("admin"), (req, res) => userController.create(req, res));
-userRouter.patch("/:user_id", requireRole("admin"),(req, res) => userController.update(req, res));
-userRouter.delete("/:user_id", requireRole("admin"),(req, res) => userController.delete(req, res));
+userRouter.post("/laporan", (req, res) => userController.createReport(req, res));
+userRouter.patch("/:user_id", requireRole("admin"), (req, res) => userController.update(req, res));
+userRouter.delete("/:user_id", requireRole("admin"), (req, res) => userController.delete(req, res));
 
 export default userRouter;

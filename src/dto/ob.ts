@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export interface ObHomeRes {
     ob: {
         nama_lengkap: string;
@@ -21,11 +23,19 @@ export interface ObHomeRes {
         kategori: string;
         deskripsi_kendala: string;
         status: string;
-        foto_masalah: string | null;
+        foto_masalah: string[];
         lokasi: string;
         nomor_lantai: number;
         priority: string;
         created_at: string;
     }>;
+
+
 }
+
+export const CreateHistoriSchema = z.object({
+    catatan: z.string().min(5, "Keterangan minimal 5 karakter"),
+}).refine(() => true);
+
+export type CreateHistoriReq = z.infer<typeof CreateHistoriSchema>;
 

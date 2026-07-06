@@ -1,6 +1,5 @@
 import { fileTypeFromBuffer } from "file-type";
 import sharp from "sharp";
-import type {Request, Response, NextFunction} from 'express';
 
 const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp'];
 const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1mb

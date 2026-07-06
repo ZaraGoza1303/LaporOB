@@ -7,6 +7,7 @@ import userRouter from './src/routes/user.js';
 import authRouter from './src/routes/auth.js';
 import obRouter from './src/routes/ob.js';
 import lokasiRouter from './src/routes/lokasi.js';
+import checklistHarianRouter from './src/routes/checklistHarian.js';
 import profileRouter from './src/routes/profile.js';
 
 
@@ -35,6 +36,7 @@ const initRouter = () => {
     app.use('/api/auth', authRouter);
     app.use('/api/ob', obRouter);
     app.use('/api/lokasi', lokasiRouter);
+    app.use('/api/checklist-harian', checklistHarianRouter);
     app.use('/api/profile', profileRouter);
 }
 

@@ -13,7 +13,7 @@ export interface MappedProfileReport {
     deskripsi_kendala: string;
     status: string;
     prioritas: string;
-    foto_masalah: string | null;
+    foto_masalah: string[];
     lokasi: string;
     nomor_lantai: number;
     nama_ob: string | null;
@@ -31,4 +31,20 @@ export interface ProfileRes {
         profile_picture: string | null;
     };
     laporan: PaginatedResponse<MappedProfileReport>;
+}
+
+export interface MappedReportDetailRes {
+    id: string;
+    kategori: string;
+    deskripsi_kendala: string;
+    status: string;
+    prioritas: string;
+    foto_masalah: string[];
+    foto_selesai: string[];
+    catatan: string;
+    lokasi: string;
+    nomor_lantai: number;
+    nama_karyawan: string;
+    nama_ob: string | null;
+    created_at: string;
 }
