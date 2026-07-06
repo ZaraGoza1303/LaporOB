@@ -1,10 +1,9 @@
 import type { IObService } from "./ob_service.interface.js";
 import type { IObRepository } from "../repositories/ob_repository.interface.js";
-import type { ObHomeRes, UpdateLaporanReq } from "../dto/ob.js";
+import type { ObHomeRes, CreateHistoriReq } from "../dto/ob.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { handlePrismaError } from "../utils/error.js";
-import type { Laporan_karyawan } from "../generated/prisma/client.js";
-import type strict from "node:assert/strict";
+import { CHECKLIST_STATUS, LAPORAN_PRIORITY } from "../utils/constants.js";
 
 export class ObService implements IObService {
     private obRepo: IObRepository;
@@ -32,7 +31,7 @@ export class ObService implements IObService {
 
             const tugasHarianMapped = checklists.map((item: any) => {
                 const statusLower = (item.status || "").toLowerCase();
-                const isResolved = statusLower === "resolved" || statusLower === "selesai" || statusLower === "complete" || statusLower === "sukses";
+                const isResolved = statusLower === "resolved" || statusLower === CHECKLIST_STATUS.SELESAI.toLowerCase() || statusLower === "complete" || statusLower === "sukses";
 
                 if (isResolved) {
                     resolvedCount++;
@@ -54,14 +53,14 @@ export class ObService implements IObService {
             const laporanMapped = reports.map((item: any) => {
                 const kategoriName = item.kategori?.nama_kategori || "";
                 const deskripsi = item.deskripsi_kendala || "";
-                const priority: "URGENT" | "STANDARD" = item.prioritas === "URGENT" ? "URGENT" : "STANDARD";
+                const priority = item.prioritas === LAPORAN_PRIORITY.URGENT ? LAPORAN_PRIORITY.URGENT : LAPORAN_PRIORITY.STANDARD;
 
                 return {
                     id: item.id,
                     kategori: kategoriName,
                     deskripsi_kendala: deskripsi,
                     status: item.status,
-                    foto_masalah: resolveFileUrl(item.foto_masalah),
+                    foto_masalah: (item.foto_masalah ?? []).map((f: string) => resolveFileUrl(f)),
                     lokasi: item.lantai?.lokasi?.nama_lokasi || "",
                     nomor_lantai: item.lantai?.nomor_lantai || 0,
                     priority,
@@ -83,19 +82,23 @@ export class ObService implements IObService {
             }
 
             return response;
-            
+
         } catch (err: any) {
             handlePrismaError(err);
         }
     }
-    async updatelaporStatus(laporanId: string, obId: string, dto: UpdateLaporanReq): Promise<void> {
+    async ambilLaporan(laporanId: string, obId: string): Promise<void> {
         try {
-            const payload: {catatan?: string; foto_masalah?: string} = {}
-            if (dto.keterangan) payload.catatan = dto.keterangan;
-            if (dto.foto) payload.foto_masalah = dto.foto;
-            
-            await this.obRepo.updateLaporStatus( laporanId, obId, dto.status, payload);
-        }catch (err: any) {
+            await this.obRepo.ambilLaporan(laporanId, obId);
+        } catch (err: any) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async createHistoriPekerjaan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq): Promise<void> {
+        try {
+            await this.obRepo.createHistoriPekerjaan(laporanId, fotoUrls, dto.catatan);
+        } catch (err: any) {
             throw handlePrismaError(err);
         }
     }

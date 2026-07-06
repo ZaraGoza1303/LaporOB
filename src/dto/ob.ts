@@ -1,4 +1,4 @@
-import z from "zod";
+import { z } from "zod";
 
 export interface ObHomeRes {
     ob: {
@@ -23,29 +23,19 @@ export interface ObHomeRes {
         kategori: string;
         deskripsi_kendala: string;
         status: string;
-        foto_masalah: string | null;
+        foto_masalah: string[];
         lokasi: string;
         nomor_lantai: number;
         priority: string;
         created_at: string;
     }>;
 
-    
+
 }
 
-export const UpdateLaporanSchema = z.object({
-    status: z.enum (["Belum_Dikerjakan", "Pending", "Selesai", "Ditolak"]),
-    keterangan: z.string().optional(),
-    foto: z.string().optional(),
-}).refine((data) => {
-    if (data.status === "Selesai" || data.status === "Ditolak"){
-        return !!data.keterangan && data.keterangan.length >= 5 && !!data.foto;
-    }
-    return true;    
-}, {
-    message: "Keterangan (minimal 5 karakter) dan foto wajib ada diisi jika status Selesai/Tolak",
-    path: ["keterangan"]
-});
+export const CreateHistoriSchema = z.object({
+    catatan: z.string().min(5, "Keterangan minimal 5 karakter"),
+}).refine(() => true);
 
-export type UpdateLaporanReq = z.infer<typeof UpdateLaporanSchema>; 
+export type CreateHistoriReq = z.infer<typeof CreateHistoriSchema>;
 

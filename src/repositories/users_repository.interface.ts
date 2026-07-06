@@ -1,7 +1,7 @@
 import type { PaginatedResponse } from "../dto/response.js";
 import type { UserActivityRes } from "../dto/users.js";
 import type { User } from "../generated/prisma/client.js";
-import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
+import type { Laporan_karyawanCreateInput, UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
 
 export interface IUsersRepository {
     getAll(page: number, limit: number, search?: string | null): Promise<PaginatedResponse<User>>
@@ -12,5 +12,6 @@ export interface IUsersRepository {
 
     getActivity(userId: string): Promise<UserActivityRes[]>
     insertActivationToken(activationToken: UserTokenCreateInput): Promise<void>;
+    insertReport(req: Laporan_karyawanCreateInput): Promise<void>;
     markTokenAsUsed(tokenId: string): Promise<void>;
 }

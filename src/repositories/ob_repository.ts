@@ -1,5 +1,6 @@
-import type { Laporan_karyawan, PrismaClient, User } from "../generated/prisma/client.js";
+import type { PrismaClient, User } from "../generated/prisma/client.js";
 import type { IObRepository } from "./ob_repository.interface.js";
+import { LAPORAN_STATUS } from "../utils/constants.js";
 
 export class ObRepository implements IObRepository {
     private db: PrismaClient;
@@ -92,14 +93,31 @@ export class ObRepository implements IObRepository {
         });
     }
 
-   async updateLaporStatus(laporanId: string, obId: string, status: string, payload: { catatan?: string; foto_masalah?: string; }): Promise<void> {
+   async ambilLaporan(laporanId: string, obId: string): Promise<void> {
     await this.db.laporan_karyawan.update({
             where: {id: laporanId},
             data: {
-                status: status,
+                status: LAPORAN_STATUS.PENDING,
                 ob_id: obId,
-                ...payload
             }
         });
+    }
+
+    async createHistoriPekerjaan(laporanId: string, fotoSelesai: string[], catatan: string): Promise<void> {
+        await this.db.$transaction([
+            this.db.histori_pekerjaan.create({
+                data: {
+                    laporan_karyawan_id: laporanId,
+                    foto_selesai: fotoSelesai,
+                    catatan: catatan,
+                }
+            }),
+            this.db.laporan_karyawan.update({
+                where: { id: laporanId },
+                data: {
+                    status: LAPORAN_STATUS.SELESAI,
+                }
+            })
+        ]);
     }
 }

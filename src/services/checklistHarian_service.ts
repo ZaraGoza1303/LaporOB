@@ -4,6 +4,7 @@ import type { IChecklistHarianRepository } from "../repositories/checklistHarian
 import { handlePrismaError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
+import { CHECKLIST_STATUS } from "../utils/constants.js";
 
 export class ChecklistHarianService implements IChecklistHarianService {
     private checklistRepo: IChecklistHarianRepository;
@@ -20,7 +21,6 @@ export class ChecklistHarianService implements IChecklistHarianService {
             lantai_id: item.lantai_id,
             ob_id: item.ob_id,
             status: item.status,
-            bukti_foto: item.bukti_foto,
             catatan: item.catatan,
             created_at: item.created_at,
             updated_at: item.updated_at,
@@ -60,7 +60,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
                 kategori_id: req.kategori_id,
                 lantai_id: req.lantai_id,
                 tanggal: new Date(),
-                status: req.status || "BELUM_DIKERJAKAN",
+                status: CHECKLIST_STATUS.BELUM_DIKERJAKAN,
             };
             await this.checklistRepo.insert(dataToInsert);
         } catch (err) {
@@ -77,6 +77,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
             if (req.status !== undefined) dataToUpdate.status = req.status;
 
             if (req.ob_id !== undefined) dataToUpdate.ob_id = req.ob_id ?? null;
+            if (req.catatan !== undefined) dataToUpdate.catatan = req.catatan ?? null;
 
             await this.checklistRepo.update(checklistId, dataToUpdate);
         } catch (err) {

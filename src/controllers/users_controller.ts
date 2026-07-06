@@ -1,4 +1,4 @@
-import { CreateUserSchema, UpdateUserSchema } from "../dto/users.js";
+import { CreateLaporanKaryawanSchema, CreateUserSchema, UpdateUserSchema } from "../dto/users.js";
 import type { IUsersService } from "../services/users_service.interface.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { Request, Response } from "express";
@@ -125,6 +125,56 @@ export class UsersController {
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data home karyawan", response));
         } catch (err: any) {
             return res.status(500).json(sendErrorResponse("Gagal mendapatkan data home karyawan", err.message))
+        }
+    }
+
+    async createReport(req: Request, res: Response) {
+        try {
+            const userId = req.user?.id as string;
+
+            if(!req.body){
+                return res.status(400).json(sendErrorResponse("Request body empty"))
+            };
+
+            const validate = CreateLaporanKaryawanSchema.safeParse(req.body);
+            if(!validate.success){
+                const formatedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
+            }
+
+            const fotoFiles = (req.files as Express.Multer.File[]).filter(
+                (file) => file.fieldname === "foto_masalah"
+            );
+
+            if (fotoFiles.length === 0) {
+                return res.status(400).json(sendErrorResponse("Foto masalah wajib diupload"));
+            }
+
+            const fotoUrls: string[] = [];
+            for (const file of fotoFiles) {
+                const validation = await validateImageFile(file);
+                if (!validation.ok) {
+                    return res.status(400).json(sendErrorResponse(validation.message));
+                }
+
+                try {
+                    await compressImageIfNeeded(file);
+                } catch (err: any) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar", err.message));
+                }
+
+                const url = await this.storageService.uploadFile(file);
+                fotoUrls.push(url);
+            }
+
+            const response = await this.usersService.createReport(userId, {
+                ...validate.data,
+                foto_masalah: fotoUrls,
+            })
+            
+            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data laporan", response));
+        } catch (err: any) {
+            return res.status(500).json(sendErrorResponse("Gagal menambahkan data laporan", err.message))
         }
     }
 }

@@ -28,7 +28,6 @@ model User {
   checklist_harian        Checklist_harian[]
   laporan_sebagai_pelapor Laporan_karyawan[] @relation("LaporanPelapor")
   laporan_sebagai_ob      Laporan_karyawan[] @relation("LaporanOb")
-  histori_pekerjaan                 Histori_pekerjaan[]
   tokens UserToken[]
 
   @@map("user")
@@ -120,6 +119,7 @@ model Checklist_harian {
   kategori_id String   @db.Uuid
   tugas_id    String   @db.Uuid
   status      String   @db.VarChar(30)
+  catatan     String?  @db.Text
   created_at  DateTime @default(now()) @db.Timestamp(6)
   updated_at  DateTime @updatedAt @db.Timestamp(6)
 
@@ -140,8 +140,7 @@ model Laporan_karyawan {
   deskripsi_kendala String   @db.Text
   status            String   @db.VarChar(30)
   prioritas         String   @default("STANDARD") @db.VarChar(20)
-  foto_masalah      String   @db.VarChar(255)
-  catatan           String   @db.Text
+  foto_masalah      String[]   @db.VarChar(255)
   alasan_gagal      String?  @db.Text 
   created_at        DateTime @default(now()) @db.Timestamp(6)
   updated_at        DateTime @updatedAt @db.Timestamp(6)
@@ -159,13 +158,11 @@ model Laporan_karyawan {
 model Histori_pekerjaan {
   id                  String   @id @default(uuid()) @db.Uuid
   laporan_karyawan_id String   @db.Uuid
-  ob_id               String   @db.Uuid
-  status_aksi         String   @db.VarChar(30)
-  foto_selesai        String?  @db.VarChar(255)
+  foto_selesai        String[]  @db.VarChar(255)
+  catatan             String   @db.Text
   created_at          DateTime @default(now()) @db.Timestamp(6)
 
   laporan Laporan_karyawan @relation(fields: [laporan_karyawan_id], references: [id])
-  ob      User             @relation(fields: [ob_id], references: [id])
 
   @@map("histori_pekerjaan")
 }
