@@ -1,5 +1,5 @@
 import type { PrismaClient, Prisma } from "../generated/prisma/client.js";
-import type { IProfileRepository, ProfileReport, ProfileUser } from "./profile_repository.interface.js";
+import type { IProfileRepository, ProfileReport, ProfileUser, DetailReportPayload } from "./profile_repository.interface.js";
 import type { PaginatedResponse } from "../dto/response.js";
 
 export class ProfileRepository implements IProfileRepository {
@@ -30,6 +30,23 @@ export class ProfileRepository implements IProfileRepository {
         const whereCondition = this.buildWhereClause({ ob_id: obId }, search, status);
         return this.executePaginatedReports(whereCondition, limit, cursor);
     }
+ async getReportDetailById(reportId: string): Promise<DetailReportPayload | null> {
+    return this.db.laporan_karyawan.findUnique({
+        where: {
+            id: reportId
+        },
+        include: {
+            kategori: true,
+            lantai: {
+                include: {
+                    lokasi: true
+                }
+            },
+            ob: true,
+            pelapor: true
+        }
+    });
+}
 
     private async executePaginatedReports(whereCondition: Prisma.Laporan_karyawanWhereInput, limit: number, cursor?: string | null): Promise<PaginatedResponse<ProfileReport>> {
         const [reports, total] = await Promise.all([
