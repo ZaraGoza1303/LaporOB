@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { LoginSchema } from "../dto/auth.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { IAuthService } from "../services/auth_service.interface.js";
+import { AppError } from "../utils/error.js";
 
 export class AuthController {
     private authService: IAuthService
@@ -25,6 +26,9 @@ export class AuthController {
             const response = await this.authService.login(validate.data);
             return res.status(200).json(sendSuccessfullResponse("Login Berhasil", response))
         } catch (err: any) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message))
+            }
             return res.status(500).json(sendErrorResponse("Login Gagal", err.message))
         }
     }
@@ -46,6 +50,9 @@ export class AuthController {
             await this.authService.loginActivation(validate.data, activationToken);
             return res.status(200).json(sendSuccessfullResponse("Login aktivasi Berhasil"))
         } catch (err: any) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message))
+            }
             return res.status(500).json(sendErrorResponse("Login Gagal", err.message))
         }
     }
