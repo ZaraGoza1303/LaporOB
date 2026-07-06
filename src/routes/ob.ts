@@ -21,6 +21,7 @@ obRouter.use(verifyJWTToken);
 obRouter.use(requireRole("ob"));
 
 obRouter.get("/dashboard", (req, res) => obController.getHomeStats(req, res));
-obRouter.patch("/laporan/:laporanId", (req, res) => obController.updatelapor(req, res));
+obRouter.patch("/laporan/:laporanId", (req, res) => obController.takeLapor(req, res));
+obRouter.post("/laporan/:laporanId/histori", (req, res) => obController.submitHistori(req, res));
 
 export default obRouter;

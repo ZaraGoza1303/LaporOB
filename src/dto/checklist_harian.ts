@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CHECKLIST_STATUS } from "../utils/constants.js";
 
 export interface ChecklistHarianQuery {
     search?: string | null;
@@ -12,9 +13,6 @@ export const CreateChecklistHarianSchema = z.object({
     kategori_id: z.string().min(1, "Kategori ID wajib diisi"),
     lokasi_id: z.string().min(1, "Lokasi ID wajib diisi"),
     lantai_id: z.string().min(1, "Lantai ID wajib diisi"),
-    status: z.enum(["BELUM_DIKERJAKAN", "SEDANG_DIKERJAKAN", "SELESAI", "TERLEWAT"]).optional(),
-    bukti_foto: z.string().optional(),
-    catatan: z.string().optional(),
 });
 
 export const UpdateChecklistHarianSchema = z.object({
@@ -23,8 +21,7 @@ export const UpdateChecklistHarianSchema = z.object({
     lokasi_id: z.string().optional(),
     lantai_id: z.string().optional(),
     ob_id: z.string().optional(),
-    status: z.enum(["BELUM_DIKERJAKAN", "SEDANG_DIKERJAKAN", "SELESAI", "TERLEWAT"]).optional(),
-    bukti_foto: z.string().optional(),
+    status: z.enum([CHECKLIST_STATUS.BELUM_DIKERJAKAN, CHECKLIST_STATUS.SEDANG_DIKERJAKAN, CHECKLIST_STATUS.SELESAI, CHECKLIST_STATUS.TERLEWAT]).optional(),
     catatan: z.string().optional(),
 });
 
@@ -39,7 +36,6 @@ export interface ChecklistHarianRes {
     lantai_id?: string;
     ob_id?: string;
     status: string;
-    bukti_foto?: string | null;
     catatan?: string | null;
     created_at: Date;
     updated_at: Date;

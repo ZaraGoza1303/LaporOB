@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import type { IObService } from "../services/ob_service.interface.js";
 import { sendSuccessfullResponse, sendErrorResponse } from "../utils/response.js";
 import type { IStorageService } from "../services/storage_service.interface.js";
-import { UpdateLaporanSchema, type UpdateLaporanReq } from "../dto/ob.js";
+import { CreateHistoriSchema } from "../dto/ob.js";
 import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
 
 
@@ -27,51 +27,60 @@ export class ObController {
     }
 
 
-async updatelapor(req: Request, res: Response) {
+    async takeLapor(req: Request, res: Response) {
       try {
-        if (!req.body){
-            return res.status(400).json(sendErrorResponse("Request Body Empty"))
-        }
+        const laporanId = req.params.laporanId as string;
+        const obId = req.user?.id as string;
 
-        const validate =UpdateLaporanSchema.safeParse({
-            ...req.body,
-            foto: req.file? "file_tersedia" : undefined
-        });
-        
+        await this.obService.ambilLaporan(laporanId, obId);
+
+        return res.status(200).json(sendSuccessfullResponse("Laporan berhasil diambil"));
+      } catch (err: any){
+        return res.status(500).json(sendErrorResponse("Terjadi kesalahan, tidak bisa mengambil laporan"))
+      }
+    }
+
+    async submitHistori(req: Request, res: Response) {
+      try {
+        const validate = CreateHistoriSchema.safeParse(req.body);
+
         if (!validate.success){
             const formatedErr = validate.error.flatten().fieldErrors;
             return res.status(400).json(sendErrorResponse("Validation failed", formatedErr));
         }
 
         const laporanId = req.params.laporanId as string;
-        const obId = req.user?.id as string;
-        let fotoLaporan: string | undefined;
 
-      if (req.file) {
-            const validation = await validateImageFile(req.file);
+        const fotoFiles = (req.files as Express.Multer.File[]).filter(
+            (file) => file.fieldname === "foto_selesai"
+        );
+
+        if (fotoFiles.length === 0) {
+            return res.status(400).json(sendErrorResponse("Foto selesai wajib diupload"));
+        }
+
+        const fotoUrls: string[] = [];
+        for (const file of fotoFiles) {
+            const validation = await validateImageFile(file);
             if (!validation.ok) {
-                return res.status(400).json(sendErrorResponse(validation.message)); 
+                return res.status(400).json(sendErrorResponse(validation.message));
             }
 
             try {
-                await compressImageIfNeeded(req.file); 
+                await compressImageIfNeeded(file);
             } catch (err: any) {
-                return res.status(500).json(sendErrorResponse("Gagal memproses Gambar"));
+                return res.status(500).json(sendErrorResponse("Gagal memproses gambar", err.message));
             }
 
-            fotoLaporan = await this.storageService.uploadFile(req.file);
-            }
+            const url = await this.storageService.uploadFile(file);
+            fotoUrls.push(url);
+        }
 
-        const dto: UpdateLaporanReq = {
-            ...validate.data,
-            ...(fotoLaporan && { foto: fotoLaporan })
-        };
+        await this.obService.createHistoriPekerjaan(laporanId, fotoUrls, validate.data);
 
-        await  this.obService.updatelaporStatus(laporanId, obId, dto);
-
-        return res.status(200).json(sendSuccessfullResponse("Status laporan berhasil diperbarui"));
+        return res.status(200).json(sendSuccessfullResponse("Histori pekerjaan berhasil disimpan"));
       } catch (err: any){
-        return res.status(500).json(sendErrorResponse("Terjadi kesalahan, tidak bisa memperbarui laporan"))
+        return res.status(500).json(sendErrorResponse("Terjadi kesalahan, tidak bisa menyimpan histori pekerjaan"))
       }
     }
 }
