@@ -4,7 +4,7 @@ import { generateJWTToken } from "../utils/jwt.js";
 import bcrypt from 'bcrypt';
 import type { IAuthService } from "./auth_service.interface.js";
 import { hashActivationToken } from "../utils/token.js";
-import { handlePrismaError } from "../utils/error.js";
+import { AppError, handlePrismaError } from "../utils/error.js";
 import type { UserToken } from "../generated/prisma/client.js";
 import type { IUsersRepository } from "../repositories/users_repository.interface.js";
 
@@ -22,19 +22,19 @@ export class AuthService implements IAuthService {
             const existsUser = await this.authRepo.login(req);
 
             if (!existsUser) {
-                throw new Error("Email atau password salah!")
+                throw new AppError("Email atau password salah!", 400)
             }
 
             const isMatched = await bcrypt.compare(req.password, existsUser.password);
             if (!isMatched) {
-                throw new Error("Email atau password salah!")
+                throw new AppError("Email atau password salah!", 400)
             }
 
             if (!existsUser.is_active) {
-                throw new Error("Email atau password salah!")
+                throw new AppError("Email atau password salah!", 400)
             }
 
-            const jwtToken = await generateJWTToken({ id: existsUser?.id, username: existsUser.username, role: existsUser.role });
+            const jwtToken = await generateJWTToken({ id: existsUser?.id, username: existsUser.username, role: existsUser.role.nama_role });
             const res: LoginRes = {
                 jwt_token: jwtToken
             }
@@ -50,17 +50,17 @@ export class AuthService implements IAuthService {
             const existsUser = await this.authRepo.login(req);
 
             if (!existsUser) {
-                throw new Error("Email atau password salah!")
+                throw new AppError("Email atau password salah!", 400)
             }
 
             const isMatched = await bcrypt.compare(req.password, existsUser.password);
             if (!isMatched) {
-                throw new Error("Email atau password salah!")
+                throw new AppError("Email atau password salah!", 400)
             }
 
             const record = await this.validateActivationToken(token);
             await this.usersRepo.markTokenAsUsed(record.id);
-
+            
         } catch (err) {
             handlePrismaError(err)
         }

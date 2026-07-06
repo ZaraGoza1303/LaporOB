@@ -1,7 +1,8 @@
 import type { PaginatedResponse } from "../dto/response.js";
-import type { CreateUserReq, CreateUserRes, UpdateUserReq, UserHomeRes } from "../dto/users.js";
+import type { CreateLaporanKaryawanInput, CreateUserReq, CreateUserRes, UpdateUserReq, UserHomeRes } from "../dto/users.js";
+import { LAPORAN_STATUS } from "../utils/constants.js";
 import type { User } from "../generated/prisma/client.js";
-import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
+import type { Laporan_karyawanCreateInput, UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
 import type { IUsersRepository } from "../repositories/users_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import { generateActivationToken } from "../utils/token.js";
@@ -155,6 +156,31 @@ export class UsersService implements IUsersService {
             return response;
         } catch (err){
             handlePrismaError(err)
+        }
+    }
+
+    async createReport(userId: string, req: CreateLaporanKaryawanInput): Promise<void> {
+        try {
+            const laporanReq: Laporan_karyawanCreateInput = {
+                pelapor: {
+                    connect: { id: userId }
+                },
+                lantai: {
+                    connect: { id: req.lantai_id }
+                },
+                kategori: {
+                    connect: { id: req.kategori_id }
+                },
+                
+                deskripsi_kendala: req.deskripsi_kendala,
+                prioritas: req.prioritas,
+                foto_masalah: req.foto_masalah,
+                status: LAPORAN_STATUS.BELUM_DIKERJAKAN,
+            };
+
+            await this.usersRepo.insertReport(laporanReq);
+        } catch (err) {
+            handlePrismaError(err);
         }
     }
 }

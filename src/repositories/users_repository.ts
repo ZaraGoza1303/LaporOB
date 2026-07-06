@@ -1,7 +1,7 @@
 import type { PaginatedResponse } from "../dto/response.js";
 import type { UserActivityRes } from "../dto/users.js";
 import type { PrismaClient, User } from "../generated/prisma/client.js";
-import type { UserCreateInput, UserTokenCreateInput } from "../generated/prisma/models.js";
+import type { Laporan_karyawanCreateInput, UserCreateInput, UserTokenCreateInput } from "../generated/prisma/models.js";
 import type { IUsersRepository } from "./users_repository.interface.js";
 
 export class UsersRepository implements IUsersRepository {
@@ -113,6 +113,12 @@ export class UsersRepository implements IUsersRepository {
         await this.db.userToken.create({
             data: activationToken
         })
+    }
+
+    async insertReport(req: Laporan_karyawanCreateInput): Promise<void> {
+        await this.db.laporan_karyawan.create({ 
+            data: req
+         })
     }
 
     async markTokenAsUsed(tokenId: string): Promise<void> {
