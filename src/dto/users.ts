@@ -7,7 +7,7 @@ export const CreateUserSchema = z.object({
   username: z.string().min(3, { message: 'Username minimal 3 karakter' }).max(50, { message: 'Username maksimal 50 karakter' }).trim(),
   email: z.string().email().trim(),
   password: z.string().min(6, { message: 'Password minimal 6 karakter' }),
-  role_id: z.string().uuid({ message: 'Format role_id harus UUID yang valid' }), 
+  role_id: z.string().trim().uuid({ message: 'Format role_id harus UUID yang valid' }), 
 });
 
 export const UpdateUserSchema = CreateUserSchema.partial().extend({
