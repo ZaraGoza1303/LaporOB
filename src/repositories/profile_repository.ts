@@ -1,4 +1,3 @@
-import z from "zod";
 import type { PrismaClient, Prisma } from "../generated/prisma/client.js";
 import type { IProfileRepository, ProfileReport, ProfileUser } from "./profile_repository.interface.js";
 import type { PaginatedResponse } from "../dto/response.js";
@@ -31,7 +30,6 @@ export class ProfileRepository implements IProfileRepository {
         const whereCondition = this.buildWhereClause({ ob_id: obId }, search, status);
         return this.executePaginatedReports(whereCondition, limit, cursor);
     }
-
 
     private async executePaginatedReports(whereCondition: Prisma.Laporan_karyawanWhereInput, limit: number, cursor?: string | null): Promise<PaginatedResponse<ProfileReport>> {
         const [reports, total] = await Promise.all([
@@ -75,9 +73,7 @@ export class ProfileRepository implements IProfileRepository {
         const where: Prisma.Laporan_karyawanWhereInput = { ...baseFilter };
 
         if (search) {
-            const isUuid = z.string().uuid().safeParse(search).success;
             where.OR = [
-                ...(isUuid ? [{ id: search }] : []),
                 { deskripsi_kendala: { contains: search, mode: "insensitive" as const } },
                 { kategori: { nama_kategori: { contains: search, mode: "insensitive" as const } } },
                 { lantai: { lokasi: { nama_lokasi: { contains: search, mode: "insensitive" as const } } } }
