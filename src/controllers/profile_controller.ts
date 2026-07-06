@@ -26,14 +26,9 @@ export class ProfileController {
 
             const response = await this.profileService.getProfile(userId, limit, { role, cursor, search, status });
 
-            res.status(200).json({
-                message: "Berhasil mengambil data profil",
-                data: response
-            });
+            res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data profile", response));
         } catch (err: any) {
-            res.status(500).json({
-                message: err.message || "Terjadi kesalahan pada server"
-            });
+            res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server"));
         }
     }
 }
