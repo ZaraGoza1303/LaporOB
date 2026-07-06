@@ -43,12 +43,11 @@ export class AuthController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr))
             }
 
-            const response = await this.authService.loginActivation(validate.data, activationToken);
-            return res.status(200).json(sendSuccessfullResponse("Login Berhasil", response))
+            await this.authService.loginActivation(validate.data, activationToken);
+            return res.status(200).json(sendSuccessfullResponse("Login aktivasi Berhasil"))
         } catch (err: any) {
             return res.status(500).json(sendErrorResponse("Login Gagal", err.message))
         }
     }
-
 
 }
