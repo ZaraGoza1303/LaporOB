@@ -32,3 +32,19 @@ export interface ProfileRes {
     };
     laporan: PaginatedResponse<MappedProfileReport>;
 }
+
+export interface MappedReportDetailRes {
+    id: string;
+    kategori: string;
+    deskripsi_kendala: string;
+    status: string;
+    prioritas: string;
+    foto_masalah: string[];
+    foto_selesai: string[];
+    catatan: string;
+    lokasi: string;
+    nomor_lantai: number;
+    nama_karyawan: string;
+    nama_ob: string | null;
+    created_at: string;
+}
