@@ -6,6 +6,8 @@ import connectDB from './src/database/db.js';
 import userRouter from './src/routes/user.js';
 import authRouter from './src/routes/auth.js';
 import obRouter from './src/routes/ob.js';
+import adminRouter from './src/routes/admin.js';
+import karyawanRouter from './src/routes/karyawan.js';
 import lokasiRouter from './src/routes/lokasi.js';
 import checklistHarianRouter from './src/routes/checklistHarian.js';
 
@@ -34,6 +36,8 @@ const initRouter = () => {
     app.use('/api/user', userRouter);
     app.use('/api/auth', authRouter);
     app.use('/api/ob', obRouter);
+    app.use('/api/admin', adminRouter);
+    app.use('/api/karyawan', karyawanRouter);
     app.use('/api/lokasi', lokasiRouter);
     app.use('/api/checklist-harian', checklistHarianRouter);
 }
