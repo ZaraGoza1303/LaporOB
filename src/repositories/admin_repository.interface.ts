@@ -1,5 +1,5 @@
 import type { Prisma } from "../generated/prisma/client.js";
-import type { UserSearchQuery, UserStatsRes } from "../dto/admin.js";
+import type { AdminLaporanQuery, UserSearchQuery, UserStatsRes } from "../dto/admin.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { User } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
@@ -28,6 +28,22 @@ export type LaporanDetailPayload = Prisma.Laporan_karyawanGetPayload<{
         histori_pekerjaan: true;
     };
 }>;
+
+export type AdminLaporanPayload = Prisma.Laporan_karyawanGetPayload<{
+    include: {
+        pelapor: true;
+        ob: true;
+        lantai: { include: { lokasi: true } };
+        kategori: true;
+    };
+}>;
+
+export interface LokasiTerpopulerPayload {
+    lokasi_id: string | null;
+    nama_lokasi: string;
+    total_laporan: number;
+}
+
 export interface IAdminRepository {
     getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>>
     getByID(userId: string): Promise<any | null>
@@ -40,4 +56,7 @@ export interface IAdminRepository {
     getRecentActivities(limit: number): Promise<RecentActivityPayload[]>;
     getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]>;
     getReportDetailById(laporanId: string): Promise<LaporanDetailPayload | null>;
+    getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>>;
+    getLokasiTerpopuler(limit: number, query: AdminLaporanQuery): Promise<LokasiTerpopulerPayload[]>;
+    countLaporanAktif(query: AdminLaporanQuery): Promise<number>;
 }
