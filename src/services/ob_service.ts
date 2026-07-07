@@ -108,6 +108,14 @@ export class ObService implements IObService {
         }
     }
 
+    async tolakLaporan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq): Promise<void> {
+        try {
+            await this.obRepo.tolakLaporan(laporanId, fotoUrls, dto.catatan);
+        } catch (err: any) {
+            throw handlePrismaError(err);
+        }
+    }
+
     async getRiwayat(obId: string, limit: number, params: { cursor?: string | null; search?: string | null; status?: string | null }): Promise<PaginatedResponse<MappedProfileReport>> {
         try {
             const reportsData = await this.laporanRepo.getReportsByObId(obId, limit, params.cursor, params.search, params.status);
