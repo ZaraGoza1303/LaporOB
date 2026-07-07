@@ -21,3 +21,5 @@ kategoriRouter.get('/:kategori_id', (req, res) => kategoriController.getByID(req
 kategoriRouter.post('/', (req, res) => kategoriController.create(req, res));
 kategoriRouter.put('/:kategori_id', (req, res) => kategoriController.update(req, res));
 kategoriRouter.delete('/:kategori_id', (req, res) => kategoriController.delete(req, res));
+
+export default kategoriRouter;

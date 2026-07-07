@@ -24,6 +24,7 @@ export const CreateChecklistHarianSchema = z.object({
     kategori_id: z.string().min(1, "Kategori ID wajib diisi"),
     lokasi_id: z.string().min(1, "Lokasi ID wajib diisi"),
     lantai_id: z.string().min(1, "Lantai ID wajib diisi"),
+    tanggal: z.string().min(1, "Tanggal wajib diisi").refine((val) => !Number.isNaN(Date.parse(val)), { message: "Format tanggal tidak valid" }),
 });
 
 export const UpdateChecklistHarianSchema = z.object({
