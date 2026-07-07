@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { PrismaClient } from "../generated/prisma/client.js";
-import { UsersRepository } from "../repositories/users_repository.js";
+import { AdminRepository } from "../repositories/admin_repository.js";
 import { AdminService } from "../services/admin_service.js";
 import { AdminController } from "../controllers/admin_controller.js";
 import { verifyJWTToken } from "../middleware/jwt.js";
@@ -10,8 +10,8 @@ import { StorageServiceFactory } from "../services/storage_service.factory.js";
 const adminRouter = Router();
 
 const db = new PrismaClient();
-const userRepo = new UsersRepository(db);
-const adminService = new AdminService(userRepo);
+const adminRepo = new AdminRepository(db);
+const adminService = new AdminService(adminRepo);
 const storageService = StorageServiceFactory.getProvider();
 const adminController = new AdminController(adminService, storageService);
 
