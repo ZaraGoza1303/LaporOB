@@ -1,4 +1,4 @@
-import type { UserSearchQuery, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse } from "../dto/admin.js";
+import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, UserSearchQuery, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse } from "../dto/admin.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { CreateUserReq, CreateUserRes, UpdateUserReq } from "../dto/users.js";
 import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse } from "../dto/admin.js";
@@ -8,7 +8,7 @@ import type { IAdminRepository } from "../repositories/admin_repository.interfac
 import type { IObRepository } from "../repositories/ob_repository.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import  { calculateDateRanges } from "../utils/date.js"
-import { LAPORAN_STATUS, type LaporanStatus } from "../utils/constants.js";
+import { LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { generateActivationToken } from "../utils/token.js";
 import { buildActivationUrl, resolveFileUrl } from "../utils/url.js";
 import type { IAdminService } from "./admin_service.interface.js";
@@ -146,6 +146,73 @@ export class AdminService implements IAdminService {
             handlePrismaError(err)
         }
     }
+
+    async getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<AdminLaporanPageResponse> {
+        try {
+            const [laporanData, lokasiTerpopuler, totalLaporanAktif, recentActivities] = await Promise.all([
+                this.adminRepo.getAllLaporan(page, limit, query),
+                this.adminRepo.getLokasiTerpopuler(6, query),
+                this.adminRepo.countLaporanAktif(query),
+                this.adminRepo.getRecentActivities(5)
+            ]);
+
+            const laporanMapped: AdminLaporanItemResponse[] = laporanData.items.map((item, index) => {
+                const nomorLaporan = ((page - 1) * limit) + index + 1;
+
+                return {
+                    id: item.id,
+                    id_laporan: `LPR - ${String(nomorLaporan).padStart(3, "0")}`,
+                    nama_karyawan: item.pelapor?.nama_lengkap ?? "Anonim",
+                    lokasi: item.lantai?.lokasi
+                        ? `${item.lantai.lokasi.nama_lokasi} Lantai ${item.lantai.nomor_lantai}`
+                        : "Lokasi tidak diketahui",
+                    lokasi_id: item.lantai?.lokasi?.id ?? null,
+                    lantai_id: item.lantai_id,
+                    nomor_lantai: item.lantai?.nomor_lantai ?? 0,
+                    kategori: item.kategori?.nama_kategori ?? "",
+                    prioritas: item.prioritas as LaporanPriority,
+                    status: item.status as LaporanStatus,
+                    nama_ob: item.ob?.nama_lengkap ?? null,
+                    created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
+                    updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : String(item.updated_at),
+                };
+            });
+
+            const recent_activities = recentActivities.map(
+                (activity: RecentActivityPayload) => ({
+                    id: activity.id,
+                    title: activity.deskripsi_kendala,
+                    location: activity.lantai?.lokasi?.nama_lokasi
+                        ? `Lantai ${activity.lantai.nomor_lantai}, ${activity.lantai.lokasi.nama_lokasi}`
+                        : "Lokasi tidak diketahui",
+                    status: activity.status as LaporanStatus,
+                    assignee_name: activity.ob?.nama_lengkap || null,
+                    timestamp: activity.updated_at
+                })
+            );
+
+            return {
+                laporan: {
+                    items: laporanMapped,
+                    next_cursor: null,
+                    meta: laporanData.meta ?? {
+                        total_items: 0,
+                        current_page: page,
+                        limit,
+                        total_pages: 0
+                    }
+                },
+                lokasi_terpopuler: lokasiTerpopuler,
+                laporan_aktif: {
+                    total_laporan: totalLaporanAktif
+                },
+                recent_activities
+            };
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
     public async getDashboardData(query: GetDashboardQuery): Promise<DashboardMainResponse> {
         const { period } = query;
         
@@ -285,7 +352,9 @@ export class AdminService implements IAdminService {
         waktu_selesai: historiTerakhir?.created_at ?? null,
         deskripsi_kendala: laporan.deskripsi_kendala,
         bukti_foto: {
-            urls: laporan.status === "SELESAI" ? (historiTerakhir?.foto_selesai ?? []) : laporan.foto_masalah,
+            urls: laporan.status === "SELESAI"
+                ? (historiTerakhir?.foto_selesai ?? []).map(resolveFileUrl).filter((url): url is string => !!url)
+                : laporan.foto_masalah.map(resolveFileUrl).filter((url): url is string => !!url),
             diupload_oleh: laporan.ob?.nama_lengkap ?? null,
             jam_upload: jamUpload
         }

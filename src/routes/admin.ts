@@ -23,11 +23,12 @@ adminRouter.use(requireRole("admin"));
 
 adminRouter.get("/", (req, res) => adminController.getAll(req, res));
 adminRouter.get("/user-stats", (req, res) => adminController.getUserStats(req, res));
+adminRouter.get("/dashboard", (req, res) => adminController.getDashboardData(req, res));
+adminRouter.get("/laporan", (req, res) => adminController.getAllLaporan(req, res));
+adminRouter.get("/laporan/:laporan_id", (req, res) => adminController.getReportDetail(req, res));
 adminRouter.get("/:user_id", (req, res) => adminController.getByID(req, res));
 adminRouter.post("/", (req, res) => adminController.create(req, res));
 adminRouter.patch("/:user_id", (req, res) => adminController.update(req, res));
 adminRouter.delete("/:user_id", (req, res) => adminController.delete(req, res));
-
-adminRouter.get("/dashboard", (req, res) => adminController.getDashboardData(req, res));
 
 export default adminRouter;
