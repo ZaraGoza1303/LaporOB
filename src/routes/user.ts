@@ -24,7 +24,7 @@ const userController = new UsersController(userService, storageService);
 userRouter.use(verifyJWTToken);
 
 userRouter.get("/profile", (req, res) => userController.getProfile(req, res));
-userRouter.get("/profile/report/:report_id", (req, res) => userController.getReportDetail(req, res));
+userRouter.get("/profile/laporan/:report_id", (req, res) => userController.getReportDetail(req, res));
 userRouter.get("/dashboard", requireRole("karyawan"), (req, res) => userController.getHomeStats(req, res));
 userRouter.get("/", requireRole("admin"), (req, res) => userController.getAll(req, res));
 userRouter.get("/:user_id", requireRole("admin"), (req, res) => userController.getByID(req, res));

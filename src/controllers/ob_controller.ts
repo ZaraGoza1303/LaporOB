@@ -6,7 +6,6 @@ import { CreateHistoriSchema } from "../dto/ob.js";
 import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
 import { AppError } from "../utils/error.js";
 
-
 export class ObController {
     private obService: IObService;
     private storageService: IStorageService;
