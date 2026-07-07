@@ -5,7 +5,7 @@ import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../
 
 export interface IAdminRepository {
     getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>>
-    getByID(userId: string): Promise<User | null>
+    getByID(userId: string): Promise<any | null>
     insert(req: UserCreateInput): Promise<User>;
     update(userId: string, req: UserUpdateInput): Promise<void>;
     delete(userId: string): Promise<void>;

@@ -150,4 +150,12 @@ export class ObService implements IObService {
             handlePrismaError(err);
         }
     }
+
+    async getObPerformanceStats(obId: string): Promise<{ tasksCompleted: number, rejected: number }> {
+        try {
+            return await this.obRepo.getObPerformanceStats(obId);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
 }

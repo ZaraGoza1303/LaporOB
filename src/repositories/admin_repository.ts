@@ -54,9 +54,18 @@ export class AdminRepository implements IAdminRepository {
         }
     }
 
-    async getByID(userId: string): Promise<User | null> {
+    async getByID(userId: string): Promise<any | null> {
         return this.db.user.findFirst({
-            where: { id: userId }
+            where: { id: userId },
+            include: {
+                role: true,
+                tokens: {
+                    orderBy: {
+                        created_at: 'desc'
+                    },
+                    take: 1
+                }
+            }
         })
     }
 

@@ -4,6 +4,7 @@ import type { CreateUserReq, CreateUserRes, UpdateUserReq } from "../dto/users.j
 import type { User } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
 import type { IAdminRepository } from "../repositories/admin_repository.interface.js";
+import type { IObRepository } from "../repositories/ob_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import { generateActivationToken } from "../utils/token.js";
 import { buildActivationUrl, resolveFileUrl } from "../utils/url.js";
@@ -13,10 +14,12 @@ import bcrypt from 'bcrypt';
 
 export class AdminService implements IAdminService {
     private adminRepo: IAdminRepository;
+    private obRepo: IObRepository;
     private storageService = StorageServiceFactory.getProvider();
 
-    constructor(adminRepo: IAdminRepository) {
+    constructor(adminRepo: IAdminRepository, obRepo: IObRepository) {
         this.adminRepo = adminRepo;
+        this.obRepo = obRepo;
     }
 
     async getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>> {
@@ -36,13 +39,24 @@ export class AdminService implements IAdminService {
         }
     }
 
-    async getByID(userId: string): Promise<User | null> {
+    async getByID(userId: string): Promise<any | null> {
         try {
             const user = await this.adminRepo.getByID(userId);
-            if (user && user.profile_picture) {
+            if (!user) return null;
+
+            if (user.profile_picture) {
                 user.profile_picture = resolveFileUrl(user.profile_picture);
             }
-            return user;
+
+            let stats = null;
+            if (user.role && user.role.nama_role.toLowerCase() === 'ob') {
+                stats = await this.obRepo.getObPerformanceStats(userId);
+            }
+
+            return {
+                ...user,
+                stats
+            };
         } catch (err) {
             handlePrismaError(err)
         }
