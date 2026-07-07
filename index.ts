@@ -10,6 +10,8 @@ import adminRouter from './src/routes/admin.js';
 import karyawanRouter from './src/routes/karyawan.js';
 import lokasiRouter from './src/routes/lokasi.js';
 import checklistHarianRouter from './src/routes/checklistHarian.js';
+import lantaiRouter from './src/routes/lantai.js';
+import ruanganRouter from './src/routes/ruangan.js';
 
 
 const app = express();
@@ -40,6 +42,8 @@ const initRouter = () => {
     app.use('/api/karyawan', karyawanRouter);
     app.use('/api/lokasi', lokasiRouter);
     app.use('/api/checklist-harian', checklistHarianRouter);
+    app.use('/api/lantai', lantaiRouter);
+    app.use('/api/ruangan', ruanganRouter);
 }
 
 const startApp = async () => {
