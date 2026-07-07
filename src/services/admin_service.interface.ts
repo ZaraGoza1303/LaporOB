@@ -5,7 +5,7 @@ import type { User } from '../generated/prisma/client.js';
 
 export interface IAdminService {
     getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>>
-    getByID(userId: string): Promise<User | null>
+    getByID(userId: string): Promise<any | null>
     create(req: CreateUserReq): Promise<CreateUserRes>;
     update(userId: string, req: UpdateUserReq, file?: Express.Multer.File): Promise<void>;
     delete(userId: string): Promise<void>;
