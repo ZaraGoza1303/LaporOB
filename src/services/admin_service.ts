@@ -2,7 +2,7 @@ import type { PaginatedResponse } from "../dto/response.js";
 import type { CreateUserReq, CreateUserRes, UpdateUserReq } from "../dto/users.js";
 import type { User } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
-import type { IUsersRepository } from "../repositories/users_repository.interface.js";
+import type { IAdminRepository } from "../repositories/admin_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import { generateActivationToken } from "../utils/token.js";
 import { buildActivationUrl, resolveFileUrl } from "../utils/url.js";
@@ -11,16 +11,16 @@ import { StorageServiceFactory } from "./storage_service.factory.js";
 import bcrypt from 'bcrypt';
 
 export class AdminService implements IAdminService {
-    private usersRepo: IUsersRepository;
+    private adminRepo: IAdminRepository;
     private storageService = StorageServiceFactory.getProvider();
 
-    constructor(usersRepo: IUsersRepository) {
-        this.usersRepo = usersRepo;
+    constructor(adminRepo: IAdminRepository) {
+        this.adminRepo = adminRepo;
     }
 
     async getAll(page: number, limit: number, search?: string | null): Promise<PaginatedResponse<User>> {
         try {
-            const users = await this.usersRepo.getAll(page, limit, search);
+            const users = await this.adminRepo.getAll(page, limit, search);
             if (users && users.items) {
                 users.items = users.items.map(user => {
                     if (user.profile_picture) {
@@ -37,7 +37,7 @@ export class AdminService implements IAdminService {
 
     async getByID(userId: string): Promise<User | null> {
         try {
-            const user = await this.usersRepo.getByID(userId);
+            const user = await this.adminRepo.getByID(userId);
             if (user && user.profile_picture) {
                 user.profile_picture = resolveFileUrl(user.profile_picture);
             }
@@ -62,7 +62,7 @@ export class AdminService implements IAdminService {
                 nama_lengkap: req.nama_lengkap,
             }
 
-            const createdUser = await this.usersRepo.insert(userReq);
+            const createdUser = await this.adminRepo.insert(userReq);
 
             const activationUserReq: UserTokenCreateInput = {
                 user: {
@@ -73,7 +73,7 @@ export class AdminService implements IAdminService {
                 expired_at: activationToken.expiredAt,
             }
 
-            await this.usersRepo.insertActivationToken(activationUserReq);
+            await this.adminRepo.insertActivationToken(activationUserReq);
             const activationUrl = buildActivationUrl(activationToken.token);
 
             const res: CreateUserRes = {
@@ -91,7 +91,7 @@ export class AdminService implements IAdminService {
             const userReq: UserUpdateInput = {}
 
             if (file) {
-                const oldUser = await this.usersRepo.getByID(userId);
+                const oldUser = await this.adminRepo.getByID(userId);
                 const oldPp = oldUser?.profile_picture || "";
                 userReq.profile_picture = await this.storageService.updateFile(file, oldPp);
             }
@@ -105,7 +105,7 @@ export class AdminService implements IAdminService {
                 };
             }
 
-            await this.usersRepo.update(userId, userReq as any);
+            await this.adminRepo.update(userId, userReq as any);
         } catch (err) {
             handlePrismaError(err)
         }
@@ -113,7 +113,7 @@ export class AdminService implements IAdminService {
 
     async delete(userId: string): Promise<void> {
         try {
-            await this.usersRepo.delete(userId);
+            await this.adminRepo.delete(userId);
         } catch (err) {
             handlePrismaError(err)
         }
