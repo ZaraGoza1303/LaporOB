@@ -1,0 +1,29 @@
+import type { PaginatedResponse } from "../dto/response.js";
+import type { UserActivityRes } from "../dto/users.js";
+import type { User, Kategori, Lantai, Lokasi, Laporan_karyawan, Prisma } from "../generated/prisma/client.js";
+import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
+
+export type ProfileReport = Laporan_karyawan & {
+    kategori: Kategori;
+    lantai: Lantai & {
+        lokasi: Lokasi;
+    };
+    ob: User | null;
+};
+
+export type DetailReportPayload = Prisma.Laporan_karyawanGetPayload<{
+    include: {
+        kategori: true;
+        lantai: { include: { lokasi: true } };
+        ob: true;
+        pelapor: true;
+    };
+}>;
+
+export interface ILaporanRepository {
+    getActivity(userId: string): Promise<UserActivityRes[]>;
+    insertReport(req: Laporan_karyawanCreateInput): Promise<void>;
+    getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
+    getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
+    getReportDetailById(reportId: string): Promise<DetailReportPayload | null>;
+}
