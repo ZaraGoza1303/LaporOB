@@ -6,6 +6,7 @@ import type { Request, Response } from "express";
 import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
 import type { IStorageService } from "../services/storage_service.interface.js";
 import { AppError } from "../utils/error.js";
+import { UserSearchQuerySchema } from "../dto/admin.js";
 
 export class AdminController {
     private adminService: IAdminService;
@@ -20,9 +21,14 @@ export class AdminController {
         try {
             const page = parseInt(String(req.query.page), 10) || 1;
             const limit = parseInt(String(req.query.limit), 10) || 10;
-            const search = req.query.search ? String(req.query.search) : null;
 
-            const response = await this.adminService.getAll(page, limit, search)
+            const validate = UserSearchQuerySchema.safeParse(req.query);
+            if (!validate.success) {
+                const formatedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
+            }
+
+            const response = await this.adminService.getAll(page, limit, validate.data)
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data user", response))
         } catch (err: any) {
             if (err instanceof AppError) {
@@ -146,6 +152,17 @@ export class AdminController {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
             return res.status(500).json(sendErrorResponse("Gagal mengambil data dashboard admin", err.message));
+        }
+    }
+    async getUserStats(req: Request, res: Response) {
+       try {
+            await this.adminService.getUserStats()
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data"));
+        } catch (err: any) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message))
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data", err.message))
         }
     }
 }

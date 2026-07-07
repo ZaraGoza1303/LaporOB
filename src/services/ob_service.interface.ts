@@ -6,5 +6,7 @@ export interface IObService {
     getHomeStats(obId: string): Promise<ObHomeRes>;
     ambilLaporan(laporanId: string, obId: string): Promise<void>;
     createHistoriPekerjaan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq): Promise<void>;
+    tolakLaporan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq): Promise<void>;
     getRiwayat(obId: string, limit: number, params: { cursor?: string | null; search?: string | null; status?: string | null }): Promise<PaginatedResponse<MappedProfileReport>>;
+    getObPerformanceStats(obId: string): Promise<{ tasksCompleted: number, rejected: number }>;
 }

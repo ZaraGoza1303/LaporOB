@@ -7,4 +7,6 @@ export interface IObRepository {
     getReports(obId: string): Promise<any[]>;
     ambilLaporan(laporanId: string, obId: string): Promise<void>;
     createHistoriPekerjaan(laporanId: string, fotoSelesai: string[], catatan: string): Promise<void>;
+    tolakLaporan(laporanId: string, fotoSelesai: string[], catatan: string): Promise<void>;
+    getObPerformanceStats(obId: string): Promise<{ tasksCompleted: number, rejected: number }>;
 }
