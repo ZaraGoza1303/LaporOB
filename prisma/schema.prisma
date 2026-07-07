@@ -42,7 +42,7 @@ model UserToken {
   used_at    DateTime? @db.Timestamp(6)   
   created_at DateTime  @default(now()) @db.Timestamp(6)
 
-  user User @relation(fields: [user_id], references: [id])
+ user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("user_token")
 }
@@ -75,7 +75,7 @@ model Lantai {
   created_at   DateTime @default(now()) @db.Timestamp(6)
   updated_at   DateTime @updatedAt @db.Timestamp(6)
 
-  lokasi Lokasi @relation(fields: [lokasi_id], references: [id])
+  lokasi Lokasi @relation(fields: [lokasi_id], references: [id], onDelete: Cascade)
 
   checklist_harian Checklist_harian[]
   laporan_karyawan Laporan_karyawan[]
@@ -91,7 +91,7 @@ model Ruangan {
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt @db.Timestamp(6)
 
-  lantai Lantai @relation(fields: [lantai_id], references: [id])
+  lantai Lantai @relation(fields: [lantai_id], references: [id], onDelete: Cascade)
 
   @@map("ruangan")
 }
@@ -110,15 +110,15 @@ model Kategori {
 }
 
 model Tugas {
-  id            String   @id @default(uuid()) @db.Uuid
-  kategori_id   String   @db.Uuid
-  nama_tugas    String   @db.VarChar(150)
-  is_active     Boolean  @default(true)
-  created_at    DateTime @default(now()) @db.Timestamp(6)
-  updated_at    DateTime @updatedAt @db.Timestamp(6)
+  id          String   @id @default(uuid()) @db.Uuid
+  kategori_id String   @db.Uuid
+  nama_tugas  String   @db.VarChar(150)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @updatedAt @db.Timestamp(6)
 
-  kategori   Kategori @relation(fields: [kategori_id], references: [id])
-
+  kategori   Kategori @relation(fields: [kategori_id], references: [id], onDelete: Cascade)
+  
   checklist_harian Checklist_harian[]
 
   @@map("tugas")
@@ -138,8 +138,9 @@ model Checklist_harian {
 
   ob       User?    @relation(fields: [ob_id], references: [id])
   lantai   Lantai   @relation(fields: [lantai_id], references: [id])
-  kategori Kategori @relation(fields: [kategori_id], references: [id])
   tugas    Tugas    @relation(fields: [tugas_id], references: [id])
+  
+  kategori Kategori @relation(fields: [kategori_id], references: [id])
 
   @@map("checklist_harian")
 }
@@ -175,7 +176,7 @@ model Histori_pekerjaan {
   catatan             String   @db.Text
   created_at          DateTime @default(now()) @db.Timestamp(6)
 
-  laporan Laporan_karyawan @relation(fields: [laporan_karyawan_id], references: [id])
+  laporan Laporan_karyawan @relation(fields: [laporan_karyawan_id], references: [id], onDelete: Cascade)
 
   @@map("histori_pekerjaan")
 }
