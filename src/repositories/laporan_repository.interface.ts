@@ -17,6 +17,7 @@ export type DetailReportPayload = Prisma.Laporan_karyawanGetPayload<{
         lantai: { include: { lokasi: true } };
         ob: true;
         pelapor: true;
+        histori_pekerjaan: true;
     };
 }>;
 

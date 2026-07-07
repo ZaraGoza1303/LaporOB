@@ -120,4 +120,23 @@ export class ObRepository implements IObRepository {
             })
         ]);
     }
+
+    async tolakLaporan(laporanId: string, fotoSelesai: string[], catatan: string): Promise<void> {
+        await this.db.$transaction([
+            this.db.histori_pekerjaan.create({
+                data: {
+                    laporan_karyawan_id: laporanId,
+                    foto_selesai: fotoSelesai,
+                    catatan: catatan,
+                }
+            }),
+            this.db.laporan_karyawan.update({
+                where: { id: laporanId },
+                data: {
+                    status: LAPORAN_STATUS.DITOLAK,
+                    alasan_gagal: catatan,
+                }
+            })
+        ]);
+    }
 }
