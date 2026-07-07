@@ -1,6 +1,6 @@
 import z from "zod";
 import type { Laporan_karyawanGetPayload } from "../generated/prisma/models.js";
-import { LAPORAN_PRIORITY, type LaporanPriority } from "../utils/constants.js";
+import { LAPORAN_PRIORITY, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import type { PaginatedResponse } from "./response.js";
 
 export const CreateUserSchema = z.object({
@@ -28,7 +28,7 @@ export interface UserHomeRes {
   acitivity: Array<{
     id: string;
     deskripsi_kendala: string;
-    status: string;
+    status: LaporanStatus;
     foto_masalah: string[];
     lokasi: string;       
     nomor_lantai: number; 
@@ -77,8 +77,8 @@ export interface MappedProfileReport {
     id: string;
     kategori: string;
     deskripsi_kendala: string;
-    status: string;
-    prioritas: string;
+    status: LaporanStatus;
+    prioritas: LaporanPriority;
     foto_masalah: string[];
     lokasi: string;
     nomor_lantai: number;
@@ -103,8 +103,8 @@ export interface MappedReportDetailRes {
     id: string;
     kategori: string;
     deskripsi_kendala: string;
-    status: string;
-    prioritas: string;
+    status: LaporanStatus;
+    prioritas: LaporanPriority;
     foto_masalah: string[];
     foto_selesai: string[];
     catatan: string;
