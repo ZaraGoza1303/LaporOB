@@ -7,7 +7,6 @@ import { verifyJWTToken } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/role.js";
 import { LocalStorageService } from "../services/local_storage_service.js";
 
-
 const obRouter = Router();
 
 const db = new PrismaClient();
@@ -15,7 +14,6 @@ const obRepo = new ObRepository(db);
 const obService = new ObService(obRepo);
 const storageService = new LocalStorageService();
 const obController = new ObController(obService, storageService);
-
 
 obRouter.use(verifyJWTToken);
 obRouter.use(requireRole("ob"));
