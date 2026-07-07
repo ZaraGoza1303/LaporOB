@@ -19,6 +19,7 @@ adminRouter.use(verifyJWTToken);
 adminRouter.use(requireRole("admin"));
 
 adminRouter.get("/", (req, res) => adminController.getAll(req, res));
+adminRouter.get("/user-stats", (req, res) => adminController.getUserStats(req, res));
 adminRouter.get("/:user_id", (req, res) => adminController.getByID(req, res));
 adminRouter.post("/", (req, res) => adminController.create(req, res));
 adminRouter.patch("/:user_id", (req, res) => adminController.update(req, res));
