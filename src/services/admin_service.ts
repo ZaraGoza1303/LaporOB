@@ -1,3 +1,4 @@
+import type { UserSearchQuery, UserStatsRes } from "../dto/admin.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { CreateUserReq, CreateUserRes, UpdateUserReq } from "../dto/users.js";
 import type { User } from "../generated/prisma/client.js";
@@ -18,9 +19,9 @@ export class AdminService implements IAdminService {
         this.adminRepo = adminRepo;
     }
 
-    async getAll(page: number, limit: number, search?: string | null): Promise<PaginatedResponse<User>> {
+    async getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>> {
         try {
-            const users = await this.adminRepo.getAll(page, limit, search);
+            const users = await this.adminRepo.getAll(page, limit, query);
             if (users && users.items) {
                 users.items = users.items.map(user => {
                     if (user.profile_picture) {
@@ -114,6 +115,15 @@ export class AdminService implements IAdminService {
     async delete(userId: string): Promise<void> {
         try {
             await this.adminRepo.delete(userId);
+        } catch (err) {
+            handlePrismaError(err)
+        }
+    }
+
+    async getUserStats(): Promise<UserStatsRes> {
+        try {
+            const data = await this.adminRepo.getUserStats();
+            return data;
         } catch (err) {
             handlePrismaError(err)
         }

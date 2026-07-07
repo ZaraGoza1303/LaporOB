@@ -2,6 +2,7 @@ import type { IUsersService } from "../services/users_service.interface.js";
 import type { IKaryawanService } from "../services/karyawan_service.interface.js";
 import type { IObService } from "../services/ob_service.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
+import { ProfileLaporanQuerySchema } from "../dto/users.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { Request, Response } from "express";
 import { AppError } from "../utils/error.js";
@@ -34,10 +35,13 @@ export class UsersController {
                 return;
             }
 
-            const search = (req.query.search as string) || null;
-            const status = (req.query.status as string) || null;
-            const cursor = (req.query.cursor as string) || null;
-            const limit = parseInt(req.query.limit as string) || 10;
+            const validate = ProfileLaporanQuerySchema.safeParse(req.query);
+            if (!validate.success) {
+                const formatedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
+            }
+
+            const { search, status, cursor, limit } = validate.data;
 
             const userProfile = await this.usersService.getProfile(userId);
 
