@@ -1,11 +1,12 @@
+import type { UserSearchQuery, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse } from "../dto/admin.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { CreateUserReq, CreateUserRes, UpdateUserReq } from "../dto/users.js";
 import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse } from "../dto/admin.js";
 import type { User } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
-import type { IUsersRepository } from "../repositories/users_repository.interface.js";
-import type { IAdminRepository, RecentActivityPayload, ReportSummaryPayload } from "../repositories/admin_repository.interface.js";
-import { handlePrismaError } from "../utils/error.js";
+import type { IAdminRepository } from "../repositories/admin_repository.interface.js";
+import type { IObRepository } from "../repositories/ob_repository.interface.js";
+import { AppError, handlePrismaError } from "../utils/error.js";
 import  { calculateDateRanges } from "../utils/date.js"
 import { LAPORAN_STATUS, type LaporanStatus } from "../utils/constants.js";
 import { generateActivationToken } from "../utils/token.js";
@@ -15,18 +16,19 @@ import { StorageServiceFactory } from "./storage_service.factory.js";
 import bcrypt from 'bcrypt';
 
 export class AdminService implements IAdminService {
-    private usersRepo: IUsersRepository;
+    private obRepo: IObRepository;
     private storageService = StorageServiceFactory.getProvider();
     private adminRepo: IAdminRepository;
 
-    constructor(usersRepo: IUsersRepository, adminRepo: IAdminRepository) {
-        this.usersRepo = usersRepo;
+
+    constructor(adminRepo: IAdminRepository, obRepo: IObRepository) {
         this.adminRepo = adminRepo;
+        this.obRepo = obRepo;
     }
 
-    async getAll(page: number, limit: number, search?: string | null): Promise<PaginatedResponse<User>> {
+    async getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>> {
         try {
-            const users = await this.usersRepo.getAll(page, limit, search);
+            const users = await this.adminRepo.getAll(page, limit, query);
             if (users && users.items) {
                 users.items = users.items.map(user => {
                     if (user.profile_picture) {
@@ -41,13 +43,24 @@ export class AdminService implements IAdminService {
         }
     }
 
-    async getByID(userId: string): Promise<User | null> {
+    async getByID(userId: string): Promise<any | null> {
         try {
-            const user = await this.usersRepo.getByID(userId);
-            if (user && user.profile_picture) {
+            const user = await this.adminRepo.getByID(userId);
+            if (!user) return null;
+
+            if (user.profile_picture) {
                 user.profile_picture = resolveFileUrl(user.profile_picture);
             }
-            return user;
+
+            let stats = null;
+            if (user.role && user.role.nama_role.toLowerCase() === 'ob') {
+                stats = await this.obRepo.getObPerformanceStats(userId);
+            }
+
+            return {
+                ...user,
+                stats
+            };
         } catch (err) {
             handlePrismaError(err)
         }
@@ -68,7 +81,7 @@ export class AdminService implements IAdminService {
                 nama_lengkap: req.nama_lengkap,
             }
 
-            const createdUser = await this.usersRepo.insert(userReq);
+            const createdUser = await this.adminRepo.insert(userReq);
 
             const activationUserReq: UserTokenCreateInput = {
                 user: {
@@ -79,7 +92,7 @@ export class AdminService implements IAdminService {
                 expired_at: activationToken.expiredAt,
             }
 
-            await this.usersRepo.insertActivationToken(activationUserReq);
+            await this.adminRepo.insertActivationToken(activationUserReq);
             const activationUrl = buildActivationUrl(activationToken.token);
 
             const res: CreateUserRes = {
@@ -97,7 +110,7 @@ export class AdminService implements IAdminService {
             const userReq: UserUpdateInput = {}
 
             if (file) {
-                const oldUser = await this.usersRepo.getByID(userId);
+                const oldUser = await this.adminRepo.getByID(userId);
                 const oldPp = oldUser?.profile_picture || "";
                 userReq.profile_picture = await this.storageService.updateFile(file, oldPp);
             }
@@ -111,7 +124,7 @@ export class AdminService implements IAdminService {
                 };
             }
 
-            await this.usersRepo.update(userId, userReq as any);
+            await this.adminRepo.update(userId, userReq as any);
         } catch (err) {
             handlePrismaError(err)
         }
@@ -119,7 +132,16 @@ export class AdminService implements IAdminService {
 
     async delete(userId: string): Promise<void> {
         try {
-            await this.usersRepo.delete(userId);
+            await this.adminRepo.delete(userId);
+        } catch (err) {
+            handlePrismaError(err)
+        }
+    }
+
+    async getUserStats(): Promise<UserStatsRes> {
+        try {
+            const data = await this.adminRepo.getUserStats();
+            return data;
         } catch (err) {
             handlePrismaError(err)
         }
@@ -235,4 +257,38 @@ export class AdminService implements IAdminService {
             count: groups[label] || 0
         }));
     }
+
+    public async getReportDetail(id: string): Promise<AdminReportDetailResponse> {
+    const laporan = await this.adminRepo.getReportDetailById(id);
+
+    if (!laporan) {
+        throw new AppError("Laporan tidak ditemukan", 404); 
+    }
+
+    const historiTerakhir = laporan.histori_pekerjaan?.[laporan.histori_pekerjaan.length - 1] ?? null;
+
+
+    const jamUpload = historiTerakhir 
+        ? historiTerakhir.created_at.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
+        : null;
+
+    return {
+        id: laporan.id,
+        status: laporan.status as LaporanStatus,
+        nama_karyawan: laporan.pelapor?.nama_lengkap ?? "Anonim",
+        lokasi: laporan.lantai?.lokasi
+            ? `Lantai ${laporan.lantai.nomor_lantai} - ${laporan.lantai.lokasi.nama_lokasi}`
+            : "Lokasi tidak diketahui",
+        kategori: laporan.kategori.nama_kategori,
+        ob_ditugaskan: laporan.ob?.nama_lengkap ?? "Belum Ditugaskan",
+        waktu_laporan: laporan.created_at,
+        waktu_selesai: historiTerakhir?.created_at ?? null,
+        deskripsi_kendala: laporan.deskripsi_kendala,
+        bukti_foto: {
+            urls: laporan.status === "SELESAI" ? (historiTerakhir?.foto_selesai ?? []) : laporan.foto_masalah,
+            diupload_oleh: laporan.ob?.nama_lengkap ?? null,
+            jam_upload: jamUpload
+        }
+    };
+}
 }

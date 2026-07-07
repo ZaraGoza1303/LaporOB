@@ -1,18 +1,30 @@
 import { z } from "zod";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
 
-export interface ChecklistHarianQuery {
-    search?: string | null;
-    lokasi_id?: string | null;
-    lantai_id?: string | null;
-    status?: string | null;
-}
+const emptyToNull = (val: unknown) => (val === "" || val === undefined ? null : val);
+
+const checklistStatusValues = [
+    CHECKLIST_STATUS.BELUM_DIKERJAKAN,
+    CHECKLIST_STATUS.SEDANG_DIKERJAKAN,
+    CHECKLIST_STATUS.SELESAI,
+    CHECKLIST_STATUS.TERLEWAT,
+] as const;
+
+export const ChecklistHarianQuerySchema = z.object({
+    search: z.preprocess(emptyToNull, z.string().nullable()),
+    lokasi_id: z.preprocess(emptyToNull, z.string().uuid().nullable()),
+    lantai_id: z.preprocess(emptyToNull, z.string().uuid().nullable()),
+    status: z.preprocess(emptyToNull, z.enum(checklistStatusValues).nullable()),
+});
+
+export type ChecklistHarianQuery = z.infer<typeof ChecklistHarianQuerySchema>;
 
 export const CreateChecklistHarianSchema = z.object({
     tugas_id: z.string().min(1, "Tugas ID wajib diisi"),
     kategori_id: z.string().min(1, "Kategori ID wajib diisi"),
     lokasi_id: z.string().min(1, "Lokasi ID wajib diisi"),
     lantai_id: z.string().min(1, "Lantai ID wajib diisi"),
+    tanggal: z.string().min(1, "Tanggal wajib diisi").refine((val) => !Number.isNaN(Date.parse(val)), { message: "Format tanggal tidak valid" }),
 });
 
 export const UpdateChecklistHarianSchema = z.object({

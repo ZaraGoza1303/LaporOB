@@ -1,5 +1,6 @@
 import type { MappedReportDetailRes } from "../dto/users.js";
 import type { ILaporanRepository } from "../repositories/laporan_repository.interface.js";
+import type { LaporanPriority, LaporanStatus } from "../utils/constants.js";
 import { handlePrismaError } from "../utils/error.js";
 import { resolveFileUrl } from "../utils/url.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
@@ -18,15 +19,17 @@ export class LaporanService implements ILaporanService {
                 throw new Error("Laporan tidak ditemukan");
             }
 
+            const history = item.histori_pekerjaan?.[0];
+
             return {
                 id: item.id,
                 kategori: item.kategori?.nama_kategori || "",
                 deskripsi_kendala: item.deskripsi_kendala || "",
-                status: item.status,
-                prioritas: item.prioritas,
+                status: item.status as LaporanStatus,
+                prioritas: item.prioritas as LaporanPriority,
                 foto_masalah: Array.isArray(item.foto_masalah) ? (item.foto_masalah as string[]).map(resolveFileUrl).filter((url): url is string => !!url) : [],
-                foto_selesai: Array.isArray((item as any).foto_selesai) ? ((item as any).foto_selesai as string[]).map(resolveFileUrl).filter((url): url is string => !!url) : [],
-                catatan: (item as any).catatan_ob || "",
+                foto_selesai: history && Array.isArray(history.foto_selesai) ? history.foto_selesai.map(resolveFileUrl).filter((url): url is string => !!url) : [],
+                catatan: history?.catatan || "",
                 lokasi: item.lantai?.lokasi?.nama_lokasi || "",
                 nomor_lantai: item.lantai?.nomor_lantai || 0,
                 nama_karyawan: item.pelapor?.nama_lengkap || "",

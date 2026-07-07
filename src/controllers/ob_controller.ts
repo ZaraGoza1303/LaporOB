@@ -92,4 +92,51 @@ export class ObController {
         return res.status(500).json(sendErrorResponse("Terjadi kesalahan, tidak bisa menyimpan histori pekerjaan"))
       }
     }
+
+    async rejectLapor(req: Request, res: Response) {
+      try {
+        const validate = CreateHistoriSchema.safeParse(req.body);
+
+        if (!validate.success){
+            const formatedErr = validate.error.flatten().fieldErrors;
+            return res.status(400).json(sendErrorResponse("Validasi Gagal", formatedErr));
+        }
+
+        const laporanId = req.params.laporanId as string;
+
+        const fotoFiles = (req.files as Express.Multer.File[]).filter(
+            (file) => file.fieldname === "foto_selesai"
+        );
+
+        if (fotoFiles.length === 0) {
+            return res.status(400).json(sendErrorResponse("Foto bukti penolakan wajib diupload"));
+        }
+
+        const fotoUrls: string[] = [];
+        for (const file of fotoFiles) {
+            const validation = await validateImageFile(file);
+            if (!validation.ok) {
+                return res.status(400).json(sendErrorResponse(validation.message));
+            }
+
+            try {
+                await compressImageIfNeeded(file);
+            } catch (err: any) {
+                return res.status(500).json(sendErrorResponse("Gagal memproses gambar", err.message));
+            }
+
+            const url = await this.storageService.uploadFile(file);
+            fotoUrls.push(url);
+        }
+
+        await this.obService.tolakLaporan(laporanId, fotoUrls, validate.data);
+
+        return res.status(200).json(sendSuccessfullResponse("Laporan berhasil ditolak dan bukti disimpan"));
+      } catch (err: any){
+        if (err instanceof AppError) {
+            return res.status(err.statusCode).json(sendErrorResponse(err.message))
+        }
+        return res.status(500).json(sendErrorResponse("Terjadi kesalahan, tidak bisa menolak laporan"))
+      }
+    }
 }

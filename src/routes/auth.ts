@@ -13,7 +13,9 @@ const usersRepo = new UsersRepository(db);
 const authService = new AuthService(authRepo, usersRepo);
 const authController = new AuthController(authService);
 
+authRouter.get('/check-token', (req, res) => authController.verifyActivation(req, res));
 authRouter.post('/login', (req, res) => authController.login(req, res));
 authRouter.post('/login-activation', (req, res) => authController.loginActivation(req, res));
+
 
 export default authRouter;

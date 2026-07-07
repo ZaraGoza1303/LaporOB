@@ -63,7 +63,8 @@ export class LaporanRepository implements ILaporanRepository {
                     }
                 },
                 ob: true,
-                pelapor: true
+                pelapor: true,
+                histori_pekerjaan: true
             }
         }) as Promise<DetailReportPayload | null>;
     }

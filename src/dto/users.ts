@@ -1,6 +1,6 @@
 import z from "zod";
 import type { Laporan_karyawanGetPayload } from "../generated/prisma/models.js";
-import { LAPORAN_PRIORITY, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
+import { LAPORAN_PRIORITY, LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import type { PaginatedResponse } from "./response.js";
 
 export const CreateUserSchema = z.object({
@@ -66,6 +66,27 @@ export type CreateUserReq = z.infer<typeof CreateUserSchema>;
 export type UpdateUserReq = z.infer<typeof UpdateUserSchema>;
 export type CreateLaporanKaryawanReq = z.infer<typeof CreateLaporanKaryawanSchema>;
 
+const emptyToNull = (val: unknown) => (val === "" || val === undefined ? null : val);
+
+const laporanStatusValues = [
+    LAPORAN_STATUS.BELUM_DIKERJAKAN,
+    LAPORAN_STATUS.PENDING,
+    LAPORAN_STATUS.SELESAI,
+    LAPORAN_STATUS.DITOLAK,
+] as const;
+
+export const ProfileLaporanQuerySchema = z.object({
+    search: z.preprocess(emptyToNull, z.string().nullable()),
+    status: z.preprocess(emptyToNull, z.enum(laporanStatusValues).nullable()),
+    cursor: z.preprocess(emptyToNull, z.string().nullable()),
+    limit: z.preprocess(
+        (val) => (val === "" || val === undefined ? undefined : val),
+        z.coerce.number().int().positive().default(10),
+    ),
+});
+
+export type ProfileLaporanQuery = z.infer<typeof ProfileLaporanQuerySchema>;
+
 export interface GetProfileReq {
     role: string;
     cursor?: string | null;
@@ -114,3 +135,4 @@ export interface MappedReportDetailRes {
     nama_ob: string | null;
     created_at: string;
 }
+
