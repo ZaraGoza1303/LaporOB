@@ -129,7 +129,7 @@ export class UsersController {
                 ...(profilePicture && { profile_picture: profilePicture })
             }
 
-            await this.usersService.update(userId, updateData, req.file)
+            await this.usersService.update(userId, updateData)
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengubah data user"));
         } catch (err: any) {
             if (err instanceof AppError) {

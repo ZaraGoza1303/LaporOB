@@ -7,13 +7,11 @@ import type { IUsersRepository } from "../repositories/users_repository.interfac
 import { handlePrismaError } from "../utils/error.js";
 import { generateActivationToken } from "../utils/token.js";
 import { buildActivationUrl, resolveFileUrl } from "../utils/url.js";
-import { StorageServiceFactory } from "./storage_service.factory.js";
 import type { IUsersService } from "./users_service.interface.js";
 import bcrypt from 'bcrypt';
 
 export class UsersService implements IUsersService {
     private usersRepo: IUsersRepository;
-    private storageService = StorageServiceFactory.getProvider();
 
     constructor(usersRepo: IUsersRepository) {
         this.usersRepo = usersRepo;
@@ -117,15 +115,9 @@ export class UsersService implements IUsersService {
         }
     }
 
-    async update(userId: string, req: UpdateUserReq, file?: Express.Multer.File): Promise<void> {
+    async update(userId: string, req: UpdateUserReq): Promise<void> {
         try {
             const userReq: UserUpdateInput = {}
-
-            if (file) {
-                const oldUser = await this.usersRepo.getByID(userId);
-                const oldPp = oldUser?.profile_picture || "";
-                userReq.profile_picture = await this.storageService.updateFile(file, oldPp);
-            }
 
             if (req.username !== undefined) userReq.username = req.username;
             if (req.nama_lengkap !== undefined) userReq.nama_lengkap = req.nama_lengkap;
