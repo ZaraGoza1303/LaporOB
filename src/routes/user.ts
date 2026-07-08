@@ -13,11 +13,9 @@ import { KaryawanService } from "../services/karyawan_service.js";
 import { ObService } from "../services/ob_service.js";
 import { ObRepository } from "../repositories/ob_repository.js";
 import { StorageServiceFactory } from "../services/storage_service.factory.js";
-import multer from 'multer';
 
 const userRouter = Router();
 const db = new PrismaClient();
-const upload = multer({ storage: multer.memoryStorage() });
 
 // Repositories
 const usersRepository = new UsersRepository(db);
@@ -52,7 +50,7 @@ userRouter.get("/profile/laporan/:laporan_id", (req, res) => userController.getR
 userRouter.get("/admin/user", requireRole("admin"), (req, res) => userController.getAll(req, res));
 userRouter.get("/admin/user/:user_id", requireRole("admin"), (req, res) => userController.getByID(req, res));
 userRouter.post("/admin/user", requireRole("admin"), (req, res) => userController.create(req, res));
-userRouter.patch("/admin/user/:user_id", requireRole("admin"), upload.single("profile_picture"), (req, res) => userController.update(req, res));
+userRouter.patch("/admin/user/:user_id", requireRole("admin"), (req, res) => userController.update(req, res));
 userRouter.delete("/admin/user/:user_id", requireRole("admin"), (req, res) => userController.delete(req, res));
 
 export default userRouter;

@@ -9,11 +9,9 @@ import { KategoriRepository } from "../repositories/kategori_repository.js";
 import { verifyJWTToken } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/role.js";
 import { StorageServiceFactory } from "../services/storage_service.factory.js";
-import multer from 'multer';
 
 const karyawanRouter = Router();
 const db = new PrismaClient();
-const upload = multer({ storage: multer.memoryStorage() });
 
 const userRepo = new UsersRepository(db);
 const laporanRepo = new LaporanRepository(db);
@@ -27,6 +25,6 @@ karyawanRouter.use(verifyJWTToken);
 karyawanRouter.use(requireRole("karyawan"));
 
 karyawanRouter.get("/dashboard", (req, res) => karyawanController.getHomeStats(req, res));
-karyawanRouter.post("/laporan", upload.array('foto_masalah'), (req, res) => karyawanController.createReport(req, res));
+karyawanRouter.post("/laporan", (req, res) => karyawanController.createReport(req, res));
 
 export default karyawanRouter;
