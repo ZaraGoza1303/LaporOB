@@ -3,7 +3,7 @@ import type { PaginatedResponse } from "../dto/response.js";
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
-import type { Checklist_harian } from "../generated/prisma/client.js";
+import type { ChecklistHarianWithRelations } from "../repositories/checklistHarian_repository.interface.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
 
@@ -14,7 +14,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
         this.checklistRepo = checklistRepo;
     }
 
-    private mapToResponse(item: Checklist_harian): ChecklistHarianRes {
+    private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {
         return {
             id: item.id,
             tugas_id: item.tugas_id,
