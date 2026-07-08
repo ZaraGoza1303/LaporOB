@@ -104,23 +104,26 @@ export class UsersController {
                 return res.status(404).json(sendErrorResponse("User tidak ditemukan"));
             }
 
-            if (req.file) {
-                const validation = await validateImageFile(req.file);
+            const profilePictureFile = ((req.files || []) as Express.Multer.File[]).find(
+                (file) => file.fieldname === "profile_picture"
+            );
+            if (profilePictureFile) {
+                const validation = await validateImageFile(profilePictureFile);
                 if (!validation.ok) {
                     return res.status(400).json(sendErrorResponse(validation.message));
                 }
 
                 try {
-                    await compressImageIfNeeded(req.file);
+                    await compressImageIfNeeded(profilePictureFile);
                 } catch (err: any) {
                     return res.status(500).json(sendErrorResponse("Gagal memproses/kompres gambar", err.message));
                 }
 
                 const oldFileUrlOrKey = existsUser.profile_picture;
                 if (oldFileUrlOrKey) {
-                    profilePicture = await this.storageService.updateFile(req.file, oldFileUrlOrKey);
+                    profilePicture = await this.storageService.updateFile(profilePictureFile, oldFileUrlOrKey);
                 } else {
-                    profilePicture = await this.storageService.uploadFile(req.file)
+                    profilePicture = await this.storageService.uploadFile(profilePictureFile)
                 }
             }
 
