@@ -1,0 +1,1235 @@
+openapi: 3.0.0
+info:
+  title: LaporOB API
+  description: API aplikasi LaporOB 
+  version: 1.0.0
+
+servers:
+  - url: https://stylar-nonseverable-denver.ngrok-free.dev
+    description: Local development
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errors:
+          type: object
+
+    Success:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nama_lengkap:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        profile_picture:
+          type: string
+          nullable: true
+
+    LoginRequest:
+      type: object
+      required:
+        - identifier
+        - password
+      properties:
+        identifier:
+          type: string
+          description: Username atau email
+        password:
+          type: string
+          format: password
+
+    PaginationMeta:
+      type: object
+      properties:
+        total_items:
+          type: integer
+        current_page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+
+# AUTH
+paths:
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login user (Publik)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                      user:
+                        $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Login gagal
+
+  /api/auth/login-activation:
+    post:
+      tags:
+        - Auth
+      summary: Login menggunakan token aktivasi (Publik)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: Token aktivasi dari email
+      responses:
+        '200':
+          description: Login berhasil
+
+  /api/auth/check-token:
+    get:
+      tags:
+        - Auth
+      summary: Verifikasi token aktivasi (Publik)
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token valid
+
+# USER / PROFILE
+  /api/user/profile:
+    get:
+      tags:
+        - User
+      summary: Ambil profil + riwayat laporan (Semua role)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Cari laporan
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Filter status laporan
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          description: Cursor pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Berhasil
+
+  /api/user/profile/laporan/{laporan_id}:
+    get:
+      tags:
+        - User
+      summary: Detail laporan user (Semua role)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Berhasil
+
+# KARYAWAN
+  /api/karyawan/dashboard:
+    get:
+      tags:
+        - Karyawan
+      summary: 'Dashboard karyawan (Karyawan)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Berhasil
+
+  /api/karyawan/laporan:
+    post:
+      tags:
+        - Karyawan
+      summary: 'Buat laporan baru (Karyawan)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - lantai_id
+                - kategori_id
+                - deskripsi_kendala
+              properties:
+                lantai_id:
+                  type: string
+                  format: uuid
+                kategori_id:
+                  type: string
+                  format: uuid
+                deskripsi_kendala:
+                  type: string
+                foto_masalah:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Foto masalah (max 5)
+      responses:
+        '201':
+          description: Laporan berhasil dibuat
+
+# OB
+  /api/ob/dashboard:
+    get:
+      tags:
+        - OB
+      summary: 'Dashboard OB (OB)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Berhasil
+
+  /api/ob/laporan/{laporan_id}:
+    patch:
+      tags:
+        - OB
+      summary: 'Ambil laporan (OB)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Berhasil mengambil laporan
+
+  /api/ob/laporan/{laporan_id}/histori:
+    post:
+      tags:
+        - OB
+      summary: 'Submit hasil pekerjaan (OB)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - catatan
+              properties:
+                catatan:
+                  type: string
+                foto_selesai:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: Histori berhasil ditambahkan
+
+  /api/ob/laporan/{laporan_id}/tolak:
+    post:
+      tags:
+        - OB
+      summary: 'Tolak laporan (OB)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - alasan_gagal
+              properties:
+                alasan_gagal:
+                  type: string
+      responses:
+        '200':
+          description: Laporan ditolak
+
+# ADMIN
+  /api/admin:
+    get:
+      tags:
+        - Admin
+      summary: 'List semua user (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: role_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar user
+    post:
+      tags:
+        - Admin
+      summary: 'Buat user baru (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+                - nama_lengkap
+                - role_id
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                nama_lengkap:
+                  type: string
+                role_id:
+                  type: string
+                  format: uuid
+                profile_picture:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: User berhasil dibuat
+
+  /api/admin/dashboard:
+    get:
+      tags:
+        - Admin
+      summary: 'Dashboard admin + KPI (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum:
+              - weekly
+              - monthly
+              - yearly
+            default: weekly
+      responses:
+        '200':
+          description: Data dashboard
+
+  /api/admin/user-stats:
+    get:
+      tags:
+        - Admin
+      summary: 'Statistik user (Admin)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Statistik user
+
+  /api/admin/laporan:
+    get:
+      tags:
+        - Admin
+      summary: 'List laporan dengan filter (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: prioritas
+          in: query
+          schema:
+            type: string
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: lantai_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - created_at
+              - updated_at
+              - prioritas
+              - status
+              - nama_karyawan
+              - lokasi
+            default: created_at
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+      responses:
+        '200':
+          description: Daftar laporan
+
+  /api/admin/laporan/{laporan_id}:
+    get:
+      tags:
+        - Admin
+      summary: 'Detail laporan (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detail laporan
+
+  /api/admin/{user_id}:
+    get:
+      tags:
+        - Admin
+      summary: 'Detail user (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data user
+    patch:
+      tags:
+        - Admin
+      summary: 'Update user (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                nama_lengkap:
+                  type: string
+                role_id:
+                  type: string
+                  format: uuid
+                profile_picture:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: User berhasil diupdate
+    delete:
+      tags:
+        - Admin
+      summary: 'Hapus user (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User berhasil dihapus
+
+# LOKASI
+  /api/lokasi:
+    get:
+      tags:
+        - Lokasi
+      summary: 'List semua lokasi (Admin)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar lokasi
+    post:
+      tags:
+        - Lokasi
+      summary: 'Tambah lokasi (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nama_lokasi
+              properties:
+                nama_lokasi:
+                  type: string
+      responses:
+        '201':
+          description: Lokasi berhasil dibuat
+
+  /api/lokasi/{lokasi_id}:
+    get:
+      tags:
+        - Lokasi
+      summary: 'Detail lokasi (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lokasi_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data lokasi
+    patch:
+      tags:
+        - Lokasi
+      summary: 'Edit lokasi (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lokasi_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nama_lokasi:
+                  type: string
+      responses:
+        '200':
+          description: Lokasi berhasil diupdate
+    delete:
+      tags:
+        - Lokasi
+      summary: 'Hapus lokasi (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lokasi_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lokasi berhasil dihapus
+
+# LANTAI
+  /api/lantai:
+    get:
+      tags:
+        - Lantai
+      summary: 'List semua lantai (Admin)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar lantai
+    post:
+      tags:
+        - Lantai
+      summary: 'Tambah lantai (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - lokasi_id
+                - nomor_lantai
+              properties:
+                lokasi_id:
+                  type: string
+                  format: uuid
+                nomor_lantai:
+                  type: integer
+      responses:
+        '201':
+          description: Lantai berhasil dibuat
+
+  /api/lantai/{lantai_id}:
+    get:
+      tags:
+        - Lantai
+      summary: 'Detail lantai (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lantai_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data lantai
+    patch:
+      tags:
+        - Lantai
+      summary: 'Edit lantai (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lantai_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lokasi_id:
+                  type: string
+                  format: uuid
+                nomor_lantai:
+                  type: integer
+      responses:
+        '200':
+          description: Lantai berhasil diupdate
+    delete:
+      tags:
+        - Lantai
+      summary: 'Hapus lantai (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: lantai_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lantai berhasil dihapus
+
+# RUANGAN
+  /api/ruangan:
+    get:
+      tags:
+        - Ruangan
+      summary: 'List semua ruangan (Admin)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar ruangan
+    post:
+      tags:
+        - Ruangan
+      summary: 'Tambah ruangan (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - lantai_id
+                - nama
+              properties:
+                lantai_id:
+                  type: string
+                  format: uuid
+                nama:
+                  type: string
+      responses:
+        '201':
+          description: Ruangan berhasil dibuat
+
+  /api/ruangan/{ruangan_id}:
+    get:
+      tags:
+        - Ruangan
+      summary: 'Detail ruangan (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ruangan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data ruangan
+    patch:
+      tags:
+        - Ruangan
+      summary: 'Edit ruangan (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ruangan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lantai_id:
+                  type: string
+                  format: uuid
+                nama:
+                  type: string
+      responses:
+        '200':
+          description: Ruangan berhasil diupdate
+    delete:
+      tags:
+        - Ruangan
+      summary: 'Hapus ruangan (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ruangan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Ruangan berhasil dihapus
+
+# KATEGORI
+  /api/kategori:
+    get:
+      tags:
+        - Kategori
+      summary: 'List semua kategori (Admin)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar kategori
+    post:
+      tags:
+        - Kategori
+      summary: 'Tambah kategori (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nama_kategori
+              properties:
+                nama_kategori:
+                  type: string
+      responses:
+        '201':
+          description: Kategori berhasil dibuat
+
+  /api/kategori/{kategori_id}:
+    get:
+      tags:
+        - Kategori
+      summary: 'Detail kategori (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: kategori_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data kategori
+    put:
+      tags:
+        - Kategori
+      summary: 'Edit kategori (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: kategori_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nama_kategori:
+                  type: string
+      responses:
+        '200':
+          description: Kategori berhasil diupdate
+    delete:
+      tags:
+        - Kategori
+      summary: 'Hapus kategori (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: kategori_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Kategori berhasil dihapus
+
+# TUGAS
+  /api/tugas:
+    get:
+      tags:
+        - Tugas
+      summary: 'List jenis tugas (Admin)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar tugas
+    post:
+      tags:
+        - Tugas
+      summary: 'Tambah jenis tugas (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - kategori_id
+                - nama_tugas
+              properties:
+                kategori_id:
+                  type: string
+                  format: uuid
+                nama_tugas:
+                  type: string
+      responses:
+        '201':
+          description: Tugas berhasil dibuat
+
+  /api/tugas/{tugas_id}:
+    get:
+      tags:
+        - Tugas
+      summary: 'Detail tugas (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tugas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data tugas
+    patch:
+      tags:
+        - Tugas
+      summary: 'Edit tugas (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tugas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kategori_id:
+                  type: string
+                  format: uuid
+                nama_tugas:
+                  type: string
+                is_active:
+                  type: boolean
+      responses:
+        '200':
+          description: Tugas berhasil diupdate
+    delete:
+      tags:
+        - Tugas
+      summary: 'Hapus tugas (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tugas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tugas berhasil dihapus
+
+# CHECKLIST HARIAN
+  /api/checklist-harian:
+    get:
+      tags:
+        - Checklist Harian
+      summary: 'List checklist harian (OB, HR, Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Daftar checklist
+    post:
+      tags:
+        - Checklist Harian
+      summary: 'Buat checklist harian (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tanggal
+                - lantai_id
+                - kategori_id
+                - tugas_id
+                - status
+              properties:
+                tanggal:
+                  type: string
+                  format: date
+                  description: Tanggal checklist (YYYY-MM-DD)
+                ob_id:
+                  type: string
+                  format: uuid
+                  description: Opsional, assign ke OB
+                lantai_id:
+                  type: string
+                  format: uuid
+                kategori_id:
+                  type: string
+                  format: uuid
+                tugas_id:
+                  type: string
+                  format: uuid
+                status:
+                  type: string
+                  description: Status checklist
+                catatan:
+                  type: string
+      responses:
+        '201':
+          description: Checklist berhasil dibuat
+
+  /api/checklist-harian/{checklist_harian_id}:
+    get:
+      tags:
+        - Checklist Harian
+      summary: 'Detail checklist (OB, HR, Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: checklist_harian_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data checklist
+    patch:
+      tags:
+        - Checklist Harian
+      summary: 'Edit checklist (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: checklist_harian_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tanggal:
+                  type: string
+                  format: date
+                ob_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                lantai_id:
+                  type: string
+                  format: uuid
+                kategori_id:
+                  type: string
+                  format: uuid
+                tugas_id:
+                  type: string
+                  format: uuid
+                status:
+                  type: string
+                catatan:
+                  type: string
+                  nullable: true
+      responses:
+        '200':
+          description: Checklist berhasil diupdate
+    delete:
+      tags:
+        - Checklist Harian
+      summary: 'Hapus checklist (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: checklist_harian_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Checklist berhasil dihapus

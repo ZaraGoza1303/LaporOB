@@ -63,8 +63,8 @@ export class UsersController {
 
     async getReportDetail(req: Request, res: Response) {
         try {
-            const reportId = req.params.report_id as string;
-            const response = await this.laporanService.getReportDetail(reportId);
+            const laporanId = req.params.laporan_id as string;
+            const response = await this.laporanService.getReportDetail(laporanId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan detail laporan", response));
         } catch (err: any) {
             if (err instanceof AppError) {

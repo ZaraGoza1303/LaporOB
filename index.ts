@@ -14,7 +14,14 @@ import lantaiRouter from './src/routes/lantai.js';
 import ruanganRouter from './src/routes/ruangan.js';
 import kategoriRouter from './src/routes/kategori.js';
 import tugasRouter from './src/routes/tugas.js';
+import swaggerUi from 'swagger-ui-express';
+import path from 'node:path';
+import YAML from 'yamljs';
+import { fileURLToPath } from 'node:url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));
 
 const app = express();
 const upload = multer();
@@ -37,6 +44,7 @@ app.use('/uploads', express.static('uploads'));
 app.use(upload.any());
 
 const initRouter = () => {
+    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
     app.use('/api/user', userRouter);
     app.use('/api/auth', authRouter);
     app.use('/api/ob', obRouter);

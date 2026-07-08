@@ -25,6 +25,9 @@
     "nodemailer": "^9.0.3",
     "pg": "^8.22.0",
     "sharp": "^0.35.3",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0",
     "zod": "^4.4.3"
   },
   "allowScripts": {
@@ -32,7 +35,8 @@
     "@prisma/client@6.19.3": true,
     "esbuild@0.28.1": true,
     "@prisma/engines@6.19.3": true,
-    "prisma@6.19.3": true
+    "prisma@6.19.3": true,
+    "@scarf/scarf@1.4.0": true
   },
   "devDependencies": {
     "@prisma/client": "^6.19.3",
@@ -45,6 +49,9 @@
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.20.0",
     "@types/sharp": "^0.31.1",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/yamljs": "^0.2.34",
     "prisma": "^6.19.3",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
