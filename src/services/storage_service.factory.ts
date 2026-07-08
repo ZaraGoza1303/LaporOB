@@ -7,9 +7,9 @@ export class StorageServiceFactory {
 
     static getProvider(): IStorageService {
         if (!this.instance) {
-            const provider = process.env.STORAGE_PROVIDER || 'dev';
+            const provider = process.env.STORAGE_PROVIDER || 'local';
 
-            if (provider.toLowerCase() === 'prod') {
+            if (provider.toLowerCase() === 'cloud') {
                 this.instance = new CloudStorageService();
             } else {
                 this.instance = new LocalStorageService();

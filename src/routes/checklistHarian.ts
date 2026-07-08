@@ -15,10 +15,10 @@ const checklistController = new ChecklistHarianController(checklistService);
 
 checklistHarianRouter.use(verifyJWTToken);
 
-checklistHarianRouter.get('/', (req, res) => checklistController.getAll(req, res));
-checklistHarianRouter.get('/:checklist_harian_id', (req, res) => checklistController.getByID(req, res));
+checklistHarianRouter.get('/', requireRole("ob", "hr", "admin"), (req, res) => checklistController.getAll(req, res));
+checklistHarianRouter.get('/:checklist_harian_id', requireRole("ob", "hr", "admin"), (req, res) => checklistController.getByID(req, res));
 checklistHarianRouter.post('/', requireRole("admin"), (req, res) => checklistController.create(req, res));
-checklistHarianRouter.put('/:checklist_harian_id', requireRole("admin"), (req, res) => checklistController.update(req, res));
+checklistHarianRouter.patch('/:checklist_harian_id', requireRole("admin"), (req, res) => checklistController.update(req, res));
 checklistHarianRouter.delete('/:checklist_harian_id', requireRole("admin"), (req, res) => checklistController.delete(req, res));
 
 export default checklistHarianRouter;

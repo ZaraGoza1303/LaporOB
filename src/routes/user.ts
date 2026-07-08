@@ -31,6 +31,6 @@ const userController = new UsersController(usersService, karyawanService, obServ
 userRouter.use(verifyJWTToken);
 
 userRouter.get("/profile", (req, res) => userController.getProfile(req, res));
-userRouter.get("/profile/laporan/:report_id", (req, res) => userController.getReportDetail(req, res));
+userRouter.get("/profile/laporan/:laporan_id", (req, res) => userController.getReportDetail(req, res));
 
 export default userRouter;

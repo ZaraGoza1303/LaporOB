@@ -19,7 +19,7 @@ tugasRouter.use(requireRole("admin"))
 tugasRouter.get('/', (req, res) => tugasController.getAll(req, res));
 tugasRouter.get('/:tugas_id', (req, res) => tugasController.getByID(req, res));
 tugasRouter.post('/', (req, res) => tugasController.create(req, res));
-tugasRouter.put('/:tugas_id', (req, res) => tugasController.update(req, res));
+tugasRouter.patch('/:tugas_id', (req, res) => tugasController.update(req, res));
 tugasRouter.delete('/:tugas_id', (req, res) => tugasController.delete(req, res));
 
 export default tugasRouter;

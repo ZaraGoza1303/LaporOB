@@ -32,7 +32,7 @@ export class ObController {
 
     async takeLapor(req: Request, res: Response) {
       try {
-        const laporanId = req.params.laporanId as string;
+        const laporanId = req.params.laporan_id as string;
         const obId = req.user?.id as string;
 
         await this.obService.ambilLaporan(laporanId, obId);
@@ -55,7 +55,7 @@ export class ObController {
             return res.status(400).json(sendErrorResponse("Validation failed", formatedErr));
         }
 
-        const laporanId = req.params.laporanId as string;
+        const laporanId = req.params.laporan_id as string;
 
         const fotoFiles = (req.files as Express.Multer.File[]).filter(
             (file) => file.fieldname === "foto_selesai"
@@ -102,7 +102,7 @@ export class ObController {
             return res.status(400).json(sendErrorResponse("Validasi Gagal", formatedErr));
         }
 
-        const laporanId = req.params.laporanId as string;
+        const laporanId = req.params.laporan_id as string;
 
         const fotoFiles = (req.files as Express.Multer.File[]).filter(
             (file) => file.fieldname === "foto_selesai"

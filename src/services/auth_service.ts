@@ -22,16 +22,16 @@ export class AuthService implements IAuthService {
             const existsUser = await this.authRepo.login(req);
 
             if (!existsUser) {
-                throw new AppError("Email atau password salah!", 400)
+                throw new AppError("Email atau password salah!", 401)
             }
 
             const isMatched = await bcrypt.compare(req.password, existsUser.password);
             if (!isMatched) {
-                throw new AppError("Email atau password salah!", 400)
+                throw new AppError("Email atau password salah!", 401)
             }
 
             if (!existsUser.is_active) {
-                throw new AppError("Email atau password salah!", 400)
+                throw new AppError("Akun sudah tidak aktif, silahkan hubungi admin", 401)
             }
 
             const jwtToken = await generateJWTToken({ id: existsUser?.id, username: existsUser.username, role: existsUser.role.nama_role });
@@ -50,12 +50,12 @@ export class AuthService implements IAuthService {
             const existsUser = await this.authRepo.login(req);
 
             if (!existsUser) {
-                throw new AppError("Email atau password salah!", 400)
+                throw new AppError("Email atau password salah!", 401)
             }
 
             const isMatched = await bcrypt.compare(req.password, existsUser.password);
             if (!isMatched) {
-                throw new AppError("Email atau password salah!", 400)
+                throw new AppError("Email atau password salah!", 401)
             }
 
             const record = await this.validateActivationToken(token);
@@ -71,9 +71,9 @@ export class AuthService implements IAuthService {
             const tokenHash = hashActivationToken(token);
             const record = await this.authRepo.checkUserToken(tokenHash);
 
-            if (!record) throw new Error("Token tidak valid");
-            if (record.used_at) throw new Error("Token sudah pernah dipakai");
-            if (record.expired_at < new Date()) throw new Error("Token sudah expired");
+            if (!record) throw new AppError("Token tidak valid", 401);
+            if (record.used_at) throw new AppError("Token sudah pernah dipakai", 401);
+            if (record.expired_at < new Date()) throw new AppError("Token sudah expired", 401);
 
             return record;
         } catch (err) {
