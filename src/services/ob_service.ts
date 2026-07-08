@@ -65,7 +65,7 @@ export class ObService implements IObService {
                     kategori: kategoriName,
                     deskripsi_kendala: deskripsi,
                     status: item.status,
-                    foto_masalah: (item.foto_masalah ?? []).map((f: string) => resolveFileUrl(f)),
+                    foto_masalah: (item.foto_masalah ?? []).map((f: string) => resolveFileUrl(f)).filter((url: string | null): url is string => url !== null),
                     lokasi: item.lantai?.lokasi?.nama_lokasi || "",
                     nomor_lantai: item.lantai?.nomor_lantai || 0,
                     priority,

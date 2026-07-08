@@ -18,7 +18,7 @@ import type { Request, Response } from "express";
 
 const userRouter = Router();
 const db = new PrismaClient();
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Repositories
 const usersRepository = new UsersRepository(db);
