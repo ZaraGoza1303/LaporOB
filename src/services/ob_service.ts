@@ -6,7 +6,7 @@ import type { MappedProfileReport } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { handlePrismaError } from "../utils/error.js";
-import { CHECKLIST_STATUS, LAPORAN_PRIORITY } from "../utils/constants.js";
+import { CHECKLIST_STATUS, LAPORAN_PRIORITY, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 
 export class ObService implements IObService {
     private obRepo: IObRepository;
@@ -125,8 +125,8 @@ export class ObService implements IObService {
                     id: item.id,
                     kategori: item.kategori?.nama_kategori || "",
                     deskripsi_kendala: item.deskripsi_kendala || "",
-                    status: item.status,
-                    prioritas: item.prioritas,
+                    status: item.status as LaporanStatus,
+                    prioritas: item.prioritas as LaporanPriority,
                     foto_masalah: (item.foto_masalah ?? []).map((f: string) => resolveFileUrl(f)).filter((url): url is string => url !== null),
                     lokasi: item.lantai?.lokasi?.nama_lokasi || "",
                     nomor_lantai: item.lantai?.nomor_lantai || 0,
