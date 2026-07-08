@@ -14,7 +14,6 @@ import { ObService } from "../services/ob_service.js";
 import { ObRepository } from "../repositories/ob_repository.js";
 import { StorageServiceFactory } from "../services/storage_service.factory.js";
 import multer from 'multer';
-import type { Request, Response } from "express";
 
 const userRouter = Router();
 const db = new PrismaClient();
@@ -41,8 +40,6 @@ const userController = new UsersController(
     laporanService,
     storageService
 );
-
-// Public routes (no JWT needed)
 
 // Protected routes
 userRouter.use(verifyJWTToken);
