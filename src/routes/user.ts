@@ -51,7 +51,7 @@ userRouter.use(verifyJWTToken);
 userRouter.get("/profile", (req, res) => userController.getProfile(req, res));
 userRouter.get("/profile/laporan/:laporan_id", (req, res) => userController.getReportDetail(req, res));
 
-// Admin user CRUD — halaman manajemen user (hanya admin)
+// Admin user CRUD 
 userRouter.get("/admin/user", requireRole("admin"), (req, res) => userController.getAll(req, res));
 userRouter.get("/admin/user/:user_id", requireRole("admin"), (req, res) => userController.getByID(req, res));
 userRouter.post("/admin/user", requireRole("admin"), (req, res) => userController.create(req, res));
