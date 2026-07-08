@@ -1,4 +1,5 @@
-import type { CreateLokasiReq, UpdateLokasiReq, LokasiRes } from "../dto/lokasi.js";
+import type { CreateLokasiReq, UpdateLokasiReq, LokasiRes, LokasiWithLantai } from "../dto/lokasi.js";
+import type { Lantai } from "../generated/prisma/client.js";
 import type { ILokasiRepository } from "../repositories/lokasi_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { ILokasiService } from "./lokasi_service.interface.js";
@@ -10,20 +11,24 @@ export class LokasiService implements ILokasiService {
         this.lokasiRepo = lokasiRepo;
     }
 
+    private toResponse(item: LokasiWithLantai): LokasiRes {
+        return {
+            id: item.id,
+            nama_lokasi: item.nama_lokasi,
+            jumlah_lantai: item.lantai ? item.lantai.length : 0,
+            lantai: (item.lantai || []).map((floor: Lantai) => ({
+                id: floor.id,
+                nomor_lantai: floor.nomor_lantai
+            })),
+            created_at: item.created_at,
+            updated_at: item.updated_at
+        };
+    }
+
     async getAll(): Promise<LokasiRes[]> {
         try {
             const data = await this.lokasiRepo.getAll();
-            return data.map((item) => ({
-                id: item.id,
-                nama_lokasi: item.nama_lokasi,
-                jumlah_lantai: item.lantai ? item.lantai.length : 0,
-                lantai: (item.lantai || []).map((floor: any) => ({
-                    id: floor.id,
-                    nomor_lantai: floor.nomor_lantai
-                })),
-                created_at: item.created_at,
-                updated_at: item.updated_at
-            }));
+            return data.map(this.toResponse);
         } catch (err) {
             handlePrismaError(err);
         }
@@ -33,18 +38,7 @@ export class LokasiService implements ILokasiService {
         try {
             const item = await this.lokasiRepo.getByID(lokasiId);
             if (!item) return null;
-
-            return {
-                id: item.id,
-                nama_lokasi: item.nama_lokasi,
-                jumlah_lantai: item.lantai ? item.lantai.length : 0,
-                lantai: (item.lantai || []).map((floor: any) => ({
-                    id: floor.id,
-                    nomor_lantai: floor.nomor_lantai
-                })),
-                created_at: item.created_at,
-                updated_at: item.updated_at
-            };
+            return this.toResponse(item);
         } catch (err) {
             handlePrismaError(err);
         }
