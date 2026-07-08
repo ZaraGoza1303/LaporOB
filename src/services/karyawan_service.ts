@@ -1,5 +1,5 @@
 import type { CreateLaporanKaryawanInput, UserHomeRes, MappedProfileReport, ProfileRes } from "../dto/users.js";
-import { LAPORAN_STATUS } from "../utils/constants.js";
+import { LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { IUsersRepository } from "../repositories/users_repository.interface.js";
 import type { ILaporanRepository, ProfileReport } from "../repositories/laporan_repository.interface.js";
@@ -32,7 +32,7 @@ export class KaryawanService implements IKaryawanService {
                 return {
                     id: item.id,
                     deskripsi_kendala: item.deskripsi_kendala,
-                    status: item.status,
+                    status: item.status as LaporanStatus,
                     foto_masalah: item.foto_masalah,
                     lokasi: item.lantai?.lokasi?.nama_lokasi ?? "",
                     nomor_lantai: item.lantai?.nomor_lantai ?? 0,
@@ -90,8 +90,8 @@ export class KaryawanService implements IKaryawanService {
                     id: item.id,
                     kategori: item.kategori?.nama_kategori || "",
                     deskripsi_kendala: item.deskripsi_kendala || "",
-                    status: item.status,
-                    prioritas: item.prioritas,
+                    status: item.status as LaporanStatus,
+                    prioritas: item.prioritas as LaporanPriority,
                     foto_masalah: (item.foto_masalah ?? []).map((f: string) => resolveFileUrl(f)).filter((url): url is string => url !== null),
                     lokasi: item.lantai?.lokasi?.nama_lokasi || "",
                     nomor_lantai: item.lantai?.nomor_lantai || 0,
