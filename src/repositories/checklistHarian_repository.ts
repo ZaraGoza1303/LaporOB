@@ -1,8 +1,8 @@
 import type { ChecklistHarianQuery } from "../dto/checklist_harian.js";
 import type { PaginatedResponse } from "../dto/response.js";
-import { Prisma, type Checklist_harian, type PrismaClient } from "../generated/prisma/client.js";
+import { Prisma, type PrismaClient } from "../generated/prisma/client.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
-import type { IChecklistHarianRepository } from "./checklistHarian_repository.interface.js";
+import type { IChecklistHarianRepository, ChecklistHarianWithRelations } from "./checklistHarian_repository.interface.js";
 
 export class ChecklistHarianRepository implements IChecklistHarianRepository {
     private db: PrismaClient;
@@ -11,7 +11,7 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
         this.db = db
     }
 
-    async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<PaginatedResponse<Checklist_harian>> {
+    async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<PaginatedResponse<ChecklistHarianWithRelations>> {
         const { search, lokasi_id, lantai_id, status } = query;
         const offset = (page - 1) * limit;
 
@@ -46,8 +46,8 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
             this.db.checklist_harian.count({ where }),
         ]);
 
-        const response: PaginatedResponse<Checklist_harian> = {
-            items,
+        const response: PaginatedResponse<ChecklistHarianWithRelations> = {
+            items: items as any,
             next_cursor: null,
             meta: {
                 total_items: total,
@@ -60,14 +60,20 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
         return response
     }
 
-    async getByID(checklist_harianId: string): Promise<Checklist_harian | null> {
+    async getByID(checklist_harianId: string): Promise<ChecklistHarianWithRelations | null> {
         const data = await this.db.checklist_harian.findFirst({
             where: {
                 id: checklist_harianId
-            }
+            },
+            include: {
+                tugas: true,
+                kategori: true,
+                lantai: true,
+                ob: true,
+            },
         })
 
-        return data
+        return data as any
     }
 
     async insert(req: Checklist_harianUncheckedCreateInput): Promise<void> {
@@ -79,9 +85,9 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
     async update(checklist_harianId: string, req: Checklist_harianUncheckedUpdateInput): Promise<void> {
         await this.db.checklist_harian.update({
             where: {
-                id: checklist_harianId,
+                id: checklist_harianId
             },
-            data: req
+            data: req,
         })
     }
 

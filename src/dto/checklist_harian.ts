@@ -46,7 +46,7 @@ export interface ChecklistHarianRes {
     kategori_id?: string;
     lokasi_id?: string;
     lantai_id?: string;
-    ob_id?: string;
+    ob_id?: string | null;
     status: string;
     catatan?: string | null;
     created_at: Date;
