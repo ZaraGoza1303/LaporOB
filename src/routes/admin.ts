@@ -1,22 +1,18 @@
 import { Router } from "express";
 import { verifyJWTToken } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/role.js";
-import { PrismaClient } from "../generated/prisma/client.js";
-import { AdminRepository } from "../repositories/admin_repository.js";
-import { ObRepository } from "../repositories/ob_repository.js";
-import { AdminService } from "../services/admin_service.js";
-import { AdminController } from "../controllers/admin_controller.js";
-import type { Request, Response } from "express";
+import { adminController, usersController } from "../container.js";
 
 const adminRouter = Router();
-const db = new PrismaClient();
-const obRepository = new ObRepository(db);
-const adminRepository = new AdminRepository(db);
-const adminService = new AdminService(adminRepository, obRepository);
-const adminController = new AdminController(adminService);
-
 adminRouter.use(verifyJWTToken);
 adminRouter.use(requireRole("admin"));
+
+// User CRUD
+adminRouter.get("/user", (req, res) => usersController.getAll(req, res));
+adminRouter.get("/user/:user_id", (req, res) => usersController.getByID(req, res));
+adminRouter.post("/user", (req, res) => usersController.create(req, res));
+adminRouter.patch("/user/:user_id", (req, res) => usersController.update(req, res));
+adminRouter.delete("/user/:user_id", (req, res) => usersController.delete(req, res));
 
 // Dashboard
 adminRouter.get("/dashboard", (req, res) => adminController.getDashboardData(req, res));
