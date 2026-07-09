@@ -3,6 +3,7 @@ import type { ILaporanRepository } from "../repositories/laporan_repository.inte
 import type { LaporanPriority, LaporanStatus } from "../utils/constants.js";
 import { handlePrismaError } from "../utils/error.js";
 import { resolveFileUrl } from "../utils/url.js";
+import { AppError } from "../utils/error.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
 
 export class LaporanService implements ILaporanService {
@@ -12,11 +13,19 @@ export class LaporanService implements ILaporanService {
         this.laporanRepo = laporanRepo;
     }
 
-    async getReportDetail(reportId: string): Promise<MappedReportDetailRes> {
+    async getReportDetail(reportId: string, userId: string, role: string): Promise<MappedReportDetailRes> {
         try {
             const item = await this.laporanRepo.getReportDetailById(reportId);
             if (!item) {
-                throw new Error("Laporan tidak ditemukan");
+                throw new AppError("Laporan tidak ditemukan", 404);
+            }
+
+            const isOwner = role === "ob"
+                ? item.ob_id === userId
+                : item.pelapor_id === userId;
+
+            if (!isOwner) {
+                throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
             }
 
             const history = item.histori_pekerjaan?.[0];
@@ -40,4 +49,5 @@ export class LaporanService implements ILaporanService {
             handlePrismaError(err);
         }
     }
+
 }

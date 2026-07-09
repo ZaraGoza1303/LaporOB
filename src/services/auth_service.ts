@@ -22,12 +22,12 @@ export class AuthService implements IAuthService {
             const existsUser = await this.authRepo.login(req);
 
             if (!existsUser) {
-                throw new AppError("Email atau password salah!", 401)
+                throw new AppError("Email/Username atau password salah!", 401)
             }
 
             const isMatched = await bcrypt.compare(req.password, existsUser.password);
             if (!isMatched) {
-                throw new AppError("Email atau password salah!", 401)
+                throw new AppError("Email/Username atau password salah!", 401)
             }
 
             if (!existsUser.is_active) {
@@ -50,12 +50,12 @@ export class AuthService implements IAuthService {
             const existsUser = await this.authRepo.login(req);
 
             if (!existsUser) {
-                throw new AppError("Email atau password salah!", 401)
+                throw new AppError("Email/Username atau password salah!", 401)
             }
 
             const isMatched = await bcrypt.compare(req.password, existsUser.password);
             if (!isMatched) {
-                throw new AppError("Email atau password salah!", 401)
+                throw new AppError("Email/Username atau password salah!", 401)
             }
 
             const record = await this.validateActivationToken(token);

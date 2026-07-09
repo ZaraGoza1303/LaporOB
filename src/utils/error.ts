@@ -1,4 +1,4 @@
-import { PrismaClientKnownRequestError } from "../generated/prisma/internal/prismaNamespace.js";
+import { PrismaClientKnownRequestError, PrismaClientValidationError } from "../generated/prisma/internal/prismaNamespace.js";
 
 export class AppError extends Error {
     public statusCode: number;
@@ -17,6 +17,9 @@ export function handlePrismaError(error: unknown): never {
             case "P2003": throw new AppError("Related data not found", 404);
             default: throw new AppError(`Database error: ${error.code}`, 500);
         }
+    }
+    if (error instanceof PrismaClientValidationError) {
+        throw new AppError("Invalid data format", 400);
     }
     throw error;
 }
