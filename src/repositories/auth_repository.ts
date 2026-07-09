@@ -24,8 +24,12 @@ export class AuthRepository implements IAuthRepository {
     }
 
     async login(req: LoginReq): Promise<LoginUserData | null> {
+        const isEmail = req.identifier.includes('@');
+
         const existsUser = await this.db.user.findFirst({
-            where: {email: req.email},
+            where: isEmail
+                ? { email: req.identifier }
+                : { username: req.identifier },
             select: {
                 id: true,
                 username: true,

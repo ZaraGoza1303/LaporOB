@@ -110,10 +110,8 @@ paths:
                   data:
                     type: object
                     properties:
-                      token:
+                      jwt_token:
                         type: string
-                      user:
-                        $ref: '#/components/schemas/UserProfile'
         '401':
           description: Login gagal
 
@@ -122,18 +120,19 @@ paths:
       tags:
         - Auth
       summary: Login menggunakan token aktivasi (Publik)
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Token aktivasi dari email
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - token
-              properties:
-                token:
-                  type: string
-                  description: Token aktivasi dari email
+              $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
           description: Login berhasil
@@ -190,7 +189,7 @@ paths:
     get:
       tags:
         - User
-      summary: Detail laporan user (Semua role)
+      summary: Detail laporan user (OB & Karyawan)
       security:
         - BearerAuth: []
       parameters:
