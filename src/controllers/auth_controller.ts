@@ -41,6 +41,10 @@ export class AuthController {
                 return res.status(400).json(sendErrorResponse("Request body empty"))
             };
 
+            if (!activationToken) {
+                return res.status(400).json(sendErrorResponse("Token required"))
+            }
+
             const validate = LoginSchema.safeParse(req.body);
             if (!validate.success) {
                 const formattedErr = validate.error.flatten().fieldErrors;

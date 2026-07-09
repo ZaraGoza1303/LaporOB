@@ -9,18 +9,14 @@ export class AuthRepository implements IAuthRepository {
         this.db = db;
     }
 
-    async checkUserToken(tokenHash: string): Promise<UserToken> {
+    async checkUserToken(tokenHash: string): Promise<UserToken | null> {
         const record = await this.db.userToken.findUnique({
             where: {
                 token_hash: tokenHash
             }
         })
 
-        if (!record) {
-            throw new Error('Token not found')
-        }
-
-        return record
+        return record;
     }
 
     async login(req: LoginReq): Promise<LoginUserData | null> {
