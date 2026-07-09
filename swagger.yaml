@@ -346,7 +346,7 @@ paths:
           description: Laporan ditolak
 
 # ADMIN
-  /api/admin:
+  /api/user/admin/user:
     get:
       tags:
         - Admin
@@ -539,7 +539,7 @@ paths:
         '200':
           description: Detail laporan
 
-  /api/admin/{user_id}:
+  /api/user/admin/user/{user_id}:
     get:
       tags:
         - Admin
