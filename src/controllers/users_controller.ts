@@ -3,7 +3,7 @@ import type { IKaryawanService } from "../services/karyawan_service.interface.js
 import type { IObService } from "../services/ob_service.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
 import type { IStorageService } from "../services/storage_service.interface.js";
-import { CreateUserSchema, UpdateUserSchema, ProfileLaporanQuerySchema } from "../dto/users.js";
+import { CreateUserSchema, UpdateUserSchema, UpdateProfileSchema, ProfileLaporanQuerySchema } from "../dto/users.js";
 import { UserSearchQuerySchema } from "../dto/admin.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
@@ -139,6 +139,64 @@ export class UsersController {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
             return res.status(500).json(sendErrorResponse("Gagal mengubah data user", err.message))
+        }
+    }
+
+    async updateProfile(req: Request, res: Response) {
+        try {
+            const userId = req.user?.id;
+            let profilePicture: string | undefined;
+
+            if (!userId) {
+                return res.status(401).json(sendErrorResponse("Unauthorized: ID user tidak ditemukan dalam token"));
+            }
+
+            const validate = UpdateProfileSchema.safeParse(req.body);
+            if (!validate.success) {
+                const formatedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
+            }
+
+            const existsUser = await this.usersService.getByID(userId);
+            if (!existsUser) {
+                return res.status(404).json(sendErrorResponse("User tidak ditemukan"));
+            }
+
+            const profilePictureFile = ((req.files || []) as Express.Multer.File[]).find(
+                (file) => file.fieldname === "profile_picture"
+            );
+            if (profilePictureFile) {
+                const validation = await validateImageFile(profilePictureFile);
+                if (!validation.ok) {
+                    return res.status(400).json(sendErrorResponse(validation.message));
+                }
+
+                try {
+                    await compressImageIfNeeded(profilePictureFile);
+                } catch (err: any) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses/kompres gambar", err.message));
+                }
+
+                const oldFileUrlOrKey = existsUser.profile_picture;
+                if (oldFileUrlOrKey) {
+                    profilePicture = await this.storageService.updateFile(profilePictureFile, oldFileUrlOrKey);
+                } else {
+                    profilePicture = await this.storageService.uploadFile(profilePictureFile)
+                }
+            }
+
+            const updateData = {
+                ...validate.data,
+                ...(profilePicture && { profile_picture: profilePicture })
+            }
+
+            await this.usersService.update(userId, updateData)
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mengubah profile"));
+        } catch (err: any) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message))
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengubah profile", err.message))
         }
     }
 

@@ -14,6 +14,10 @@ export const CreateUserSchema = z.object({
 export const UpdateUserSchema = CreateUserSchema.partial().extend({
 });
 
+export const UpdateProfileSchema = CreateUserSchema.pick({
+  nama_lengkap: true,
+}).partial();
+
 export interface CreateUserRes {
   activationUrl: string,
 }
@@ -63,7 +67,12 @@ export const CreateLaporanKaryawanSchema = z.object({
 });
 
 export type CreateUserReq = z.infer<typeof CreateUserSchema>;
-export type UpdateUserReq = z.infer<typeof UpdateUserSchema>;
+export type UpdateUserReq = z.infer<typeof UpdateUserSchema> & {
+  profile_picture?: string;
+};
+export type UpdateProfileReq = z.infer<typeof UpdateProfileSchema> & {
+  profile_picture?: string;
+};
 export type CreateLaporanKaryawanReq = z.infer<typeof CreateLaporanKaryawanSchema>;
 
 const emptyToNull = (val: unknown) => (val === "" || val === undefined ? null : val);
