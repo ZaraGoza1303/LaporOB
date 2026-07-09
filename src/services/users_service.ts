@@ -1,5 +1,5 @@
 import type { UserSearchQuery } from "../dto/admin.js";
-import type { CreateUserReq, CreateUserRes, UpdateUserReq } from "../dto/users.js";
+import type { CreateUserReq, CreateUserRes, UpdateProfileReq, UpdateUserReq } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { User } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
@@ -115,14 +115,16 @@ export class UsersService implements IUsersService {
         }
     }
 
-    async update(userId: string, req: UpdateUserReq): Promise<void> {
+    async update(userId: string, req: UpdateUserReq | UpdateProfileReq): Promise<void> {
         try {
             const userReq: UserUpdateInput = {}
 
-            if (req.username !== undefined) userReq.username = req.username;
+            if ("username" in req && req.username !== undefined) userReq.username = req.username;
             if (req.nama_lengkap !== undefined) userReq.nama_lengkap = req.nama_lengkap;
-            if (req.password !== undefined) userReq.password = await bcrypt.hash(req.password, 16);
-            if (req.role_id !== undefined) {
+            if ("email" in req && req.email !== undefined) userReq.email = req.email;
+            if ("password" in req && req.password !== undefined) userReq.password = await bcrypt.hash(req.password, 16);
+            if (req.profile_picture !== undefined) userReq.profile_picture = req.profile_picture;
+            if ("role_id" in req && req.role_id !== undefined) {
                 userReq.role = {
                     connect: { id: req.role_id }
                 };
