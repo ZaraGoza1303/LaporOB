@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
+import type { PaginatedResponse } from "./response.js";
 
 const emptyToNull = (val: unknown) => (val === "" || val === undefined ? null : val);
 
@@ -58,4 +59,16 @@ export interface ChecklistHarianRes {
     kategori?: any;
     lantai?: any;
     ob?: any;
+}
+
+export interface ChecklistCountsResponse {
+    total: number;
+    done: number;
+    pending: number;
+    late: number;
+}
+
+export interface ChecklistHarianPageResponse {
+    checklist: PaginatedResponse<ChecklistHarianRes>;
+    counts: ChecklistCountsResponse;
 }
