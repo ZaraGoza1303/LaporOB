@@ -65,6 +65,9 @@ export class KaryawanService implements IKaryawanService {
                 lantai: {
                     connect: { id: req.lantai_id }
                 },
+                ruangan: {
+                    connect: { id: req.ruangan_id }
+                },
                 kategori: {
                     connect: { id: req.kategori_id }
                 },

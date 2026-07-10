@@ -143,31 +143,24 @@ export class ObRepository implements IObRepository {
         ]);
     }
 
-    async getObPerformanceStats(obId: string): Promise<{ tasksCompleted: number, rejected: number }> {
-        const [completedChecklists, completedLaporan, rejectedLaporan] = await Promise.all([
-            this.db.checklist_harian.count({
+    async getObPerformanceStats(obId: string): Promise<{ laporanDiterima: number, laporanSelesai: number }> {
+        const [laporanDiterima, laporanSelesai] = await Promise.all([
+            this.db.laporan_karyawan.count({
                 where: {
-                    ob_id: obId,
-                    status: 'SELESAI'
+                    ob_id: obId
                 }
             }),
             this.db.laporan_karyawan.count({
                 where: {
                     ob_id: obId,
-                    status: 'SELESAI'
-                }
-            }),
-            this.db.laporan_karyawan.count({
-                where: {
-                    ob_id: obId,
-                    status: 'DITOLAK'
+                    status: LAPORAN_STATUS.SELESAI,
                 }
             })
         ]);
 
         return {
-            tasksCompleted: completedChecklists + completedLaporan,
-            rejected: rejectedLaporan
+            laporanDiterima,
+            laporanSelesai
         };
     }
 }

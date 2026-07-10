@@ -91,7 +91,7 @@ export type AdminReportDetailResponse = {
     bukti_foto: {
         urls: string[];
         diupload_oleh: string | null;
-        jam_upload: string | null;   
+        jam_upload: string | null;
     };
 };
 
@@ -111,8 +111,10 @@ export interface AdminLaporanItemResponse {
     updated_at: string;
 }
 
-export interface LokasiTerpopulerResponse {
-    lokasi_id: string | null;
+export interface RuanganTerpopulerResponse {
+    ruangan_id: string | null;
+    nama_ruangan: string;
+    nama_lantai: string;
     nama_lokasi: string;
     total_laporan: number;
 }
@@ -132,7 +134,7 @@ export interface AdminLaporanPageResponse {
             total_pages: number;
         };
     };
-    lokasi_terpopuler: LokasiTerpopulerResponse[];
+    ruangan_terpopuler: RuanganTerpopulerResponse[];
     laporan_aktif: LaporanAktifResponse;
 }
 
