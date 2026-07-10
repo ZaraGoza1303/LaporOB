@@ -56,6 +56,7 @@ export class UsersService implements IUsersService {
         email: string;
         role: string;
         profile_picture: string | null;
+        total_laporan: number;
     }> {
         try {
             const user = await this.usersRepo.getUserWithRoleById(userId);
@@ -63,13 +64,17 @@ export class UsersService implements IUsersService {
                 throw new Error("User tidak ditemukan");
             }
 
+
+            const totalLaporan = await this.usersRepo.countLaporanByUserId(userId);
+
             return {
                 id: user.id,
                 nama_lengkap: user.nama_lengkap,
                 username: user.username,
                 email: user.email,
                 role: user.role.nama_role,
-                profile_picture: resolveFileUrl(user.profile_picture)
+                profile_picture: resolveFileUrl(user.profile_picture),
+                total_laporan: totalLaporan || 0
             };
         } catch (err) {
             handlePrismaError(err);

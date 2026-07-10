@@ -240,8 +240,7 @@ export class UsersController {
             const role = req.user?.role;
 
             if (!userId || !role) {
-                res.status(401).json(sendErrorResponse("Unauthorized: ID user atau role tidak ditemukan dalam token"));
-                return;
+                return res.status(401).json(sendErrorResponse("Unauthorized: ID user atau role tidak ditemukan dalam token"));
             }
 
             const validate = ProfileLaporanQuerySchema.safeParse(req.query);
@@ -251,10 +250,13 @@ export class UsersController {
             }
 
             const { search, status, cursor, limit } = validate.data;
+            const isOb = role.toLowerCase() === "ob";
 
-            const userProfile = await this.usersService.getProfile(userId);
+            const userProfile = isOb
+                ? await this.obService.getProfile(userId)
+                : await this.usersService.getProfile(userId);
 
-            const laporan = role.toLowerCase() === "ob"
+            const laporan = isOb
                 ? await this.obService.getRiwayat(userId, limit, { cursor, search, status })
                 : await this.karyawanService.getRiwayat(userId, limit, { cursor, search, status });
 

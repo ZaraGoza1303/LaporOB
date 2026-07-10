@@ -137,6 +137,9 @@ export interface ProfileRes {
     email: string;
     role: string;
     profile_picture: string | null;
+    total_laporan?: number; //Karyawan
+    tasksCompleted?: number; // OB
+    rejected?: number; // OB
   };
   laporan: PaginatedResponse<MappedProfileReport>;
 }
@@ -156,4 +159,3 @@ export interface MappedReportDetailRes {
   nama_ob: string | null;
   created_at: string;
 }
-

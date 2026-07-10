@@ -107,4 +107,10 @@ export class UsersRepository implements IUsersRepository {
             include: { role: true }
         });
     }
+
+   async countLaporanByUserId(userId: string): Promise<number> {
+    return this.db.laporan_karyawan.count({
+        where: { pelapor_id: userId }
+    });
+}
 }

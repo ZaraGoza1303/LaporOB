@@ -11,17 +11,17 @@ export class ObRepository implements IObRepository {
 
     async getObById(obId: string): Promise<User | null> {
         return this.db.user.findFirst({
-            where: {
-                id: obId,
-                role: {
-                    nama_role: {
-                        equals: "ob",
-                        mode: "insensitive"
+            where: { id: obId },
+                include: {
+                    role:true,
+                    tokens: {
+                        orderBy: {
+                            created_at: 'desc'
+                        },
+                        take: 1
                     }
-                },
-                is_deleted: false
-            }
-        });
+                }
+        })
     }
 
     async getTodayChecklists(obId: string, tanggal: Date): Promise<any[]> {
@@ -143,7 +143,7 @@ export class ObRepository implements IObRepository {
         ]);
     }
 
-    async getObPerformanceStats(obId: string): Promise<{ tasksCompleted: number, rejected: number }> {
+    async getObPerformanceStats(obId: string): Promise<{ tasksCompleted: number, komplain_ditangani: number; rejected: number }> {
         const [completedChecklists, completedLaporan, rejectedLaporan] = await Promise.all([
             this.db.checklist_harian.count({
                 where: {
@@ -166,7 +166,8 @@ export class ObRepository implements IObRepository {
         ]);
 
         return {
-            tasksCompleted: completedChecklists + completedLaporan,
+            tasksCompleted: completedChecklists,
+            komplain_ditangani: completedLaporan,
             rejected: rejectedLaporan
         };
     }
