@@ -9,21 +9,23 @@ export class RuanganRepository implements IRuanganRepository {
         this.db = db
     }
 
-    async getAll(lantaiId: string): Promise<Ruangan[]> {
+    async getAll(lantaiId?: string): Promise<Ruangan[]> {
         const data = await this.db.ruangan.findMany({
-            where: {
+            where: lantaiId ? {
                 lantai_id: lantaiId
-            }
+            } : {}
         });
 
         return data;
     }
 
-    async getById(lantaiId: string, ruanganId: string): Promise<Ruangan | null> {
-        const data = await this.db.ruangan.findUnique({
-            where: {
+    async getById(lantaiId: string | undefined, ruanganId: string): Promise<Ruangan | null> {
+        const data = await this.db.ruangan.findFirst({
+            where: lantaiId ? {
                 id: ruanganId,
                 lantai_id: lantaiId
+            } : {
+                id: ruanganId
             }
         })
 
@@ -36,21 +38,19 @@ export class RuanganRepository implements IRuanganRepository {
         })
     }
 
-    async update(lantaiId: string, ruanganId: string, req: RuanganUpdateInput): Promise<void> {
+    async update(lantaiId: string | undefined, ruanganId: string, req: RuanganUpdateInput): Promise<void> {
         await this.db.ruangan.update({
             where: {
                 id: ruanganId,
-                lantai_id: lantaiId,
             },
             data: req
         })
     }
 
-    async delete(lantaiId: string, ruanganId: string): Promise<void> {
+    async delete(lantaiId: string | undefined, ruanganId: string): Promise<void> {
         await this.db.ruangan.delete({
             where: {
                 id: ruanganId,
-                lantai_id: lantaiId
             }
         })
     }

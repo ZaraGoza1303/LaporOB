@@ -13,7 +13,7 @@ export const CreateTugasSchema = z.object({
 export const UpdateTugasSchema = CreateTugasSchema.partial();
 
 export const TugasQuerySchema = z.object({
-    kategori_id: z.string().uuid({ message: "Format Kategori ID harus berupa UUID yang valid" }),
+    kategori_id: z.string().uuid({ message: "Format Kategori ID harus berupa UUID yang valid" }).optional(),
 });
 
 export type CreateTugasReq = z.infer<typeof CreateTugasSchema>;

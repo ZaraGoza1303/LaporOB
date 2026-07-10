@@ -291,6 +291,8 @@ paths:
                 - lantai_id
                 - kategori_id
                 - deskripsi_kendala
+                - prioritas
+                - foto_masalah
               properties:
                 lantai_id:
                   type: string
@@ -300,6 +302,11 @@ paths:
                   format: uuid
                 deskripsi_kendala:
                   type: string
+                prioritas:
+                  type: string
+                  enum:
+                    - STANDARD
+                    - URGENT
                 foto_masalah:
                   type: array
                   items:
@@ -362,6 +369,7 @@ paths:
               type: object
               required:
                 - catatan
+                - foto_selesai
               properties:
                 catatan:
                   type: string
@@ -370,6 +378,7 @@ paths:
                   items:
                     type: string
                     format: binary
+                  description: Foto bukti penyelesaian pekerjaan
       responses:
         '200':
           description: Histori berhasil ditambahkan
@@ -391,14 +400,22 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               required:
-                - alasan_gagal
+                - catatan
+                - foto_selesai
               properties:
-                alasan_gagal:
+                catatan:
                   type: string
+                  description: Catatan penolakan (min 5 karakter)
+                foto_selesai:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Foto bukti penolakan laporan
       responses:
         '200':
           description: Laporan ditolak
@@ -449,7 +466,6 @@ paths:
               required:
                 - username
                 - email
-                - password
                 - nama_lengkap
                 - role_id
               properties:
@@ -458,17 +474,11 @@ paths:
                 email:
                   type: string
                   format: email
-                password:
-                  type: string
-                  format: password
                 nama_lengkap:
                   type: string
                 role_id:
                   type: string
                   format: uuid
-                profile_picture:
-                  type: string
-                  format: binary
       responses:
         '201':
           description: User berhasil dibuat
@@ -694,9 +704,13 @@ paths:
               type: object
               required:
                 - nama_lokasi
+                - jumlah_lantai
               properties:
                 nama_lokasi:
                   type: string
+                jumlah_lantai:
+                  type: integer
+                  minimum: 1
       responses:
         '201':
           description: Lokasi berhasil dibuat
@@ -740,6 +754,9 @@ paths:
               properties:
                 nama_lokasi:
                   type: string
+                jumlah_lantai:
+                  type: integer
+                  minimum: 1
       responses:
         '200':
           description: Lokasi berhasil diupdate
@@ -832,10 +849,9 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - nomor_lantai
               properties:
-                lokasi_id:
-                  type: string
-                  format: uuid
                 nomor_lantai:
                   type: integer
       responses:
@@ -930,10 +946,9 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - nama
               properties:
-                lantai_id:
-                  type: string
-                  format: uuid
                 nama:
                   type: string
       responses:
@@ -1182,34 +1197,23 @@ paths:
             schema:
               type: object
               required:
-                - tanggal
-                - lantai_id
-                - kategori_id
                 - tugas_id
-                - status
+                - kategori_id
+                - lokasi_id
+                - lantai_id
               properties:
-                tanggal:
-                  type: string
-                  format: date
-                  description: Tanggal checklist (YYYY-MM-DD)
-                ob_id:
-                  type: string
-                  format: uuid
-                  description: Opsional, assign ke OB
-                lantai_id:
+                tugas_id:
                   type: string
                   format: uuid
                 kategori_id:
                   type: string
                   format: uuid
-                tugas_id:
+                lokasi_id:
                   type: string
                   format: uuid
-                status:
+                lantai_id:
                   type: string
-                  description: Status checklist
-                catatan:
-                  type: string
+                  format: uuid
       responses:
         '201':
           description: Checklist berhasil dibuat
@@ -1251,22 +1255,22 @@ paths:
             schema:
               type: object
               properties:
-                tanggal:
-                  type: string
-                  format: date
-                ob_id:
-                  type: string
-                  format: uuid
-                  nullable: true
-                lantai_id:
+                tugas_id:
                   type: string
                   format: uuid
                 kategori_id:
                   type: string
                   format: uuid
-                tugas_id:
+                lokasi_id:
                   type: string
                   format: uuid
+                lantai_id:
+                  type: string
+                  format: uuid
+                ob_id:
+                  type: string
+                  format: uuid
+                  nullable: true
                 status:
                   type: string
                 catatan:

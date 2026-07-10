@@ -12,7 +12,7 @@ export class LantaiService implements ILantaiService {
         this.lantaiRepo = lantaiRepo
     }
 
-    async getAll(lokasiId: string): Promise<Lantai[]> {
+    async getAll(lokasiId?: string): Promise<Lantai[]> {
         try {
             const data = await this.lantaiRepo.getAll(lokasiId);
             return data;
@@ -21,20 +21,20 @@ export class LantaiService implements ILantaiService {
         }
     }
 
-    async getById(lokasiId: string, lantaiId: string): Promise<Lantai | null> {
+    async getById(lokasiId: string | undefined, lantaiId: string): Promise<Lantai | null> {
         try {
             const data = await this.lantaiRepo.getById(lokasiId, lantaiId);
             return data;
         } catch (err) {
             handlePrismaError(err)
-        }        
+        }
     }
 
     async create(req: CreateLantaiReq): Promise<void> {
         try {
             const lantaiReq: LantaiCreateInput = {
                 lokasi: {
-                    connect: {id: req.lokasi_id}
+                    connect: { id: req.lokasi_id }
                 },
 
                 nomor_lantai: req.nomor_lantai
@@ -46,18 +46,18 @@ export class LantaiService implements ILantaiService {
         }
     }
 
-    async update(lokasiId: string, lantaiId: string, req: UpdateLantaiReq): Promise<void> {
+    async update(lokasiId: string | undefined, lantaiId: string, req: UpdateLantaiReq): Promise<void> {
         try {
             const lantaiReq: LantaiUpdateInput = {}
-            if(req.nomor_lantai !== undefined) lantaiReq.nomor_lantai = req.nomor_lantai
+            if (req.nomor_lantai !== undefined) lantaiReq.nomor_lantai = req.nomor_lantai
 
             await this.lantaiRepo.update(lokasiId, lantaiId, lantaiReq)
         } catch (err) {
             handlePrismaError(err)
         }
     }
-    
-    async delete(lokasiId: string, lantaiId: string): Promise<void> {
+
+    async delete(lokasiId: string | undefined, lantaiId: string): Promise<void> {
         try {
             await this.lantaiRepo.delete(lokasiId, lantaiId);
         } catch (err) {

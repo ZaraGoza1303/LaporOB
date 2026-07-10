@@ -5,7 +5,7 @@ export const RuanganIdParamSchema = z.object({
 });
 
 export const RuanganQuerySchema = z.object({
-  lantai_id: z.string().trim().uuid({ message: "Format lantai_id wajib berupa UUID yang valid" }),
+  lantai_id: z.string().trim().uuid({ message: "Format lantai_id wajib berupa UUID yang valid" }).optional(),
 });
 
 export const CreateRuanganSchema = z.object({
