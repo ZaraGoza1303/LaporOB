@@ -1,4 +1,4 @@
-import type { ChecklistHarianQuery, CreateChecklistHarianReq, UpdateChecklistHarianReq, ChecklistHarianRes } from "../dto/checklist_harian.js";
+import type { ChecklistHarianQuery, CreateChecklistHarianReq, UpdateChecklistHarianReq, ChecklistHarianRes, ChecklistHarianPageResponse } from "../dto/checklist_harian.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
@@ -32,12 +32,33 @@ export class ChecklistHarianService implements IChecklistHarianService {
         };
     }
 
-    async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<PaginatedResponse<ChecklistHarianRes>> {
+    async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<ChecklistHarianPageResponse> {
         try {
-            const data = await this.checklistRepo.getAll(page, limit, query);
+            const [
+                data, 
+                total, 
+                done, 
+                pending, 
+                late
+            ] = await Promise.all([
+                this.checklistRepo.getAll(page, limit, query),
+                this.checklistRepo.countTotalChecklist(),
+                this.checklistRepo.countTotalChecklistDone(),
+                this.checklistRepo.countTotalChecklistPending(),
+                this.checklistRepo.countTotalChecklistLate()
+            ]);
+
             return {
-                ...data,
-                items: data.items.map(this.mapToResponse)
+                checklist: {
+                    ...data,
+                    items: data.items.map(this.mapToResponse)
+                },
+                counts: {
+                    total,
+                    done,
+                    pending,
+                    late
+                }
             };
         } catch (err) {
             handlePrismaError(err);

@@ -2,6 +2,7 @@ import type { ChecklistHarianQuery } from "../dto/checklist_harian.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import { Prisma, type PrismaClient } from "../generated/prisma/client.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
+import { CHECKLIST_STATUS } from "../utils/constants.js";
 import type { IChecklistHarianRepository, ChecklistHarianWithRelations } from "./checklistHarian_repository.interface.js";
 
 export class ChecklistHarianRepository implements IChecklistHarianRepository {
@@ -9,6 +10,41 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
 
     constructor(db: PrismaClient) {
         this.db = db
+    }
+
+    async countTotalChecklist(): Promise<number> {
+        const data = await this.db.checklist_harian.count();
+        return data;
+    }
+    
+    async countTotalChecklistDone(): Promise<number> {
+        const data = await this.db.checklist_harian.count({
+            where: {
+                status: CHECKLIST_STATUS.SELESAI
+            }
+        });
+
+        return data;
+    }
+    
+    async countTotalChecklistPending(): Promise<number> {
+        const data = await this.db.checklist_harian.count({
+            where: {
+                status: CHECKLIST_STATUS.SEDANG_DIKERJAKAN
+            }
+        });
+        
+        return data;
+    }
+
+    async countTotalChecklistLate(): Promise<number> {
+        const data = await this.db.checklist_harian.count({
+            where: {
+                status: CHECKLIST_STATUS.TERLEWAT
+            }
+        });
+        
+        return data;
     }
 
     async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<PaginatedResponse<ChecklistHarianWithRelations>> {
