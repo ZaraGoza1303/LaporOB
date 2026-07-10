@@ -1,7 +1,7 @@
 import type { IRuanganService } from "../services/ruangan_service.interface.js";
 import type { Request, Response } from 'express';
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
-import { CreateRuanganSchema, UpdateRuanganSchema } from "../dto/ruangan.js";
+import { CreateRuanganSchema, UpdateRuanganSchema, RuanganIdParamSchema, RuanganQuerySchema } from "../dto/ruangan.js";
 import { AppError } from "../utils/error.js";
 
 export class RuanganController {
@@ -13,11 +13,12 @@ export class RuanganController {
 
     async getAll(req: Request, res: Response) {
         try {
-            const lantaiId = req.query.lantai_id as string;
-
-            if (!lantaiId) {
-                return res.status(400).json(sendErrorResponse("Parameter query lantai_id wajib diisi"));
+            const validateQuery = RuanganQuerySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formattedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
+            const lantaiId = validateQuery.data.lantai_id;
 
             const response = await this.ruanganService.getAll(lantaiId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data ruangan", response));
@@ -31,12 +32,19 @@ export class RuanganController {
 
     async getByID(req: Request, res: Response) {
         try {
-            const ruanganId = req.params.ruangan_id as string;
-            const lantaiId = req.query.lantai_id as string;
-
-            if (!lantaiId) {
-                return res.status(400).json(sendErrorResponse("Parameter query lantai_id wajib diisi"));
+            const validateParams = RuanganIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
+            const ruanganId = validateParams.data.ruangan_id;
+
+            const validateQuery = RuanganQuerySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formattedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const lantaiId = validateQuery.data.lantai_id;
 
             const response = await this.ruanganService.getById(lantaiId, ruanganId);
 
@@ -77,12 +85,19 @@ export class RuanganController {
 
     async update(req: Request, res: Response) {
         try {
-            const ruanganId = req.params.ruangan_id as string;
-            const lantaiId = req.query.lantai_id as string;
-
-            if (!lantaiId) {
-                return res.status(400).json(sendErrorResponse("Parameter query lantai_id wajib diisi"));
+            const validateParams = RuanganIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
+            const ruanganId = validateParams.data.ruangan_id;
+
+            const validateQuery = RuanganQuerySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formattedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const lantaiId = validateQuery.data.lantai_id;
 
             if (!req.body) {
                 return res.status(400).json(sendErrorResponse("Request body empty"));
@@ -106,12 +121,19 @@ export class RuanganController {
 
     async delete(req: Request, res: Response) {
         try {
-            const ruanganId = req.params.ruangan_id as string;
-            const lantaiId = req.query.lantai_id as string;
-
-            if (!lantaiId) {
-                return res.status(400).json(sendErrorResponse("Parameter query lantai_id wajib diisi"));
+            const validateParams = RuanganIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
+            const ruanganId = validateParams.data.ruangan_id;
+
+            const validateQuery = RuanganQuerySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formattedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const lantaiId = validateQuery.data.lantai_id;
 
             await this.ruanganService.delete(lantaiId, ruanganId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data ruangan"));

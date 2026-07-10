@@ -1,7 +1,7 @@
 import type { ITugasService } from "../services/tugas_service.interface.js";
 import type { Request, Response } from 'express';
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
-import { CreateTugasSchema, TugasQuerySchema, UpdateTugasSchema } from "../dto/tugas.js";
+import { CreateTugasSchema, TugasQuerySchema, UpdateTugasSchema, TugasIdParamSchema } from "../dto/tugas.js";
 import { AppError } from "../utils/error.js";
 
 export class TugasController {
@@ -32,9 +32,17 @@ export class TugasController {
 
     async getByID(req: Request, res: Response) {
         try {
-            const tugasId = req.params.tugas_id as string;
+            const validateParams = TugasIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const tugasId = validateParams.data.tugas_id;
 
             const response = await this.tugasService.getByID(tugasId);
+            if (!response) {
+                return res.status(404).json(sendErrorResponse("Data tugas tidak ditemukan"));
+            }
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data tugas", response))
         } catch (err: any) {
             if (err instanceof AppError) {
@@ -68,7 +76,12 @@ export class TugasController {
 
     async update(req: Request, res: Response) {
         try {
-            const tugasId = req.params.tugas_id as string;
+            const validateParams = TugasIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const tugasId = validateParams.data.tugas_id;
 
             if (!req.body) {
                 return res.status(400).json(sendErrorResponse("Request body empty"))
@@ -92,7 +105,12 @@ export class TugasController {
 
     async delete(req: Request, res: Response) {
         try {
-            const tugasId = req.params.tugas_id as string;
+            const validateParams = TugasIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const tugasId = validateParams.data.tugas_id;
 
             await this.tugasService.delete(tugasId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data tugas"))

@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { ActivateAccountSchema, LoginSchema } from "../dto/auth.js";
+import { ActivateAccountSchema, LoginSchema, TokenQuerySchema } from "../dto/auth.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { IAuthService } from "../services/auth_service.interface.js";
 import { AppError } from "../utils/error.js";
@@ -35,10 +35,12 @@ export class AuthController {
 
     async verifyActivation(req: Request, res: Response) {
         try {
-            const token = req.query.token as string;
-            if (!token) {
-                return res.status(400).json(sendErrorResponse("Token required"));
+            const validateQuery = TokenQuerySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formattedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
+            const token = validateQuery.data.token;
             await this.authService.validateActivationToken(token);
             return res.status(200).json(sendSuccessfullResponse("Token valid"));
         } catch (err: any) {
@@ -51,10 +53,12 @@ export class AuthController {
 
     async activateAccount(req: Request, res: Response) {
         try {
-            const token = req.query.token as string;
-            if (!token) {
-                return res.status(400).json(sendErrorResponse("Token required"));
+            const validateQuery = TokenQuerySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formattedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
+            const token = validateQuery.data.token;
 
             if (!req.body) {
                 return res.status(400).json(sendErrorResponse("Request body empty"))

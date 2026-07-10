@@ -19,20 +19,24 @@ export const ChecklistHarianQuerySchema = z.object({
 
 export type ChecklistHarianQuery = z.infer<typeof ChecklistHarianQuerySchema>;
 
+export const ChecklistHarianIdParamSchema = z.object({
+    checklist_harian_id: z.string().trim().uuid({ message: "Format checklist_harian_id harus UUID yang valid" })
+});
+
 export const CreateChecklistHarianSchema = z.object({
-    tugas_id: z.string().min(1, "Tugas ID wajib diisi"),
-    kategori_id: z.string().min(1, "Kategori ID wajib diisi"),
-    lokasi_id: z.string().min(1, "Lokasi ID wajib diisi"),
-    lantai_id: z.string().min(1, "Lantai ID wajib diisi"),
+    tugas_id: z.string().trim().uuid({ message: "Format tugas_id harus berupa UUID yang valid" }),
+    kategori_id: z.string().trim().uuid({ message: "Format kategori_id harus berupa UUID yang valid" }),
+    lokasi_id: z.string().trim().uuid({ message: "Format lokasi_id harus berupa UUID yang valid" }),
+    lantai_id: z.string().trim().uuid({ message: "Format lantai_id harus berupa UUID yang valid" }),
     tanggal: z.string().min(1, "Tanggal wajib diisi").refine((val) => !Number.isNaN(Date.parse(val)), { message: "Format tanggal tidak valid" }),
 });
 
 export const UpdateChecklistHarianSchema = z.object({
-    tugas_id: z.string().optional(),
-    kategori_id: z.string().optional(),
-    lokasi_id: z.string().optional(),
-    lantai_id: z.string().optional(),
-    ob_id: z.string().optional(),
+    tugas_id: z.string().trim().uuid({ message: "Format tugas_id harus berupa UUID yang valid" }).optional(),
+    kategori_id: z.string().trim().uuid({ message: "Format kategori_id harus berupa UUID yang valid" }).optional(),
+    lokasi_id: z.string().trim().uuid({ message: "Format lokasi_id harus berupa UUID yang valid" }).optional(),
+    lantai_id: z.string().trim().uuid({ message: "Format lantai_id harus berupa UUID yang valid" }).optional(),
+    ob_id: z.string().trim().uuid({ message: "Format ob_id harus berupa UUID yang valid" }).optional(),
     status: z.enum([CHECKLIST_STATUS.BELUM_DIKERJAKAN, CHECKLIST_STATUS.SEDANG_DIKERJAKAN, CHECKLIST_STATUS.SELESAI, CHECKLIST_STATUS.TERLEWAT]).optional(),
     catatan: z.string().optional(),
 });

@@ -1,7 +1,7 @@
 import type { IKategoriService } from "../services/kategori_service.interface.js";
-import type {Request, Response} from 'express';
+import type { Request, Response } from 'express';
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
-import { CreateKategoriSchema, UpdateKategoriSchema } from "../dto/kategori.js";
+import { CreateKategoriSchema, UpdateKategoriSchema, KategoriIdParamSchema } from "../dto/kategori.js";
 import { AppError } from "../utils/error.js";
 
 export class KategoriController {
@@ -26,9 +26,17 @@ export class KategoriController {
 
     async getByID(req: Request, res: Response) {
         try {
-            const kategoriId = req.params.kategori_id as string;
+            const validateParams = KategoriIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const kategoriId = validateParams.data.kategori_id;
 
             const response = await this.kategoriService.getByID(kategoriId);
+            if (!response) {
+                return res.status(404).json(sendErrorResponse("Data kategori tidak ditemukan"));
+            }
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data kategori", response))
         } catch (err: any) {
             if (err instanceof AppError) {
@@ -62,7 +70,12 @@ export class KategoriController {
 
     async update(req: Request, res: Response) {
         try {
-            const kategoriId = req.params.kategori_id as string;
+            const validateParams = KategoriIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const kategoriId = validateParams.data.kategori_id;
 
             if (!req.body) {
                 return res.status(400).json(sendErrorResponse("Request body empty"))
@@ -86,7 +99,12 @@ export class KategoriController {
 
     async delete(req: Request, res: Response) {
         try {
-            const kategoriId = req.params.kategori_id as string;
+            const validateParams = KategoriIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const kategoriId = validateParams.data.kategori_id;
 
             await this.kategoriService.delete(kategoriId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data kategori"))
