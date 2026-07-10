@@ -20,6 +20,7 @@ async function main() {
         ('d25542e0-93ad-4513-87ca-c567319f6187', 'karyawan', now()),
         ('62c0a9d8-afd7-45f5-9cb3-6dc6e8a9b8da', 'ob',       now()),
         ('eb89b4f9-635f-4e1e-8916-3a96af4e0c72', 'hr',       now())
+      ON CONFLICT (nama_role) DO NOTHING
     `);
 
     // User 
@@ -35,6 +36,7 @@ async function main() {
         ('9e4d64c0-34e2-455c-b317-b9e4d6d5e6bd', 'ob2',       'ob2@mail.com',       $1, 'Rina Marlina',     '62c0a9d8-afd7-45f5-9cb3-6dc6e8a9b8da', true,  false, now(), now()),
         ('dc21d543-3890-4ffb-8b6d-b226c35ab8dc', 'ob3',       'ob3@mail.com',       $1, 'Dedi Kurniawan',   '62c0a9d8-afd7-45f5-9cb3-6dc6e8a9b8da', false, false, now(), now()),
         ('d5178486-b32e-414a-b927-04d96b150d1b', 'hr1',       'hr1@mail.com',       $1, 'Lestari Handayani','eb89b4f9-635f-4e1e-8916-3a96af4e0c72', true,  false, now(), now())
+      ON CONFLICT (username) DO NOTHING
       `,
       [hashedPassword]
     );
@@ -45,6 +47,7 @@ async function main() {
       INSERT INTO user_token (id, user_id, token_hash, type, expired_at, used_at, created_at) VALUES
         ('bb6cb754-a862-4cd7-b6c0-8c1e097b942f', 'dc21d543-3890-4ffb-8b6d-b226c35ab8dc', 'a1b2c3d4e5f6token_verify_email_hash_dummy', 'VERIFY_EMAIL',    now() + interval '1 day',  NULL, now()),
         ('aad79c26-43c3-4486-a2d0-2dfea9f59b9d', '1faac01e-e059-4686-af13-f04bce031a71', 'z9y8x7w6v5u4token_reset_password_hash_dummy', 'RESET_PASSWORD', now() + interval '1 hour', now(), now())
+      ON CONFLICT (token_hash) DO NOTHING
     `);
 
     //  Lokasi 
@@ -53,6 +56,7 @@ async function main() {
       INSERT INTO lokasi (id, nama_lokasi, created_at, updated_at) VALUES
         ('033f0941-8378-42e3-af2c-29cf83ab8e11', 'Gedung A - Kantor Pusat',  now(), now()),
         ('6c58477b-a345-4175-893a-58472165b899', 'Gedung B - Kantor Cabang', now(), now())
+      ON CONFLICT (id) DO NOTHING
     `);
 
     //  Lantai 
@@ -64,6 +68,7 @@ async function main() {
         ('a67fbf59-44e4-4537-a9b8-5c5193958116', '033f0941-8378-42e3-af2c-29cf83ab8e11', 3, now(), now()),
         ('5970908a-117c-4ab9-95f6-065ed4d8b04c', '6c58477b-a345-4175-893a-58472165b899', 1, now(), now()),
         ('a75e15c3-5990-4936-af85-2848d12d1901', '6c58477b-a345-4175-893a-58472165b899', 2, now(), now())
+      ON CONFLICT (id) DO NOTHING
     `);
 
     // Ruangan
@@ -91,6 +96,7 @@ async function main() {
         ('b8db3d11-447a-4c28-98e3-b0fc844e2e01', 'a75e15c3-5990-4936-af85-2848d12d1901', 'Ruang Rapat B2', now(), now()),
         ('b8db3d11-447a-4c28-98e3-b0fc844e2e02', 'a75e15c3-5990-4936-af85-2848d12d1901', 'Pantry Lantai 2', now(), now()),
         ('b8db3d11-447a-4c28-98e3-b0fc844e2e03', 'a75e15c3-5990-4936-af85-2848d12d1901', 'Toilet Lantai 2', now(), now())
+      ON CONFLICT (id) DO NOTHING
     `);
 
     // Kategori 
@@ -100,6 +106,7 @@ async function main() {
         ('ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Kebersihan',   now(), now()),
         ('d2597de5-120f-47b0-878a-83a46c47db34', 'Pengecekan',   now(), now()),
         ('5dcba45c-b5de-437c-858b-50dbe7624f9b', 'Peralatan',    now(), now())
+      ON CONFLICT (id) DO NOTHING
     `);
 
     //  Tugas 
@@ -120,6 +127,7 @@ async function main() {
         -- Peralatan
         ('7140b0e9-5512-453b-baa8-cfba4c00da11', '5dcba45c-b5de-437c-858b-50dbe7624f9b', 'Isi ulang sabun & tisu',                      true, now(), now()),
         ('1e47f903-71c5-4366-90f3-4e0daad6fc3d', '5dcba45c-b5de-437c-858b-50dbe7624f9b', 'Cek stok peralatan kebersihan',               true, now(), now())
+      ON CONFLICT (id) DO NOTHING
     `);
 
     await client.query("COMMIT");
