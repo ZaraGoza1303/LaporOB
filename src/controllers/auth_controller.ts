@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { LoginSchema } from "../dto/auth.js";
+import { ActivateAccountSchema, LoginSchema } from "../dto/auth.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { IAuthService } from "../services/auth_service.interface.js";
 import { AppError } from "../utils/error.js";
@@ -74,6 +74,33 @@ export class AuthController {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
             return res.status(400).json(sendErrorResponse("Token tidak valid atau expired", err.message));
+        }
+    }
+
+    async activateAccount(req: Request, res: Response) {
+        try {
+            const token = req.query.token as string;
+            if (!token) {
+                return res.status(400).json(sendErrorResponse("Token required"));
+            }
+
+            if (!req.body) {
+                return res.status(400).json(sendErrorResponse("Request body empty"))
+            };
+
+            const validate = ActivateAccountSchema.safeParse(req.body);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            await this.authService.activateAccount(token, validate.data.password);
+            return res.status(200).json(sendSuccessfullResponse("Akun berhasil diaktivasi, silahkan login"));
+        } catch (err: any) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(400).json(sendErrorResponse("Aktivasi gagal", err.message));
         }
     }
 

@@ -78,7 +78,6 @@ export class UsersService implements IUsersService {
 
     async create(req: CreateUserReq): Promise<CreateUserRes> {
         try {
-            const hashedPassword = await bcrypt.hash(req.password, 16);
             const activationToken = generateActivationToken(1);
 
             const userReq: UserCreateInput = {
@@ -87,7 +86,6 @@ export class UsersService implements IUsersService {
                 },
                 username: req.username,
                 email: req.email,
-                password: hashedPassword,
                 nama_lengkap: req.nama_lengkap,
             }
 
