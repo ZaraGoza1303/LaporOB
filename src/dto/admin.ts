@@ -33,6 +33,7 @@ export interface KpiResponse {
     total_reports: StatDetail;
     completed_reports: StatDetail;
     ongoing_reports: StatDetail;
+    rejected_reports: StatDetail;
 }
 
 export interface BarChartResponse {
@@ -55,11 +56,20 @@ export interface RecentActivityResponse {
     timestamp: Date;
 }
 
+export interface DailyChecklistOBResponse {
+    nama_ob: string;
+    lokasi: string;
+    selesai: number;
+    total: number;
+    persentase: number;
+}
+
 export interface DashboardMainResponse {
     kpi: KpiResponse;
     bar_chart: BarChartResponse[];
     pie_chart: PieChartResponse[];
     recent_activities: RecentActivityResponse[];
+    daily_checklist_ob: DailyChecklistOBResponse[];
 }
 
 export interface UserStatsRes {

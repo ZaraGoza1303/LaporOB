@@ -50,4 +50,5 @@ export interface IAdminRepository {
     getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>>;
     getLokasiTerpopuler(limit: number, query: AdminLaporanQuery): Promise<LokasiTerpopulerPayload[]>;
     countLaporanAktif(query: AdminLaporanQuery): Promise<number>;
+    getDailyChecklistOB(tanggal: Date): Promise<any[]>;
 }
