@@ -82,10 +82,11 @@ export class AdminService implements IAdminService {
         
         const { current_start, current_end, previous_start, previous_end } = calculateDateRanges(period);
 
-        const [rawActivities, currentReports, previousReports] = await Promise.all([
+        const [rawActivities, currentReports, previousReports, daily_checklist_ob] = await Promise.all([
             this.adminRepo.getRecentActivities(5),
             this.adminRepo.getReportsByDateRange(current_start, current_end),
-            this.adminRepo.getReportsByDateRange(previous_start, previous_end)
+            this.adminRepo.getReportsByDateRange(previous_start, previous_end),
+            this.adminRepo.getDailyChecklistOB(new Date())
         ]);
 
         const kpi = this.calculateKpi(currentReports, previousReports);
@@ -105,7 +106,7 @@ export class AdminService implements IAdminService {
             })
         );
 
-        return { kpi, bar_chart, pie_chart, recent_activities };
+        return { kpi, bar_chart, pie_chart, recent_activities, daily_checklist_ob };
     }
 
     private calculateKpi(current: ReportSummaryPayload[], previous: ReportSummaryPayload[]): DashboardMainResponse['kpi'] {
@@ -131,10 +132,14 @@ export class AdminService implements IAdminService {
         const currOngoing = current.filter(r => r.status === LAPORAN_STATUS.BELUM_DIKERJAKAN || r.status === LAPORAN_STATUS.PENDING).length;
         const prevOngoing = previous.filter(r => r.status === LAPORAN_STATUS.BELUM_DIKERJAKAN || r.status === LAPORAN_STATUS.PENDING).length;
 
+        const currRejected = current.filter(r => r.status === LAPORAN_STATUS.DITOLAK).length;
+        const prevRejected = previous.filter(r => r.status === LAPORAN_STATUS.DITOLAK).length;
+
         return {
             total_reports: calculateTrend(currTotal, prevTotal),
             completed_reports: calculateTrend(currDone, prevDone),
-            ongoing_reports: calculateTrend(currOngoing, prevOngoing)
+            ongoing_reports: calculateTrend(currOngoing, prevOngoing),
+            rejected_reports: calculateTrend(currRejected, prevRejected)
         };
     }
 
