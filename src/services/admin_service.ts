@@ -28,11 +28,10 @@ export class AdminService implements IAdminService {
 
     async getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<AdminLaporanPageResponse> {
         try {
-            const [laporanData, lokasiTerpopuler, totalLaporanAktif, recentActivities] = await Promise.all([
+            const [laporanData, lokasiTerpopuler, totalLaporanAktif] = await Promise.all([
                 this.adminRepo.getAllLaporan(page, limit, query),
                 this.adminRepo.getLokasiTerpopuler(6, query),
-                this.adminRepo.countLaporanAktif(query),
-                this.adminRepo.getRecentActivities(5)
+                this.adminRepo.countLaporanAktif(query)
             ]);
 
             const laporanMapped: AdminLaporanItemResponse[] = laporanData.items.map((item, index) => {
@@ -57,19 +56,6 @@ export class AdminService implements IAdminService {
                 };
             });
 
-            const recent_activities = recentActivities.map(
-                (activity: RecentActivityPayload) => ({
-                    id: activity.id,
-                    title: activity.deskripsi_kendala,
-                    location: activity.lantai?.lokasi?.nama_lokasi
-                        ? `Lantai ${activity.lantai.nomor_lantai}, ${activity.lantai.lokasi.nama_lokasi}`
-                        : "Lokasi tidak diketahui",
-                    status: activity.status as LaporanStatus,
-                    assignee_name: activity.ob?.nama_lengkap || null,
-                    timestamp: activity.updated_at
-                })
-            );
-
             return {
                 laporan: {
                     items: laporanMapped,
@@ -84,8 +70,7 @@ export class AdminService implements IAdminService {
                 lokasi_terpopuler: lokasiTerpopuler,
                 laporan_aktif: {
                     total_laporan: totalLaporanAktif
-                },
-                recent_activities
+                }
             };
         } catch (err) {
             handlePrismaError(err);

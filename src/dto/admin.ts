@@ -124,7 +124,6 @@ export interface AdminLaporanPageResponse {
     };
     lokasi_terpopuler: LokasiTerpopulerResponse[];
     laporan_aktif: LaporanAktifResponse;
-    recent_activities: RecentActivityResponse[];
 }
 
 export type RecentActivityPayload = Prisma.Laporan_karyawanGetPayload<{
