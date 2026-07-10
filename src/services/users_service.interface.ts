@@ -16,5 +16,6 @@ export interface IUsersService {
         email: string;
         role: string;
         profile_picture: string | null;
+        total_laporan: number;
     }>;
 }

@@ -116,6 +116,41 @@ export class ObService implements IObService {
         }
     }
 
+   async getProfile(obId: string): Promise<{
+        id: string;
+        nama_lengkap: string;
+        username: string;
+        email: string;
+        role: string;
+        profile_picture: string | null;
+        tasksCompleted: number;
+        komplain_ditangani: number;
+        rejected: number;           
+    }> {
+        try {
+            const user = await this.obRepo.getObById(obId);
+            if (!user) {
+                throw new Error("OB tidak ditemukan");
+            }
+
+            const obStats = await this.getObPerformanceStats(obId);
+
+            return {
+                id: user.id,
+                nama_lengkap: user.nama_lengkap,
+                username: user.username,
+                email: user.email,
+                role: user.role_id || "OB",
+                profile_picture: resolveFileUrl(user.profile_picture),
+                tasksCompleted: obStats.tasksCompleted || 0,
+                komplain_ditangani: obStats.komplain_ditangani || 0,
+                rejected: obStats.rejected || 0
+            };
+        } catch (err: any) {
+            handlePrismaError(err);
+        }
+    }
+
     async getRiwayat(obId: string, limit: number, params: { cursor?: string | null; search?: string | null; status?: string | null }): Promise<PaginatedResponse<MappedProfileReport>> {
         try {
             const reportsData = await this.laporanRepo.getReportsByObId(obId, limit, params.cursor, params.search, params.status);
@@ -151,7 +186,7 @@ export class ObService implements IObService {
         }
     }
 
-    async getObPerformanceStats(obId: string): Promise<{ tasksCompleted: number, rejected: number }> {
+    async getObPerformanceStats(obId: string): Promise<{ tasksCompleted: number, komplain_ditangani: number, rejected: number }> {
         try {
             return await this.obRepo.getObPerformanceStats(obId);
         } catch (err) {
