@@ -7,6 +7,7 @@ import { hashActivationToken } from "../utils/token.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import type { UserToken } from "../generated/prisma/client.js";
 import type { IUsersRepository } from "../repositories/users_repository.interface.js";
+import type { UserUpdateInput } from "../generated/prisma/models.js";
 
 export class AuthService implements IAuthService {
     private authRepo: IAuthRepository;
@@ -25,7 +26,11 @@ export class AuthService implements IAuthService {
                 throw new AppError("Email/Username atau password salah!", 401)
             }
 
-            const isMatched = await bcrypt.compare(req.password, existsUser.password);
+            if (!existsUser.password) {
+                throw new AppError("Akun belum diaktivasi, silahkan aktivasi terlebih dahulu", 401)
+            }
+
+            const isMatched = await bcrypt.compare(req.password, existsUser.password!);
             if (!isMatched) {
                 throw new AppError("Email/Username atau password salah!", 401)
             }
@@ -53,7 +58,7 @@ export class AuthService implements IAuthService {
                 throw new AppError("Email/Username atau password salah!", 401)
             }
 
-            const isMatched = await bcrypt.compare(req.password, existsUser.password);
+            const isMatched = await bcrypt.compare(req.password, existsUser.password!);
             if (!isMatched) {
                 throw new AppError("Email/Username atau password salah!", 401)
             }
@@ -76,6 +81,23 @@ export class AuthService implements IAuthService {
             if (record.expired_at < new Date()) throw new AppError("Token sudah expired", 401);
 
             return record;
+        } catch (err) {
+            handlePrismaError(err)
+        }
+    }
+
+    async activateAccount(token: string, password: string): Promise<void> {
+        try {
+            const record = await this.validateActivationToken(token);
+
+            const hashedPassword = await bcrypt.hash(password, 16);
+
+            await this.usersRepo.update(record.user_id, {
+                password: hashedPassword,
+                is_active: true,
+            } as UserUpdateInput);
+
+            await this.usersRepo.markTokenAsUsed(record.id);
         } catch (err) {
             handlePrismaError(err)
         }

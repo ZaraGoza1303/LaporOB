@@ -185,6 +185,36 @@ paths:
         '200':
           description: Berhasil
 
+    patch:
+      tags:
+        - User
+      summary: Update profile sendiri (Semua role)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                nama_lengkap:
+                  type: string
+                  description: Nama lengkap user
+                profile_picture:
+                  type: string
+                  format: binary
+                  description: File foto profil
+      responses:
+        '200':
+          description: Berhasil mengubah profile
+        '400':
+          description: Validation Failed
+        '401':
+          description: Unauthorized
+        '404':
+          description: User tidak ditemukan
+
   /api/user/profile/laporan/{laporan_id}:
     get:
       tags:
