@@ -63,6 +63,7 @@ export interface CreateLaporanKaryawanInput {
   kategori_id: string;
   prioritas: LaporanPriority;
   lantai_id: string;
+  ruangan_id: string;
   deskripsi_kendala: string;
   foto_masalah: string[];
 }
@@ -75,6 +76,7 @@ export const CreateLaporanKaryawanSchema = z.object({
   kategori_id: z.string().trim().uuid({ message: "Format kategori_id harus berupa UUID yang valid" }),
   prioritas: z.enum([LAPORAN_PRIORITY.STANDARD, LAPORAN_PRIORITY.URGENT]),
   lantai_id: z.string().trim().uuid({ message: "Format lantai_id harus berupa UUID yang valid" }),
+  ruangan_id: z.string().trim().uuid({ message: "Format ruangan_id harus berupa UUID yang valid" }),
   deskripsi_kendala: z.string().trim().min(1, { message: "Deskripsi kendala tidak boleh kosong" }),
 });
 

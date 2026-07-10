@@ -1,7 +1,7 @@
 import type { AdminLaporanQuery, UserStatsRes } from "../dto/admin.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import { Prisma, type PrismaClient } from "../generated/prisma/client.js";
-import type { IAdminRepository, RecentActivityPayload, ReportSummaryPayload, LaporanDetailPayload, AdminLaporanPayload, LokasiTerpopulerPayload } from "./admin_repository.interface.js";
+import type { IAdminRepository, RecentActivityPayload, ReportSummaryPayload, LaporanDetailPayload, AdminLaporanPayload, RuanganTerpopulerPayload } from "./admin_repository.interface.js";
 import { LAPORAN_STATUS, CHECKLIST_STATUS } from "../utils/constants.js";
 
 export class AdminRepository implements IAdminRepository {
@@ -72,17 +72,17 @@ export class AdminRepository implements IAdminRepository {
         });
     }
     async getReportDetailById(id: string): Promise<LaporanDetailPayload | null> {
-    return await this.db.laporan_karyawan.findUnique({
-        where: { id },
-        include: {
-            pelapor: true,
-            ob: true,
-            lantai: { include: { lokasi: true } },
-            kategori: true,
-            histori_pekerjaan: true
-        }
-    });
-}
+        return await this.db.laporan_karyawan.findUnique({
+            where: { id },
+            include: {
+                pelapor: true,
+                ob: true,
+                lantai: { include: { lokasi: true } },
+                kategori: true,
+                histori_pekerjaan: true
+            }
+        });
+    }
 
     async getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>> {
         const offset = (page - 1) * limit;
@@ -121,36 +121,45 @@ export class AdminRepository implements IAdminRepository {
         }
     }
 
-    async getLokasiTerpopuler(limit: number, query: AdminLaporanQuery): Promise<LokasiTerpopulerPayload[]> {
+    async getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<RuanganTerpopulerPayload[]> {
         const where = this.buildLaporanWhereClause(query);
 
         const laporan = await this.db.laporan_karyawan.findMany({
             where,
             include: {
-                lantai: {
+                ruangan: {
                     include: {
-                        lokasi: true
+                        lantai: {
+                            include: {
+                                lokasi: true
+                            }
+                        }
                     }
                 }
             }
         });
 
-        const lokasiMap = new Map<string, LokasiTerpopulerPayload>();
+        const ruanganMap = new Map<string, RuanganTerpopulerPayload>();
 
         laporan.forEach((item) => {
-            const lokasiId = item.lantai?.lokasi?.id ?? null;
-            const namaLokasi = item.lantai?.lokasi?.nama_lokasi ?? "Lokasi tidak diketahui";
-            const key = lokasiId ?? namaLokasi;
-            const current = lokasiMap.get(key);
+            const ruanganId = item.ruangan?.id ?? null;
+            const namaRuangan = item.ruangan?.nama ?? "Ruangan tidak diketahui";
+            const nomorLantai = item.ruangan?.lantai?.nomor_lantai;
+            const namaLantai = nomorLantai !== undefined ? `Lantai ${nomorLantai}` : "Lantai tidak diketahui";
+            const namaLokasi = item.ruangan?.lantai?.lokasi?.nama_lokasi ?? "Lokasi tidak diketahui";
+            const key = ruanganId ?? namaRuangan;
+            const current = ruanganMap.get(key);
 
-            lokasiMap.set(key, {
-                lokasi_id: lokasiId,
+            ruanganMap.set(key, {
+                ruangan_id: ruanganId,
+                nama_ruangan: namaRuangan,
+                nama_lantai: namaLantai,
                 nama_lokasi: namaLokasi,
                 total_laporan: (current?.total_laporan ?? 0) + 1
             });
         });
 
-        return Array.from(lokasiMap.values())
+        return Array.from(ruanganMap.values())
             .sort((a, b) => b.total_laporan - a.total_laporan)
             .slice(0, limit);
     }
@@ -232,6 +241,8 @@ export class AdminRepository implements IAdminRepository {
             { [query.sort_by]: sortOrder } as Prisma.Laporan_karyawanOrderByWithRelationInput,
             { created_at: "desc" }
         ];
+    }
+
     async getDailyChecklistOB(tanggal: Date): Promise<any[]> {
         const startOfDay = new Date(tanggal);
         startOfDay.setHours(0, 0, 0, 0);

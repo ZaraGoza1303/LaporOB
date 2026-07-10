@@ -36,8 +36,10 @@ export type AdminLaporanPayload = Prisma.Laporan_karyawanGetPayload<{
     };
 }>;
 
-export interface LokasiTerpopulerPayload {
-    lokasi_id: string | null;
+export interface RuanganTerpopulerPayload {
+    ruangan_id: string | null;
+    nama_ruangan: string;
+    nama_lantai: string;
     nama_lokasi: string;
     total_laporan: number;
 }
@@ -48,7 +50,7 @@ export interface IAdminRepository {
     getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]>;
     getReportDetailById(laporanId: string): Promise<LaporanDetailPayload | null>;
     getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>>;
-    getLokasiTerpopuler(limit: number, query: AdminLaporanQuery): Promise<LokasiTerpopulerPayload[]>;
+    getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<RuanganTerpopulerPayload[]>;
     countLaporanAktif(query: AdminLaporanQuery): Promise<number>;
     getDailyChecklistOB(tanggal: Date): Promise<any[]>;
 }

@@ -1,9 +1,9 @@
 import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse } from "../dto/admin.js";
 import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse } from "../dto/admin.js";
-import type { IAdminRepository } from "../repositories/admin_repository.interface.js";
+import type { IAdminRepository, AdminLaporanPayload } from "../repositories/admin_repository.interface.js";
 import type { IObRepository } from "../repositories/ob_repository.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
-import  { calculateDateRanges } from "../utils/date.js"
+import { calculateDateRanges } from "../utils/date.js"
 import { LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { resolveFileUrl } from "../utils/url.js";
 import type { IAdminService } from "./admin_service.interface.js";
@@ -28,13 +28,13 @@ export class AdminService implements IAdminService {
 
     async getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<AdminLaporanPageResponse> {
         try {
-            const [laporanData, lokasiTerpopuler, totalLaporanAktif] = await Promise.all([
+            const [laporanData, ruanganTerpopuler, totalLaporanAktif] = await Promise.all([
                 this.adminRepo.getAllLaporan(page, limit, query),
-                this.adminRepo.getLokasiTerpopuler(6, query),
+                this.adminRepo.getRuanganTerpopuler(6, query),
                 this.adminRepo.countLaporanAktif(query)
             ]);
 
-            const laporanMapped: AdminLaporanItemResponse[] = laporanData.items.map((item, index) => {
+            const laporanMapped: AdminLaporanItemResponse[] = laporanData.items.map((item: AdminLaporanPayload, index: number) => {
                 const nomorLaporan = ((page - 1) * limit) + index + 1;
 
                 return {
@@ -67,7 +67,7 @@ export class AdminService implements IAdminService {
                         total_pages: 0
                     }
                 },
-                lokasi_terpopuler: lokasiTerpopuler,
+                ruangan_terpopuler: ruanganTerpopuler,
                 laporan_aktif: {
                     total_laporan: totalLaporanAktif
                 }
@@ -79,7 +79,7 @@ export class AdminService implements IAdminService {
 
     public async getDashboardData(query: GetDashboardQuery): Promise<DashboardMainResponse> {
         const { period } = query;
-        
+
         const { current_start, current_end, previous_start, previous_end } = calculateDateRanges(period);
 
         const [rawActivities, currentReports, previousReports, daily_checklist_ob] = await Promise.all([
@@ -97,8 +97,8 @@ export class AdminService implements IAdminService {
             (activity: RecentActivityPayload) => ({
                 id: activity.id,
                 title: activity.deskripsi_kendala,
-                location: activity.lantai?.lokasi?.nama_lokasi 
-                    ? `Lantai ${activity.lantai.nomor_lantai}, ${activity.lantai.lokasi.nama_lokasi}` 
+                location: activity.lantai?.lokasi?.nama_lokasi
+                    ? `Lantai ${activity.lantai.nomor_lantai}, ${activity.lantai.lokasi.nama_lokasi}`
                     : "Lokasi tidak diketahui",
                 status: activity.status as LaporanStatus,
                 assignee_name: activity.ob?.nama_lengkap || null,
@@ -145,7 +145,7 @@ export class AdminService implements IAdminService {
 
     private calculatePieChart(reports: ReportSummaryPayload[]): PieChartResponse[] {
         const total = reports.length;
-        
+
         const counts: Record<LaporanStatus, number> = {
             [LAPORAN_STATUS.BELUM_DIKERJAKAN]: 0,
             [LAPORAN_STATUS.PENDING]: 0,
@@ -176,13 +176,13 @@ export class AdminService implements IAdminService {
         reports.forEach(report => {
             const date = new Date(report.created_at);
             let label = '';
-            
+
             if (period === 'weekly') {
-                label = date.toLocaleDateString('id-ID', { weekday: 'short' }); 
+                label = date.toLocaleDateString('id-ID', { weekday: 'short' });
             } else if (period === 'monthly') {
-                label = `Mgg ${Math.ceil(date.getDate() / 7)}`; 
+                label = `Mgg ${Math.ceil(date.getDate() / 7)}`;
             } else {
-                label = date.toLocaleDateString('id-ID', { month: 'short' }); 
+                label = date.toLocaleDateString('id-ID', { month: 'short' });
             }
 
             groups[label] = (groups[label] || 0) + 1;
@@ -195,38 +195,38 @@ export class AdminService implements IAdminService {
     }
 
     public async getReportDetail(id: string): Promise<AdminReportDetailResponse> {
-    const laporan = await this.adminRepo.getReportDetailById(id);
+        const laporan = await this.adminRepo.getReportDetailById(id);
 
-    if (!laporan) {
-        throw new AppError("Laporan tidak ditemukan", 404); 
-    }
-
-    const historiTerakhir = laporan.histori_pekerjaan?.[laporan.histori_pekerjaan.length - 1] ?? null;
-
-
-    const jamUpload = historiTerakhir 
-        ? historiTerakhir.created_at.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
-        : null;
-
-    return {
-        id: laporan.id,
-        status: laporan.status as LaporanStatus,
-        nama_karyawan: laporan.pelapor?.nama_lengkap ?? "Anonim",
-        lokasi: laporan.lantai?.lokasi
-            ? `Lantai ${laporan.lantai.nomor_lantai} - ${laporan.lantai.lokasi.nama_lokasi}`
-            : "Lokasi tidak diketahui",
-        kategori: laporan.kategori.nama_kategori,
-        ob_ditugaskan: laporan.ob?.nama_lengkap ?? "Belum Ditugaskan",
-        waktu_laporan: laporan.created_at,
-        waktu_selesai: historiTerakhir?.created_at ?? null,
-        deskripsi_kendala: laporan.deskripsi_kendala,
-        bukti_foto: {
-            urls: laporan.status === "SELESAI"
-                ? (historiTerakhir?.foto_selesai ?? []).map(resolveFileUrl).filter((url): url is string => !!url)
-                : laporan.foto_masalah.map(resolveFileUrl).filter((url): url is string => !!url),
-            diupload_oleh: laporan.ob?.nama_lengkap ?? null,
-            jam_upload: jamUpload
+        if (!laporan) {
+            throw new AppError("Laporan tidak ditemukan", 404);
         }
-    };
-}
+
+        const historiTerakhir = laporan.histori_pekerjaan?.[laporan.histori_pekerjaan.length - 1] ?? null;
+
+
+        const jamUpload = historiTerakhir
+            ? historiTerakhir.created_at.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
+            : null;
+
+        return {
+            id: laporan.id,
+            status: laporan.status as LaporanStatus,
+            nama_karyawan: laporan.pelapor?.nama_lengkap ?? "Anonim",
+            lokasi: laporan.lantai?.lokasi
+                ? `Lantai ${laporan.lantai.nomor_lantai} - ${laporan.lantai.lokasi.nama_lokasi}`
+                : "Lokasi tidak diketahui",
+            kategori: laporan.kategori.nama_kategori,
+            ob_ditugaskan: laporan.ob?.nama_lengkap ?? "Belum Ditugaskan",
+            waktu_laporan: laporan.created_at,
+            waktu_selesai: historiTerakhir?.created_at ?? null,
+            deskripsi_kendala: laporan.deskripsi_kendala,
+            bukti_foto: {
+                urls: laporan.status === "SELESAI"
+                    ? (historiTerakhir?.foto_selesai ?? []).map(resolveFileUrl).filter((url): url is string => !!url)
+                    : laporan.foto_masalah.map(resolveFileUrl).filter((url): url is string => !!url),
+                diupload_oleh: laporan.ob?.nama_lengkap ?? null,
+                jam_upload: jamUpload
+            }
+        };
+    }
 }

@@ -151,7 +151,7 @@ export class ObService implements IObService {
         }
     }
 
-    async getObPerformanceStats(obId: string): Promise<{ tasksCompleted: number, rejected: number }> {
+    async getObPerformanceStats(obId: string): Promise<{ laporanDiterima: number, laporanSelesai: number }> {
         try {
             return await this.obRepo.getObPerformanceStats(obId);
         } catch (err) {
