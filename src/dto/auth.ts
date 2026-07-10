@@ -1,5 +1,9 @@
 import z from "zod";
 
+export const TokenQuerySchema = z.object({
+    token: z.string().trim().min(1, { message: "Token wajib diisi" })
+});
+
 export const LoginSchema = z.object({
     identifier: z.string().min(1, 'email atau username required'),
     password: z.string().min(1, 'password required'),
@@ -33,4 +37,3 @@ export const ActivateAccountSchema = z.object({
 });
 
 export type ActivateAccountReq = z.infer<typeof ActivateAccountSchema>;
- 

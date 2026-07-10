@@ -1,7 +1,7 @@
 import type { ILantaiService } from "../services/lantai_service.interface.js";
 import type { Request, Response } from 'express';
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
-import { CreateLantaiSchema, UpdateLantaiSchema } from "../dto/lantai.js";
+import { CreateLantaiSchema, UpdateLantaiSchema, LantaiIdParamSchema, LantaiQuerySchema } from "../dto/lantai.js";
 import { AppError } from "../utils/error.js";
 
 export class LantaiController {
@@ -13,11 +13,12 @@ export class LantaiController {
 
     async getAll(req: Request, res: Response) {
         try {
-            const lokasiId = req.query.lokasi_id as string;
-
-            if (!lokasiId) {
-                return res.status(400).json(sendErrorResponse("Parameter query lokasi_id wajib diisi"));
+            const validateQuery = LantaiQuerySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formattedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
+            const lokasiId = validateQuery.data.lokasi_id;
 
             const response = await this.lantaiService.getAll(lokasiId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data lantai", response));
@@ -31,12 +32,19 @@ export class LantaiController {
 
     async getByID(req: Request, res: Response) {
         try {
-            const lantaiId = req.params.lantai_id as string;
-            const lokasiId = req.query.lokasi_id as string;
-
-            if (!lokasiId) {
-                return res.status(400).json(sendErrorResponse("Parameter query lokasi_id wajib diisi"));
+            const validateParams = LantaiIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
+            const lantaiId = validateParams.data.lantai_id;
+
+            const validateQuery = LantaiQuerySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formattedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const lokasiId = validateQuery.data.lokasi_id;
 
             const response = await this.lantaiService.getById(lokasiId, lantaiId);
 
@@ -77,12 +85,19 @@ export class LantaiController {
 
     async update(req: Request, res: Response) {
         try {
-            const lantaiId = req.params.lantai_id as string;
-            const lokasiId = req.query.lokasi_id as string;
-
-            if (!lokasiId) {
-                return res.status(400).json(sendErrorResponse("Parameter query lokasi_id wajib diisi"));
+            const validateParams = LantaiIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
+            const lantaiId = validateParams.data.lantai_id;
+
+            const validateQuery = LantaiQuerySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formattedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const lokasiId = validateQuery.data.lokasi_id;
 
             if (!req.body) {
                 return res.status(400).json(sendErrorResponse("Request body empty"));
@@ -106,12 +121,19 @@ export class LantaiController {
 
     async delete(req: Request, res: Response) {
         try {
-            const lantaiId = req.params.lantai_id as string;
-            const lokasiId = req.query.lokasi_id as string;
-
-            if (!lokasiId) {
-                return res.status(400).json(sendErrorResponse("Parameter query lokasi_id wajib diisi"));
+            const validateParams = LantaiIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
+            const lantaiId = validateParams.data.lantai_id;
+
+            const validateQuery = LantaiQuerySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formattedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const lokasiId = validateQuery.data.lokasi_id;
 
             await this.lantaiService.delete(lokasiId, lantaiId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data lantai"));

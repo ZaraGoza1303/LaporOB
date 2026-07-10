@@ -3,7 +3,7 @@ import type { IKaryawanService } from "../services/karyawan_service.interface.js
 import type { IObService } from "../services/ob_service.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
 import type { IStorageService } from "../services/storage_service.interface.js";
-import { CreateUserSchema, UpdateUserSchema, UpdateProfileSchema, ProfileLaporanQuerySchema } from "../dto/users.js";
+import { CreateUserSchema, UpdateUserSchema, UpdateProfileSchema, ProfileLaporanQuerySchema, UserIdParamSchema, LaporanIdParamSchema } from "../dto/users.js";
 import { UserSearchQuerySchema } from "../dto/admin.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
@@ -54,9 +54,18 @@ export class UsersController {
 
     async getByID(req: Request, res: Response) {
         try {
-            const userId = req.params.user_id as string;
+            const validate = UserIdParamSchema.safeParse(req.params);
+            if (!validate.success) {
+                const formatedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
+            }
 
-            const response = await this.usersService.getByID(userId)
+            const userId = validate.data.user_id;
+            const response = await this.usersService.getByID(userId);
+            if (!response) {
+                return res.status(404).json(sendErrorResponse("User tidak ditemukan"));
+            }
+
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data user", response))
         } catch (err: any) {
             if (err instanceof AppError) {
@@ -90,7 +99,13 @@ export class UsersController {
 
     async update(req: Request, res: Response) {
         try {
-            const userId = req.params.user_id as string;
+            const validateParams = UserIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formatedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
+            }
+
+            const userId = validateParams.data.user_id;
             let profilePicture: string | undefined;
 
             const validate = UpdateUserSchema.safeParse(req.body);
@@ -202,8 +217,13 @@ export class UsersController {
 
     async delete(req: Request, res: Response) {
         try {
-            const userId = req.params.user_id as string;
+            const validate = UserIdParamSchema.safeParse(req.params);
+            if (!validate.success) {
+                const formatedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
+            }
 
+            const userId = validate.data.user_id;
             await this.usersService.delete(userId)
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data user"));
         } catch (err: any) {
@@ -252,7 +272,12 @@ export class UsersController {
 
     async getReportDetail(req: Request, res: Response) {
         try {
-            const laporanId = req.params.laporan_id as string;
+            const validateParams = LaporanIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const laporanId = validateParams.data.laporan_id;
             const userId = req.user?.id as string;
             const role = req.user?.role as string;
             const response = await this.laporanService.getReportDetail(laporanId, userId, role);

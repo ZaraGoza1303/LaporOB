@@ -1,4 +1,5 @@
 import { AdminLaporanQuerySchema, GetDashboardQuerySchema } from '../dto/admin.js';
+import { LaporanIdParamSchema } from '../dto/users.js';
 import type { IAdminService } from "../services/admin_service.interface.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { Request, Response } from "express";
@@ -10,7 +11,7 @@ export class AdminController {
     constructor(adminService: IAdminService) {
         this.adminService = adminService;
     }
-    
+
     async getDashboardData(req: Request, res: Response) {
         try {
             const parsedQuery = GetDashboardQuerySchema.parse(req.query);
@@ -51,7 +52,12 @@ export class AdminController {
 
     async getReportDetail(req: Request, res: Response) {
         try {
-            const laporanId = req.params.laporan_id as string;
+            const validateParams = LaporanIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const laporanId = validateParams.data.laporan_id;
 
             const response = await this.adminService.getReportDetail(laporanId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan detail laporan", response));
@@ -64,7 +70,7 @@ export class AdminController {
     }
 
     async getUserStats(req: Request, res: Response) {
-       try {
+        try {
             const response = await this.adminService.getUserStats()
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data", response));
         } catch (err: any) {

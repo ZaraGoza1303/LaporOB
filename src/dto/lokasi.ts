@@ -7,6 +7,10 @@ export type LokasiWithLantai = LokasiGetPayload<{
     }
 }>;
 
+export const LokasiIdParamSchema = z.object({
+    lokasi_id: z.string().trim().uuid({ message: "Format lokasi_id harus UUID yang valid" })
+});
+
 export const CreateLokasiSchema = z.object({
     nama_lokasi: z.string().min(1, { message: "Nama lokasi tidak boleh kosong" }).max(100, { message: "Nama lokasi maksimal 100 karakter" }),
     jumlah_lantai: z.number().int().min(1, { message: "Jumlah lantai minimal 1" })

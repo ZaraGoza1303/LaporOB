@@ -1,7 +1,7 @@
 import type { ILokasiService } from "../services/lokasi_service.interface.js";
 import type { Request, Response } from 'express';
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
-import { CreateLokasiSchema, UpdateLokasiSchema } from "../dto/lokasi.js";
+import { CreateLokasiSchema, UpdateLokasiSchema, LokasiIdParamSchema } from "../dto/lokasi.js";
 import { AppError } from "../utils/error.js";
 
 export class LokasiController {
@@ -25,7 +25,12 @@ export class LokasiController {
 
     async getByID(req: Request, res: Response) {
         try {
-            const lokasiId = req.params.lokasi_id as string;
+            const validateParams = LokasiIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const lokasiId = validateParams.data.lokasi_id;
             const response = await this.lokasiService.getByID(lokasiId);
 
             if (!response) {
@@ -65,7 +70,12 @@ export class LokasiController {
 
     async update(req: Request, res: Response) {
         try {
-            const lokasiId = req.params.lokasi_id as string;
+            const validateParams = LokasiIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const lokasiId = validateParams.data.lokasi_id;
 
             if (!req.body) {
                 return res.status(400).json(sendErrorResponse("Request body empty"));
@@ -89,7 +99,12 @@ export class LokasiController {
 
     async delete(req: Request, res: Response) {
         try {
-            const lokasiId = req.params.lokasi_id as string;
+            const validateParams = LokasiIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const lokasiId = validateParams.data.lokasi_id;
 
             await this.lokasiService.delete(lokasiId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data lokasi"));

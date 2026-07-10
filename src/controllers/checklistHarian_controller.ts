@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { IChecklistHarianService } from "../services/checklistHarian_service.interface.js";
-import { ChecklistHarianQuerySchema, CreateChecklistHarianSchema, UpdateChecklistHarianSchema } from "../dto/checklist_harian.js";
+import { ChecklistHarianQuerySchema, CreateChecklistHarianSchema, UpdateChecklistHarianSchema, ChecklistHarianIdParamSchema } from "../dto/checklist_harian.js";
 import { AppError } from "../utils/error.js";
 
 export class ChecklistHarianController {
@@ -34,7 +34,12 @@ export class ChecklistHarianController {
 
     async getByID(req: Request, res: Response) {
         try {
-            const checklistId = req.params.checklist_harian_id as string;
+            const validateParams = ChecklistHarianIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const checklistId = validateParams.data.checklist_harian_id;
             const response = await this.checklistService.getByID(checklistId);
 
             if (!response) {
@@ -74,7 +79,12 @@ export class ChecklistHarianController {
 
     async update(req: Request, res: Response) {
         try {
-            const checklistId = req.params.checklist_harian_id as string;
+            const validateParams = ChecklistHarianIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const checklistId = validateParams.data.checklist_harian_id;
 
             if (!req.body) {
                 return res.status(400).json(sendErrorResponse("Request body empty"));
@@ -98,7 +108,12 @@ export class ChecklistHarianController {
 
     async delete(req: Request, res: Response) {
         try {
-            const checklistId = req.params.checklist_harian_id as string;
+            const validateParams = ChecklistHarianIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const checklistId = validateParams.data.checklist_harian_id;
 
             await this.checklistService.delete(checklistId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data checklist harian"));
