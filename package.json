@@ -46,7 +46,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.2.0",
     "@types/node": "^26.0.1",
-    "@types/nodemailer": "^8.0.1",
+    "@types/nodemailer": "^6.0.1",
     "@types/pg": "^8.20.0",
     "@types/sharp": "^0.31.1",
     "@types/swagger-jsdoc": "^6.0.4",
@@ -56,5 +56,8 @@
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
