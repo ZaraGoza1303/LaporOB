@@ -12,10 +12,6 @@ async function main() {
   try {
     await client.query("BEGIN");
 
-    //  Bersihin data lama 
-    console.log("  Membersihkan data lama...");
-    await client.query("TRUNCATE TABLE ruangan, histori_pekerjaan, laporan_karyawan, checklist_harian, user_token, \"user\", tugas, kategori, lantai, lokasi, role RESTART IDENTITY CASCADE");
-
     // Role 
     console.log("  Insert role...");
     await client.query(`

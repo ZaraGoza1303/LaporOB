@@ -6,7 +6,7 @@ export const TugasIdParamSchema = z.object({
 
 export const CreateTugasSchema = z.object({
     kategori_id: z.string().uuid({ message: "Format Kategori ID harus berupa UUID yang valid" }),
-    nama_tugas: z.string().min(1, { message: "Nama tugas tidak boleh kosong" }).max(150, { message: "Nama tugas maksimal 150 karakter" }),
+    nama_tugas: z.string().trim().min(1, { message: "Nama tugas tidak boleh kosong" }).max(150, { message: "Nama tugas maksimal 150 karakter" }),
     is_active: z.boolean().optional().default(true),
 });
 

@@ -10,11 +10,11 @@ export const RuanganQuerySchema = z.object({
 
 export const CreateRuanganSchema = z.object({
   lantai_id: z.string().uuid({ message: "Format Lantai ID harus berupa UUID yang valid" }),
-  nama: z.string({ message: "Nama ruangan harus berupa string" }),
+  nama: z.string().trim().min(1, { message: "Nama ruangan tidak boleh kosong" }),
 });
 
 export const UpdateRuanganSchema = z.object({
-  nama: z.string({ message: "Nama ruangan harus berupa string" }),
+  nama: z.string().trim().min(1, { message: "Nama ruangan tidak boleh kosong" }),
 });
 
 export type CreateRuanganReq = z.infer<typeof CreateRuanganSchema>;

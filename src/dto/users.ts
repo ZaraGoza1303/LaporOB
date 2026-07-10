@@ -8,17 +8,17 @@ export const UserIdParamSchema = z.object({
 });
 
 export const CreateUserSchema = z.object({
-  nama_lengkap: z.string().min(1, { message: 'Nama lengkap wajib diisi' }).trim(),
-  username: z.string().min(3, { message: 'Username minimal 3 karakter' }).max(50, { message: 'Username maksimal 50 karakter' }).trim(),
-  email: z.string().email().trim(),
+  nama_lengkap: z.string().trim().min(1, { message: 'Nama lengkap wajib diisi' }),
+  username: z.string().trim().min(3, { message: 'Username minimal 3 karakter' }).max(50, { message: 'Username maksimal 50 karakter' }),
+  email: z.string().trim().email(),
   role_id: z.string().trim().uuid({ message: 'Format role_id harus UUID yang valid' }),
 });
 
 export const UpdateUserSchema = z.object({
-  nama_lengkap: z.string().min(1, { message: 'Nama lengkap wajib diisi' }).trim().optional(),
-  username: z.string().min(3, { message: 'Username minimal 3 karakter' }).max(50, { message: 'Username maksimal 50 karakter' }).trim().optional(),
-  email: z.string().email().trim().optional(),
-  password: z.string().min(6, { message: 'Password minimal 6 karakter' }).optional(),
+  nama_lengkap: z.string().trim().min(1, { message: 'Nama lengkap wajib diisi' }).optional(),
+  username: z.string().trim().min(3, { message: 'Username minimal 3 karakter' }).max(50, { message: 'Username maksimal 50 karakter' }).optional(),
+  email: z.string().trim().email().optional(),
+  password: z.string().trim().min(6, { message: 'Password minimal 6 karakter' }).optional(),
   role_id: z.string().trim().uuid({ message: 'Format role_id harus UUID yang valid' }).optional(),
 });
 
@@ -75,7 +75,7 @@ export const CreateLaporanKaryawanSchema = z.object({
   kategori_id: z.string().trim().uuid({ message: "Format kategori_id harus berupa UUID yang valid" }),
   prioritas: z.enum([LAPORAN_PRIORITY.STANDARD, LAPORAN_PRIORITY.URGENT]),
   lantai_id: z.string().trim().uuid({ message: "Format lantai_id harus berupa UUID yang valid" }),
-  deskripsi_kendala: z.string().min(1, { message: "Deskripsi kendala tidak boleh kosong" }),
+  deskripsi_kendala: z.string().trim().min(1, { message: "Deskripsi kendala tidak boleh kosong" }),
 });
 
 export type CreateUserReq = z.infer<typeof CreateUserSchema>;
