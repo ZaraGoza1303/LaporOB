@@ -9,10 +9,12 @@ export class TugasRepository implements ITugasRepository {
         this.db = db;
     }
 
-    async getAll(kategoriId: string): Promise<Tugas[]> {
+    async getAll(kategoriId?: string): Promise<Tugas[]> {
         const data = await this.db.tugas.findMany({
-            where: {
+            where: kategoriId ? {
                 kategori_id: kategoriId,
+                is_active: true,
+            } : {
                 is_active: true,
             },
             orderBy: {

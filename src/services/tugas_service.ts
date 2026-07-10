@@ -12,7 +12,7 @@ export class TugasService implements ITugasService {
         this.tugasRepo = tugasRepo;
     }
 
-    async getAll(kategoriId: string): Promise<Tugas[]> {
+    async getAll(kategoriId?: string): Promise<Tugas[]> {
         try {
             const data = await this.tugasRepo.getAll(kategoriId);
             return data;

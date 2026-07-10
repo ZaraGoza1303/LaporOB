@@ -14,7 +14,7 @@ async function main() {
 
     //  Bersihin data lama 
     console.log("  Membersihkan data lama...");
-    await client.query("TRUNCATE TABLE histori_pekerjaan, laporan_karyawan, checklist_harian, user_token, \"user\", tugas, kategori, lantai, lokasi, role RESTART IDENTITY CASCADE");
+    await client.query("TRUNCATE TABLE ruangan, histori_pekerjaan, laporan_karyawan, checklist_harian, user_token, \"user\", tugas, kategori, lantai, lokasi, role RESTART IDENTITY CASCADE");
 
     // Role 
     console.log("  Insert role...");
@@ -68,6 +68,33 @@ async function main() {
         ('a67fbf59-44e4-4537-a9b8-5c5193958116', '033f0941-8378-42e3-af2c-29cf83ab8e11', 3, now(), now()),
         ('5970908a-117c-4ab9-95f6-065ed4d8b04c', '6c58477b-a345-4175-893a-58472165b899', 1, now(), now()),
         ('a75e15c3-5990-4936-af85-2848d12d1901', '6c58477b-a345-4175-893a-58472165b899', 2, now(), now())
+    `);
+
+    // Ruangan
+    console.log("  Insert ruangan...");
+    await client.query(`
+      INSERT INTO ruangan (id, lantai_id, nama, created_at, updated_at) VALUES
+        -- Gedung A Lantai 1
+        ('a8db3d11-447a-4c28-98e3-b0fc844e1e01', '45a8d4d0-ea99-404d-b35b-f39cd7315c2b', 'Lobby Gedung A', now(), now()),
+        ('a8db3d11-447a-4c28-98e3-b0fc844e1e02', '45a8d4d0-ea99-404d-b35b-f39cd7315c2b', 'Toilet Pria Lantai 1', now(), now()),
+        ('a8db3d11-447a-4c28-98e3-b0fc844e1e03', '45a8d4d0-ea99-404d-b35b-f39cd7315c2b', 'Toilet Wanita Lantai 1', now(), now()),
+        ('a8db3d11-447a-4c28-98e3-b0fc844e1e04', '45a8d4d0-ea99-404d-b35b-f39cd7315c2b', 'Pantry Lantai 1', now(), now()),
+        -- Gedung A Lantai 2
+        ('a8db3d11-447a-4c28-98e3-b0fc844e2e01', '7249c72a-642d-4ceb-afbe-61396587e37e', 'Ruang Kerja Utama A2', now(), now()),
+        ('a8db3d11-447a-4c28-98e3-b0fc844e2e02', '7249c72a-642d-4ceb-afbe-61396587e37e', 'Ruang Rapat Besar A2', now(), now()),
+        ('a8db3d11-447a-4c28-98e3-b0fc844e2e03', '7249c72a-642d-4ceb-afbe-61396587e37e', 'Toilet Lantai 2', now(), now()),
+        -- Gedung A Lantai 3
+        ('a8db3d11-447a-4c28-98e3-b0fc844e3e01', 'a67fbf59-44e4-4537-a9b8-5c5193958116', 'Ruang Direksi', now(), now()),
+        ('a8db3d11-447a-4c28-98e3-b0fc844e3e02', 'a67fbf59-44e4-4537-a9b8-5c5193958116', 'Ruang Server', now(), now()),
+        ('a8db3d11-447a-4c28-98e3-b0fc844e3e03', 'a67fbf59-44e4-4537-a9b8-5c5193958116', 'Toilet Lantai 3', now(), now()),
+        -- Gedung B Lantai 1
+        ('b8db3d11-447a-4c28-98e3-b0fc844e1e01', '5970908a-117c-4ab9-95f6-065ed4d8b04c', 'Lobby Gedung B', now(), now()),
+        ('b8db3d11-447a-4c28-98e3-b0fc844e1e02', '5970908a-117c-4ab9-95f6-065ed4d8b04c', 'Ruang Kerja Utama B1', now(), now()),
+        ('b8db3d11-447a-4c28-98e3-b0fc844e1e03', '5970908a-117c-4ab9-95f6-065ed4d8b04c', 'Toilet Lantai 1', now(), now()),
+        -- Gedung B Lantai 2
+        ('b8db3d11-447a-4c28-98e3-b0fc844e2e01', 'a75e15c3-5990-4936-af85-2848d12d1901', 'Ruang Rapat B2', now(), now()),
+        ('b8db3d11-447a-4c28-98e3-b0fc844e2e02', 'a75e15c3-5990-4936-af85-2848d12d1901', 'Pantry Lantai 2', now(), now()),
+        ('b8db3d11-447a-4c28-98e3-b0fc844e2e03', 'a75e15c3-5990-4936-af85-2848d12d1901', 'Toilet Lantai 2', now(), now())
     `);
 
     // Kategori 

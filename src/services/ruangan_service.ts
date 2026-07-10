@@ -12,7 +12,7 @@ export class RuanganService implements IRuanganService {
         this.ruanganRepo = ruanganRepo
     }
 
-    async getAll(lantaiId: string): Promise<Ruangan[]> {
+    async getAll(lantaiId?: string): Promise<Ruangan[]> {
         try {
             const data = await this.ruanganRepo.getAll(lantaiId);
             return data;
@@ -21,7 +21,7 @@ export class RuanganService implements IRuanganService {
         }
     }
 
-    async getById(lantaiId: string, ruanganId: string): Promise<Ruangan | null> {
+    async getById(lantaiId: string | undefined, ruanganId: string): Promise<Ruangan | null> {
         try {
             const data = await this.ruanganRepo.getById(lantaiId, ruanganId);
             return data;
@@ -45,7 +45,7 @@ export class RuanganService implements IRuanganService {
         }
     }
 
-    async update(lantaiId: string, ruanganId: string, req: UpdateRuanganReq): Promise<void> {
+    async update(lantaiId: string | undefined, ruanganId: string, req: UpdateRuanganReq): Promise<void> {
         try {
             const ruanganReq: RuanganUpdateInput = {}
             if (req.nama !== undefined) ruanganReq.nama = req.nama
@@ -56,7 +56,7 @@ export class RuanganService implements IRuanganService {
         }
     }
 
-    async delete(lantaiId: string, ruanganId: string): Promise<void> {
+    async delete(lantaiId: string | undefined, ruanganId: string): Promise<void> {
         try {
             await this.ruanganRepo.delete(lantaiId, ruanganId);
         } catch (err) {

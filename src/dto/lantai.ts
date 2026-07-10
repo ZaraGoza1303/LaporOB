@@ -5,7 +5,7 @@ export const LantaiIdParamSchema = z.object({
 });
 
 export const LantaiQuerySchema = z.object({
-  lokasi_id: z.string().trim().uuid({ message: "Format lokasi_id wajib berupa UUID yang valid" }),
+  lokasi_id: z.string().trim().uuid({ message: "Format lokasi_id wajib berupa UUID yang valid" }).optional(),
 });
 
 export const CreateLantaiSchema = z.object({

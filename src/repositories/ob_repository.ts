@@ -76,7 +76,10 @@ export class ObRepository implements IObRepository {
     async getReports(obId: string): Promise<any[]> {
         return this.db.laporan_karyawan.findMany({
             where: {
-                ob_id: obId
+                OR: [
+                    { ob_id: obId },
+                    { ob_id: null }
+                ]
             },
             include: {
                 kategori: true,
@@ -93,9 +96,9 @@ export class ObRepository implements IObRepository {
         });
     }
 
-   async ambilLaporan(laporanId: string, obId: string): Promise<void> {
-    await this.db.laporan_karyawan.update({
-            where: {id: laporanId},
+    async ambilLaporan(laporanId: string, obId: string): Promise<void> {
+        await this.db.laporan_karyawan.update({
+            where: { id: laporanId },
             data: {
                 status: LAPORAN_STATUS.PENDING,
                 ob_id: obId,

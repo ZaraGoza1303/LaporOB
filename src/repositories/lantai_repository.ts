@@ -9,21 +9,23 @@ export class LantaiRepository implements ILantaiRepository {
         this.db = db
     }
 
-    async getAll(lokasiId: string): Promise<Lantai[]> {
+    async getAll(lokasiId?: string): Promise<Lantai[]> {
         const data = await this.db.lantai.findMany({
-            where: {
+            where: lokasiId ? {
                 lokasi_id: lokasiId
-            }
+            } : {}
         });
 
         return data;
     }
 
-    async getById(lokasiId: string, lantaiId: string): Promise<Lantai | null> {
-        const data = await this.db.lantai.findUnique({
-            where: {
+    async getById(lokasiId: string | undefined, lantaiId: string): Promise<Lantai | null> {
+        const data = await this.db.lantai.findFirst({
+            where: lokasiId ? {
                 id: lantaiId,
                 lokasi_id: lokasiId
+            } : {
+                id: lantaiId
             }
         })
 
@@ -36,23 +38,21 @@ export class LantaiRepository implements ILantaiRepository {
         })
     }
 
-    async update(lokasiId: string, lantaiId: string, req: LantaiUpdateInput): Promise<void> {
+    async update(lokasiId: string | undefined, lantaiId: string, req: LantaiUpdateInput): Promise<void> {
         await this.db.lantai.update({
             where: {
-                id: lantaiId,
-                lokasi_id: lokasiId,
+                id: lantaiId
             },
             data: req
         })
     }
 
-    async delete(lokasiId: string, lantaiId: string): Promise<void> {
+    async delete(lokasiId: string | undefined, lantaiId: string): Promise<void> {
         await this.db.lantai.delete({
             where: {
-                id: lantaiId,
-                lokasi_id: lokasiId
+                id: lantaiId
             }
         })
     }
-    
+
 }

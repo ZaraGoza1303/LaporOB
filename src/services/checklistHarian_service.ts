@@ -60,7 +60,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
                 tugas_id: req.tugas_id,
                 kategori_id: req.kategori_id,
                 lantai_id: req.lantai_id,
-                tanggal: new Date(req.tanggal),
+                tanggal: new Date(),
                 status: CHECKLIST_STATUS.BELUM_DIKERJAKAN,
             };
             await this.checklistRepo.insert(dataToInsert);
