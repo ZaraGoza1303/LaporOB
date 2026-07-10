@@ -1,4 +1,4 @@
-import type { ChecklistHarianQuery, CreateChecklistHarianReq, UpdateChecklistHarianReq, ChecklistHarianRes, ChecklistHarianPageResponse } from "../dto/checklist_harian.js";
+import type { ChecklistHarianQuery, CreateChecklistHarianReq, UpdateChecklistHarianReq, ChecklistHarianRes, ChecklistHarianPageResponse, ChecklistHarianGroupedByOB } from "../dto/checklist_harian.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
@@ -48,10 +48,27 @@ export class ChecklistHarianService implements IChecklistHarianService {
                 this.checklistRepo.countTotalChecklistLate()
             ]);
 
+            const mappedItems = data.items.map(item => this.mapToResponse(item));
+            const groupedMap = new Map<string | null, ChecklistHarianGroupedByOB>();
+
+            for (const item of mappedItems) {
+                const key = item.ob_id || null;
+                if (!groupedMap.has(key)) {
+                    groupedMap.set(key, {
+                        ob_id: key,
+                        ob: item.ob || null,
+                        items: []
+                    });
+                }
+                groupedMap.get(key)!.items.push(item);
+            }
+
+            const groupedItems = Array.from(groupedMap.values());
+
             return {
                 checklist: {
                     ...data,
-                    items: data.items.map(this.mapToResponse)
+                    items: groupedItems
                 },
                 counts: {
                     total,

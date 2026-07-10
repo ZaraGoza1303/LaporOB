@@ -164,17 +164,17 @@ export class AdminRepository implements IAdminRepository {
         return this.db.laporan_karyawan.count({ where });
     }
 
-private buildLaporanWhereClause(query: AdminLaporanQuery): Prisma.Laporan_karyawanWhereInput {
-    const where: Prisma.Laporan_karyawanWhereInput = {};
+    private buildLaporanWhereClause(query: AdminLaporanQuery): Prisma.Laporan_karyawanWhereInput {
+        const where: Prisma.Laporan_karyawanWhereInput = {};
 
-    if (query.search) {
-        where.OR = [
-            { deskripsi_kendala: { contains: query.search, mode: "insensitive" } },
-            { pelapor: { nama_lengkap: { contains: query.search, mode: "insensitive" } } },
-            { kategori: { nama_kategori: { contains: query.search, mode: "insensitive" } } },
-            { lantai: { lokasi: { nama_lokasi: { contains: query.search, mode: "insensitive" } } } }
-        ];
-    }
+        if (query.search) {
+            where.OR = [
+                { deskripsi_kendala: { contains: query.search, mode: "insensitive" } },
+                { pelapor: { nama_lengkap: { contains: query.search, mode: "insensitive" } } },
+                { kategori: { nama_kategori: { contains: query.search, mode: "insensitive" } } },
+                { lantai: { lokasi: { nama_lokasi: { contains: query.search, mode: "insensitive" } } } }
+            ];
+        }
 
         if (query.status) {
             where.status = { equals: query.status, mode: "insensitive" };
