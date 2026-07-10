@@ -12,12 +12,12 @@ export const LokasiIdParamSchema = z.object({
 });
 
 export const CreateLokasiSchema = z.object({
-    nama_lokasi: z.string().min(1, { message: "Nama lokasi tidak boleh kosong" }).max(100, { message: "Nama lokasi maksimal 100 karakter" }),
+    nama_lokasi: z.string().trim().min(1, { message: "Nama lokasi tidak boleh kosong" }).max(100, { message: "Nama lokasi maksimal 100 karakter" }),
     jumlah_lantai: z.number().int().min(1, { message: "Jumlah lantai minimal 1" })
 });
 
 export const UpdateLokasiSchema = z.object({
-    nama_lokasi: z.string().min(1, { message: "Nama lokasi tidak boleh kosong" }).max(100, { message: "Nama lokasi maksimal 100 karakter" }).optional(),
+    nama_lokasi: z.string().trim().min(1, { message: "Nama lokasi tidak boleh kosong" }).max(100, { message: "Nama lokasi maksimal 100 karakter" }).optional(),
     jumlah_lantai: z.number().int().min(1, { message: "Jumlah lantai minimal 1" }).optional()
 });
 
