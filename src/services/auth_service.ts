@@ -27,7 +27,7 @@ export class AuthService implements IAuthService {
             }
 
             if (!existsUser.password) {
-                throw new AppError("Akun belum diaktivasi, silahkan aktivasi terlebih dahulu", 401)
+                throw new AppError("Akun belum diaktivasi, silahkan aktivasi terlebih dahulu", 403)
             }
 
             const isMatched = await bcrypt.compare(req.password, existsUser.password!);
@@ -36,7 +36,7 @@ export class AuthService implements IAuthService {
             }
 
             if (!existsUser.is_active) {
-                throw new AppError("Akun sudah tidak aktif, silahkan hubungi admin", 401)
+                throw new AppError("Akun sudah tidak aktif, silahkan hubungi admin", 403)
             }
 
             const jwtToken = await generateJWTToken({ id: existsUser?.id, username: existsUser.username, role: existsUser.role.nama_role });
@@ -45,27 +45,6 @@ export class AuthService implements IAuthService {
             }
 
             return res
-        } catch (err) {
-            handlePrismaError(err)
-        }
-    }
-
-    async loginActivation(req: LoginReq, token: string): Promise<void> {
-        try {
-            const existsUser = await this.authRepo.login(req);
-
-            if (!existsUser) {
-                throw new AppError("Email/Username atau password salah!", 401)
-            }
-
-            const isMatched = await bcrypt.compare(req.password, existsUser.password!);
-            if (!isMatched) {
-                throw new AppError("Email/Username atau password salah!", 401)
-            }
-
-            const record = await this.validateActivationToken(token);
-            await this.usersRepo.markTokenAsUsed(record.id);
-            
         } catch (err) {
             handlePrismaError(err)
         }
