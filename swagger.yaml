@@ -69,6 +69,21 @@ components:
           type: string
           format: password
 
+    ActivateAccountRequest:
+      type: object
+      required:
+        - password
+        - confirmPassword
+      properties:
+        password:
+          type: string
+          format: password
+          description: Password minimal 6 karakter
+        confirmPassword:
+          type: string
+          format: password
+          description: Konfirmasi password, harus sama dengan password
+
     PaginationMeta:
       type: object
       properties:
@@ -115,28 +130,6 @@ paths:
         '401':
           description: Login gagal
 
-  /api/auth/login-activation:
-    post:
-      tags:
-        - Auth
-      summary: Login menggunakan token aktivasi (Publik)
-      parameters:
-        - name: token
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Token aktivasi dari email
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-      responses:
-        '200':
-          description: Login berhasil
-
   /api/auth/check-token:
     get:
       tags:
@@ -151,6 +144,42 @@ paths:
       responses:
         '200':
           description: Token valid
+
+  /api/auth/activate-account:
+    post:
+      tags:
+        - Auth
+      summary: Aktivasi akun & set password (Publik)
+      description: Set password pertama kali setelah admin buat akun, link dari email
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Token aktivasi dari URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateAccountRequest'
+      responses:
+        '200':
+          description: Akun berhasil diaktivasi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Akun berhasil diaktivasi, silahkan login
+        '400':
+          description: Token tidak valid / Validation Failed / Password tidak cocok
 
 # USER / PROFILE
   /api/user/profile:
