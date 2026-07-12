@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { LAPORAN_PRIORITY, LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from '../utils/constants.js';
-import { Prisma } from "../generated/prisma/client.js";
 
 export const GetDashboardQuerySchema = z.object({
     range: z.enum(['mingguan', 'bulanan', 'tahunan']).default('mingguan'),
@@ -52,8 +51,9 @@ export interface RecentLaporanResponse {
     id_laporan: string;
     nama_karyawan: string;
     lokasi: string;
-    prioritas:LaporanPriority;
+    prioritas: LaporanPriority;
     status: LaporanStatus;
+    created_at: Date;
 }
 
 export interface DailyChecklistObResponse {
@@ -143,21 +143,6 @@ export interface DailyChecklistObPayload {
 }
 
 
-export type RecentActivityPayload = Prisma.Laporan_karyawanGetPayload<{
-    include: {
-        lantai: {
-            include: { lokasi: true }
-        };
-        ob: true;
-    };
-}>;
-
-export interface ReportSummaryPayload {
-    id: string;
-    status: string;
-    prioritas: string;
-    created_at: Date;
-}
 export const UserSearchQuerySchema = z.object({
     search: z.preprocess(emptyToNull, z.string().nullable()),
     role_id: z.preprocess(emptyToNull, z.string().uuid({ message: "Format role_id harus UUID yang valid" }).nullable()),
