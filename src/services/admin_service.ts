@@ -1,6 +1,6 @@
-import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, UserStatsRes, ReportSummaryPayload, AdminReportDetailResponse, DailyChecklistObResponse } from "../dto/admin.js";
+import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, UserStatsRes, AdminReportDetailResponse, DailyChecklistObResponse } from "../dto/admin.js";
 import type { DashboardMainResponse, GetDashboardQuery, RecentLaporanResponse, StatDetail, BarChartResponse, PieChartResponse } from "../dto/admin.js";
-import type { IAdminRepository } from "../repositories/admin_repository.interface.js";
+import type { IAdminRepository, ReportSummaryPayload, RecentLaporanPayload } from "../repositories/admin_repository.interface.js";
 import type { IObRepository } from "../repositories/ob_repository.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { calculateDateRanges } from "../utils/date.js";
@@ -70,7 +70,7 @@ export class AdminService implements IAdminService {
                 lokasi_terpopuler: lokasiTerpopuler,
                 laporan_aktif: {
                     total_laporan: totalLaporanAktif
-                },
+                }
             };
         } catch (err) {
             handlePrismaError(err);
@@ -89,40 +89,40 @@ export class AdminService implements IAdminService {
 
     const { current_start, current_end, previous_start, previous_end } = calculateDateRanges(period);
 
-    const [rawActivities, currentReports, previousReports, dailyChecklist] = await Promise.all([
-        this.adminRepo.getRecentActivities(4),
-        this.adminRepo.getReportsByDateRange(current_start, current_end),
-        this.adminRepo.getReportsByDateRange(previous_start, previous_end),
-        this.adminRepo.getDailyChecklistOb()
-    ]);
+        const [rawActivities, currentReports, previousReports, dailyChecklist] = await Promise.all([
+            this.adminRepo.getRecentActivities(4),
+            this.adminRepo.getReportsByDateRange(current_start, current_end),
+            this.adminRepo.getReportsByDateRange(previous_start, previous_end),
+            this.adminRepo.getDailyChecklistOb()
+        ]);
 
     const kpi = this.calculateKpi(currentReports, previousReports);
     const pie_chart = this.calculatePieChart(currentReports);
     const bar_chart = this.calculateBarChart(currentReports, period);
 
-    const recent_laporan: RecentLaporanResponse[] = rawActivities.map(
-        (item) => ({
-            id_laporan: item.id,
-            nama_karyawan: item.pelapor?.nama_lengkap ?? "Anonim",
-            lokasi: item.lantai?.lokasi
-                ? `${item.lantai.lokasi.nama_lokasi} Lantai ${item.lantai.nomor_lantai}`
-                : "Lokasi tidak diketahui",
-            prioritas: item.prioritas as LaporanPriority,
-            status: item.status as LaporanStatus,
-        })
-    );
+        const recent_laporan: RecentLaporanResponse[] = rawActivities.map(
+            (activity: RecentLaporanPayload, index: number) => ({
+                id_laporan: `LPR - ${String(index + 1).padStart(3, "0")}`,
+                nama_karyawan: activity.pelapor?.nama_lengkap ?? "Anonim",
+                lokasi: activity.lantai?.lokasi?.nama_lokasi
+                    ? `${activity.lantai.lokasi.nama_lokasi} Lantai ${activity.lantai.nomor_lantai}`
+                    : "Lokasi tidak diketahui",
+                prioritas: activity.prioritas as LaporanPriority,
+                status: activity.status as LaporanStatus,
+                created_at: activity.created_at,
+            })
+        );
 
-    const daily_checklist_ob: DailyChecklistObResponse[] = dailyChecklist.map((item) => ({
-        nama_ob: item.nama_ob,
-        total_tugas: item.total_tugas,
-        tugas_selesai: item.tugas_selesai,
-        persentase: item.total_tugas > 0
-            ? Math.round((item.tugas_selesai / item.total_tugas) * 100)
-            : 0
-    }));
+        const daily_checklist_ob: DailyChecklistObResponse[] = dailyChecklist.map((item) => ({
+            ob_id: item.ob_id,
+            nama_ob: item.nama_ob,
+            total_tugas: item.total_tugas,
+            tugas_selesai: item.tugas_selesai,
+            persentase: item.total_tugas > 0 ? Math.round((item.tugas_selesai / item.total_tugas) * 100) : 0,
+        }));
 
-    return { kpi, bar_chart, pie_chart, recent_laporan, daily_checklist_ob };
-}
+        return { kpi, bar_chart, pie_chart, recent_laporan, daily_checklist_ob };
+    }
 
     private calculateKpi(current: ReportSummaryPayload[], previous: ReportSummaryPayload[]): DashboardMainResponse['kpi'] {
     const calculateTrend = (currCount: number, prevCount: number): StatDetail => {
