@@ -1,8 +1,8 @@
-import type { AdminLaporanQuery, UserStatsRes } from "../dto/admin.js";
+import type { AdminLaporanQuery, DailyChecklistObPayload, UserStatsRes } from "../dto/admin.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import { Prisma, type PrismaClient } from "../generated/prisma/client.js";
-import type { IAdminRepository, RecentActivityPayload, ReportSummaryPayload, LaporanDetailPayload, AdminLaporanPayload, LokasiTerpopulerPayload } from "./admin_repository.interface.js";
-import { LAPORAN_STATUS } from "../utils/constants.js";
+import type { IAdminRepository, RecentLaporanPayload, ReportSummaryPayload, LaporanDetailPayload, AdminLaporanPayload, LokasiTerpopulerPayload } from "./admin_repository.interface.js";
+import { CHECKLIST_STATUS, LAPORAN_STATUS } from "../utils/constants.js";
 
 export class AdminRepository implements IAdminRepository {
     private db: PrismaClient;
@@ -40,21 +40,32 @@ export class AdminRepository implements IAdminRepository {
 
         return res;
     }
-
-    async getRecentActivities(limit: number): Promise<RecentActivityPayload[]> {
-        return this.db.laporan_karyawan.findMany({
-            include: {
-                lantai: {
-                    include: { lokasi: true }
-                },
-                ob: true
+    
+async getRecentActivities(limit: number): Promise<RecentLaporanPayload[]> {
+    return this.db.laporan_karyawan.findMany({
+        select: {
+            id: true,
+            prioritas: true,
+            status: true,
+            created_at: true,
+            pelapor: {
+                select: { nama_lengkap: true }
             },
-            orderBy: {
-                updated_at: 'desc'
-            },
-            take: limit
-        });
-    }
+            lantai: {
+                select: {
+                    nomor_lantai: true,
+                    lokasi: {
+                        select: { nama_lokasi: true }
+                    }
+                }
+            }
+        },
+        orderBy: {
+            updated_at: 'desc'
+        },
+        take: limit
+    });
+}
 
     async getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]> {
         return this.db.laporan_karyawan.findMany({
@@ -67,10 +78,12 @@ export class AdminRepository implements IAdminRepository {
             select: {
                 id: true,
                 status: true,
+                prioritas: true,
                 created_at: true
             }
         });
     }
+    
     async getReportDetailById(id: string): Promise<LaporanDetailPayload | null> {
     return await this.db.laporan_karyawan.findUnique({
         where: { id },
@@ -163,6 +176,47 @@ export class AdminRepository implements IAdminRepository {
 
         return this.db.laporan_karyawan.count({ where });
     }
+
+    async getDailyChecklistOb(): Promise<DailyChecklistObPayload[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const [allChecklists, completedChecklists, obUsers] = await Promise.all([
+        this.db.checklist_harian.groupBy({
+            by: ['ob_id'],
+            where: {
+                tanggal: { gte: today, lt: tomorrow },
+                ob_id: { not: null }
+            },
+            _count: { id: true },
+        }),
+        this.db.checklist_harian.groupBy({
+            by: ['ob_id'],
+            where: {
+                tanggal: { gte: today, lt: tomorrow },
+                ob_id: { not: null },
+                status: CHECKLIST_STATUS.SELESAI
+            },
+            _count: { id: true },
+        }),
+        this.db.user.findMany({
+            where: { role: { nama_role: 'ob' } },
+            select: { id: true, nama_lengkap: true }
+        })
+    ]);
+
+    const obNameMap = new Map(obUsers.map(u => [u.id, u.nama_lengkap]));
+    const completedMap = new Map(completedChecklists.map(c => [c.ob_id, c._count.id]));
+
+    return allChecklists.map(c => ({
+        ob_id: c.ob_id!,
+        nama_ob: obNameMap.get(c.ob_id!) ?? "Unknown",
+        total_tugas: c._count.id,
+        tugas_selesai: completedMap.get(c.ob_id!) ?? 0
+    }));
+}
 
 private buildLaporanWhereClause(query: AdminLaporanQuery): Prisma.Laporan_karyawanWhereInput {
     const where: Prisma.Laporan_karyawanWhereInput = {};

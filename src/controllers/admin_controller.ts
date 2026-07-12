@@ -13,21 +13,25 @@ export class AdminController {
     }
 
     async getDashboardData(req: Request, res: Response) {
-        try {
-            const parsedQuery = GetDashboardQuerySchema.parse(req.query);
-
-            const dashboardData = await this.adminService.getDashboardData(parsedQuery);
-
-            return res.status(200).json(
-                sendSuccessfullResponse("Berhasil mengambil data dashboard admin", dashboardData)
-            );
-        } catch (err: any) {
-            if (err instanceof AppError) {
-                return res.status(err.statusCode).json(sendErrorResponse(err.message));
-            }
-            return res.status(500).json(sendErrorResponse("Gagal mengambil data dashboard admin", err.message));
+    try {
+        const parsedQuery = GetDashboardQuerySchema.safeParse(req.query);
+        if (!parsedQuery.success) {
+            const formattedErr = parsedQuery.error.flatten().fieldErrors;
+            return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
         }
+
+        const dashboardData = await this.adminService.getDashboardData(parsedQuery.data);
+
+        return res.status(200).json(
+            sendSuccessfullResponse("Berhasil mengambil data dashboard admin", dashboardData)
+        );
+    } catch (err: any) {
+        if (err instanceof AppError) {
+            return res.status(err.statusCode).json(sendErrorResponse(err.message));
+        }
+        return res.status(500).json(sendErrorResponse("Gagal mengambil data dashboard admin"));
     }
+}
 
     async getAllLaporan(req: Request, res: Response) {
         try {
