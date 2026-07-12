@@ -133,7 +133,6 @@ export interface AdminLaporanPageResponse {
     };
     lokasi_terpopuler: LokasiTerpopulerResponse[];
     laporan_aktif: LaporanAktifResponse;
-    recent_laporan: RecentLaporanResponse[];
 }
 
 export interface DailyChecklistObPayload {

@@ -40,7 +40,7 @@ export class AdminRepository implements IAdminRepository {
 
         return res;
     }
-    
+
 async getRecentActivities(limit: number): Promise<RecentLaporanPayload[]> {
     return this.db.laporan_karyawan.findMany({
         select: {
@@ -61,7 +61,7 @@ async getRecentActivities(limit: number): Promise<RecentLaporanPayload[]> {
             }
         },
         orderBy: {
-            updated_at: 'desc'
+            created_at: 'desc'
         },
         take: limit
     });
