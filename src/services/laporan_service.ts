@@ -20,11 +20,7 @@ export class LaporanService implements ILaporanService {
                 throw new AppError("Laporan tidak ditemukan", 404);
             }
 
-            const isOwner = role === "ob"
-                ? item.ob_id === userId
-                : item.pelapor_id === userId;
-
-            if (!isOwner) {
+        if (role !== "ob" || item.ob_id !== userId) {
                 throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
             }
 

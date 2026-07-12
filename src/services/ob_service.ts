@@ -2,10 +2,10 @@ import type { IObService } from "./ob_service.interface.js";
 import type { IObRepository } from "../repositories/ob_repository.interface.js";
 import type { ILaporanRepository, ProfileReport } from "../repositories/laporan_repository.interface.js";
 import type { ObHomeRes, CreateHistoriReq } from "../dto/ob.js";
-import type { MappedProfileReport } from "../dto/users.js";
+import type { MappedProfileReport, MappedReportDetailRes } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import { resolveFileUrl } from "../utils/url.js";
-import { handlePrismaError } from "../utils/error.js";
+import { AppError, handlePrismaError } from "../utils/error.js";
 import { CHECKLIST_STATUS, LAPORAN_PRIORITY, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 
 export class ObService implements IObService {
@@ -180,6 +180,39 @@ export class ObService implements IObService {
                     limit,
                     total_pages: 0
                 }
+            };
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
+    async getDetailRiwayat(obId: string, laporanId: string): Promise<MappedReportDetailRes> {
+        try {
+            const item = await this.laporanRepo.getReportDetailById(laporanId);
+            if (!item) {
+                throw new AppError("Laporan tidak ditemukan", 404);
+            }
+
+            if (item.ob_id !== obId) {
+                throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
+            }
+
+            const history = item.histori_pekerjaan?.[0];
+
+            return {
+                id: item.id,
+                kategori: item.kategori?.nama_kategori || "",
+                deskripsi_kendala: item.deskripsi_kendala || "",
+                status: item.status as LaporanStatus,
+                prioritas: item.prioritas as LaporanPriority,
+                foto_masalah: Array.isArray(item.foto_masalah) ? (item.foto_masalah as string[]).map(resolveFileUrl).filter((url): url is string => !!url) : [],
+                foto_selesai: history && Array.isArray(history.foto_selesai) ? history.foto_selesai.map(resolveFileUrl).filter((url): url is string => !!url) : [],
+                catatan: history?.catatan || "",
+                lokasi: item.lantai?.lokasi?.nama_lokasi || "",
+                nomor_lantai: item.lantai?.nomor_lantai || 0,
+                nama_karyawan: item.pelapor?.nama_lengkap || "",
+                nama_ob: item.ob?.nama_lengkap || null,
+                created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
             };
         } catch (err) {
             handlePrismaError(err);

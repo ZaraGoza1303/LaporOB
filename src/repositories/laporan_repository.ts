@@ -113,7 +113,6 @@ export class LaporanRepository implements ILaporanRepository {
         if (search) {
             where.OR = [
                 { deskripsi_kendala: { contains: search, mode: "insensitive" as const } },
-                { kategori: { nama_kategori: { contains: search, mode: "insensitive" as const } } },
                 { lantai: { lokasi: { nama_lokasi: { contains: search, mode: "insensitive" as const } } } }
             ];
         }
