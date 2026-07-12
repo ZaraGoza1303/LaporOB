@@ -28,11 +28,10 @@ export class AdminService implements IAdminService {
 
     async getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<AdminLaporanPageResponse> {
         try {
-            const [laporanData, lokasiTerpopuler, totalLaporanAktif, recentActivities] = await Promise.all([
+            const [laporanData, lokasiTerpopuler, totalLaporanAktif] = await Promise.all([
                 this.adminRepo.getAllLaporan(page, limit, query),
                 this.adminRepo.getLokasiTerpopuler(6, query),
-                this.adminRepo.countLaporanAktif(query),
-                this.adminRepo.getRecentActivities(5)
+                this.adminRepo.countLaporanAktif(query)
             ]);
 
             const laporanMapped: AdminLaporanItemResponse[] = laporanData.items.map((item, index) => {
@@ -57,18 +56,6 @@ export class AdminService implements IAdminService {
                 };
             });
 
-        const recent_laporan = recentActivities.map(
-            (activity) => ({
-                id_laporan: activity.id,
-                nama_karyawan: activity.pelapor?.nama_lengkap ?? "Anonim",
-                lokasi: activity.lantai?.lokasi
-                    ? `${activity.lantai.lokasi.nama_lokasi} Lantai ${activity.lantai.nomor_lantai}`
-                    : "Lokasi tidak diketahui",
-                prioritas: activity.prioritas as LaporanPriority,
-                status: activity.status as LaporanStatus,
-            })
-        );
-
             return {
                 laporan: {
                     items: laporanMapped,
@@ -84,7 +71,6 @@ export class AdminService implements IAdminService {
                 laporan_aktif: {
                     total_laporan: totalLaporanAktif
                 },
-                recent_laporan
             };
         } catch (err) {
             handlePrismaError(err);
@@ -104,7 +90,7 @@ export class AdminService implements IAdminService {
     const { current_start, current_end, previous_start, previous_end } = calculateDateRanges(period);
 
     const [rawActivities, currentReports, previousReports, dailyChecklist] = await Promise.all([
-        this.adminRepo.getRecentActivities(5),
+        this.adminRepo.getRecentActivities(4),
         this.adminRepo.getReportsByDateRange(current_start, current_end),
         this.adminRepo.getReportsByDateRange(previous_start, previous_end),
         this.adminRepo.getDailyChecklistOb()
