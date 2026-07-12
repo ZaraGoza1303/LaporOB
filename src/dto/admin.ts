@@ -3,7 +3,7 @@ import { LAPORAN_PRIORITY, LAPORAN_STATUS, type LaporanPriority, type LaporanSta
 import { Prisma } from "../generated/prisma/client.js";
 
 export const GetDashboardQuerySchema = z.object({
-    period: z.enum(['weekly', 'monthly', 'yearly']).default('weekly'),
+    range: z.enum(['mingguan', 'bulanan', 'tahunan']).default('mingguan'),
 });
 export type GetDashboardQuery = z.infer<typeof GetDashboardQuerySchema>;
 
@@ -30,9 +30,10 @@ export interface StatDetail {
 }
 
 export interface KpiResponse {
-    total_reports: StatDetail;
-    completed_reports: StatDetail;
-    ongoing_reports: StatDetail;
+    total_laporan: StatDetail;
+    laporan_selesai: StatDetail;
+    laporan_berjalan: StatDetail;
+    laporan_ditolak: StatDetail;
 }
 
 export interface BarChartResponse {
@@ -42,24 +43,32 @@ export interface BarChartResponse {
 
 export interface PieChartResponse {
     status: LaporanStatus;
+    label: string;
     percentage: number;
     count: number;
 }
 
-export interface RecentActivityResponse {
-    id: string;
-    title: string;
-    location: string;
+export interface RecentLaporanResponse {
+    id_laporan: string;
+    nama_karyawan: string;
+    lokasi: string;
+    prioritas:LaporanPriority;
     status: LaporanStatus;
-    assignee_name: string | null;
-    timestamp: Date;
+}
+
+export interface DailyChecklistObResponse {
+    nama_ob: string;
+    total_tugas: number;
+    tugas_selesai: number;
+    persentase: number;
 }
 
 export interface DashboardMainResponse {
     kpi: KpiResponse;
     bar_chart: BarChartResponse[];
     pie_chart: PieChartResponse[];
-    recent_activities: RecentActivityResponse[];
+    recent_laporan: RecentLaporanResponse[];
+    daily_checklist_ob: DailyChecklistObResponse[];
 }
 
 export interface UserStatsRes {
@@ -124,8 +133,16 @@ export interface AdminLaporanPageResponse {
     };
     lokasi_terpopuler: LokasiTerpopulerResponse[];
     laporan_aktif: LaporanAktifResponse;
-    recent_activities: RecentActivityResponse[];
+    recent_laporan: RecentLaporanResponse[];
 }
+
+export interface DailyChecklistObPayload {
+    ob_id: string;
+    nama_ob: string;
+    total_tugas: number;
+    tugas_selesai: number;
+}
+
 
 export type RecentActivityPayload = Prisma.Laporan_karyawanGetPayload<{
     include: {
@@ -139,6 +156,7 @@ export type RecentActivityPayload = Prisma.Laporan_karyawanGetPayload<{
 export interface ReportSummaryPayload {
     id: string;
     status: string;
+    prioritas: string;
     created_at: Date;
 }
 export const UserSearchQuerySchema = z.object({
