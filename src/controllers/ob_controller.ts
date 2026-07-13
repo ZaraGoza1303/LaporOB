@@ -60,6 +60,7 @@ export class ObController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
             const laporanId = validateParams.data.laporan_id;
+            const obId = req.user?.id as string;
 
             const validate = CreateHistoriSchema.safeParse(req.body);
 
@@ -93,7 +94,7 @@ export class ObController {
                 fotoUrls.push(url);
             }
 
-            await this.obService.createHistoriPekerjaan(laporanId, fotoUrls, validate.data);
+            await this.obService.createHistoriPekerjaan(laporanId, fotoUrls, validate.data, obId);
 
             return res.status(200).json(sendSuccessfullResponse("Histori pekerjaan berhasil disimpan"));
         } catch (err: any) {
@@ -112,6 +113,7 @@ export class ObController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
             const laporanId = validateParams.data.laporan_id;
+            const obId = req.user?.id as string;
 
             const validate = CreateHistoriSchema.safeParse(req.body);
 
@@ -145,7 +147,7 @@ export class ObController {
                 fotoUrls.push(url);
             }
 
-            await this.obService.tolakLaporan(laporanId, fotoUrls, validate.data);
+            await this.obService.tolakLaporan(laporanId, fotoUrls, validate.data, obId);
 
             return res.status(200).json(sendSuccessfullResponse("Laporan berhasil ditolak dan bukti disimpan"));
         } catch (err: any) {

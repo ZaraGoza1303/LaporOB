@@ -108,6 +108,21 @@ export class UsersRepository implements IUsersRepository {
         });
     }
 
+    async getByRole(nama_role: string): Promise<User[]> {
+        return this.db.user.findMany({
+            where: {
+                is_deleted: false,
+                is_active: true,
+                role: {
+                    nama_role: {
+                        equals: nama_role,
+                        mode: 'insensitive'
+                    }
+                }
+            }
+        });
+    }
+
    async countLaporanByUserId(userId: string): Promise<number> {
     return this.db.laporan_karyawan.count({
         where: { pelapor_id: userId }

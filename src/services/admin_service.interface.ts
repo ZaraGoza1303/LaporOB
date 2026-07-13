@@ -1,5 +1,4 @@
 import type { AdminLaporanPageResponse, AdminLaporanQuery, AdminReportDetailResponse, UserSearchQuery, UserStatsRes } from '../dto/admin.js';
-import type { PaginatedResponse } from '../dto/response.js';
 import type { GetDashboardQuery, DashboardMainResponse } from '../dto/admin.js';
 
 export interface IAdminService {

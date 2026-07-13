@@ -1,33 +1,43 @@
 import type { CreateLaporanKaryawanInput, UserHomeRes, MappedProfileReport, ProfileRes } from "../dto/users.js";
-import { LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
+import { LAPORAN_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
-import type { IUsersRepository } from "../repositories/users_repository.interface.js";
-import type { ILaporanRepository, ProfileReport } from "../repositories/laporan_repository.interface.js";
+import type { IUsersService } from "./users_service.interface.js";
+import type { ILaporanService } from "./laporan_service.interface.js";
+import type { ProfileReport } from "../repositories/laporan_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import { resolveFileUrl } from "../utils/url.js";
 import type { IKaryawanService, RiwayatParams } from "./karyawan_service.interface.js";
 import type { IKategoriService } from "./kategori_service.interface.js";
 import type { PaginatedResponse } from "../dto/response.js";
+import type { INotificationService } from "./notification_service.interface.js";
+import type { BulkNotificationData, NotificationData } from "../dto/notification.js";
 
 export class KaryawanService implements IKaryawanService {
-    private usersRepo: IUsersRepository;
-    private laporanRepo: ILaporanRepository;
+    private usersService: IUsersService;
+    private laporanService: ILaporanService;
     private kategoriService: IKategoriService;
+    private notificationService: INotificationService
 
-    constructor(usersRepo: IUsersRepository, laporanRepo: ILaporanRepository, kategoriService: IKategoriService) {
-        this.usersRepo = usersRepo;
-        this.laporanRepo = laporanRepo;
+    constructor(
+        usersService: IUsersService,
+        laporanService: ILaporanService,
+        kategoriService: IKategoriService,
+        notificationService: INotificationService
+        ) {
+        this.usersService = usersService;
+        this.laporanService = laporanService;
         this.kategoriService = kategoriService;
+        this.notificationService = notificationService;
     }
 
     async getHomeStats(userId: string): Promise<UserHomeRes> {
         try {
-            const karyawanUser = await this.usersRepo.getByID(userId);
+            const karyawanUser = await this.usersService.getByID(userId);
             if (!karyawanUser) {
                 throw new Error("Karyawan tidak ditemukan")
             }
 
-            const activity = await this.laporanRepo.getActivity(userId);
+            const activity = await this.laporanService.getActivity(userId);
             const activityMapped = activity.map((item) => {
                 return {
                     id: item.id,
@@ -65,6 +75,9 @@ export class KaryawanService implements IKaryawanService {
                 lantai: {
                     connect: { id: req.lantai_id }
                 },
+                ruangan: {
+                    connect: { id: req.ruangan_id }
+                },
                 kategori: {
                     connect: { id: req.kategori_id }
                 },
@@ -75,7 +88,17 @@ export class KaryawanService implements IKaryawanService {
                 status: LAPORAN_STATUS.BELUM_DIKERJAKAN,
             };
 
-            await this.laporanRepo.insertReport(laporanReq);
+            await this.laporanService.insertReport(laporanReq);
+            const allOB = await this.usersService.getByRole('ob');
+
+            const notifReq: BulkNotificationData = {
+                penerima_ids: allOB.map(ob => ob.id),
+                pengirim_id: userId,
+                tipe: NOTIFICATION_TYPE.LAPORAN_BARU,
+                judul: NOTIFICATION_TITLE.LAPORAN_BARU,
+            }
+
+            await this.notificationService.sendBulkNotification(notifReq)
         } catch (err) {
             handlePrismaError(err);
         }
@@ -83,7 +106,7 @@ export class KaryawanService implements IKaryawanService {
 
     async getRiwayat(userId: string, limit: number, params: RiwayatParams): Promise<PaginatedResponse<MappedProfileReport>> {
         try {
-            const reportsData = await this.laporanRepo.getReportsByUserId(userId, limit, params.cursor, params.search, params.status);
+            const reportsData = await this.laporanService.getReportsByUserId(userId, limit, params.cursor, params.search, params.status);
 
             const laporanMapped: MappedProfileReport[] = reportsData.items.map((item: ProfileReport) => {
                 return {

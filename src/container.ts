@@ -34,6 +34,9 @@ import { ObController } from "./controllers/ob_controller.js";
 import { RuanganController } from "./controllers/ruangan_controller.js";
 import { TugasController } from "./controllers/tugas_controller.js";
 import { UsersController } from "./controllers/users_controller.js";
+import { NotificationRepository } from "./repositories/notification_repository.js";
+import { NotificationService } from "./services/notification_service.js";
+import { NotificationController } from "./controllers/notification_controller.js";
 
 // PRISMA
 const prisma = new PrismaClient();
@@ -50,6 +53,7 @@ const obRepository = new ObRepository(prisma);
 const ruanganRepository = new RuanganRepository(prisma);
 const tugasRepository = new TugasRepository(prisma);
 const usersRepository = new UsersRepository(prisma);
+const notificationRepository = new NotificationRepository(prisma);
 
 //  STORAGE 
 const storageService = StorageServiceFactory.getProvider();
@@ -62,11 +66,12 @@ const lokasiService = new LokasiService(lokasiRepository);
 const ruanganService = new RuanganService(ruanganRepository);
 const tugasService = new TugasService(tugasRepository);
 const usersService = new UsersService(usersRepository);
-const checklistHarianService = new ChecklistHarianService(checklistHarianRepository);
+const notificationService = new NotificationService(notificationRepository);
+const checklistHarianService = new ChecklistHarianService(checklistHarianRepository, notificationService);
 const authService = new AuthService(authRepository, usersRepository);
-const obService = new ObService(obRepository, laporanRepository);
-const adminService = new AdminService(adminRepository, obRepository);
-const karyawanService = new KaryawanService(usersRepository, laporanRepository, kategoriService);
+const obService = new ObService(obRepository, laporanRepository, notificationService);
+const adminService = new AdminService(adminRepository, obRepository, laporanService);
+const karyawanService = new KaryawanService(usersService, laporanService, kategoriService, notificationService);
 
 //  CONTROLLERS 
 export const adminController = new AdminController(adminService);
@@ -86,3 +91,4 @@ export const usersController = new UsersController(
     laporanService,
     storageService
 );
+export const notificationController = new NotificationController(notificationService);

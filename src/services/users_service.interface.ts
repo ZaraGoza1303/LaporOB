@@ -6,6 +6,7 @@ import type { User } from "../generated/prisma/client.js";
 export interface IUsersService {
     getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>>;
     getByID(userId: string): Promise<any | null>;
+    getByRole(nama_role: string): Promise<User[]>;
     create(req: CreateUserReq): Promise<CreateUserRes>;
     update(userId: string, req: UpdateUserReq | UpdateProfileReq): Promise<void>;
     delete(userId: string): Promise<void>;

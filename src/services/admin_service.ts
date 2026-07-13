@@ -1,9 +1,11 @@
-import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, UserStatsRes, AdminReportDetailResponse, DailyChecklistObResponse } from "../dto/admin.js";
-import type { DashboardMainResponse, GetDashboardQuery, RecentLaporanResponse, StatDetail, BarChartResponse, PieChartResponse } from "../dto/admin.js";
-import type { IAdminRepository, ReportSummaryPayload, RecentLaporanPayload } from "../repositories/admin_repository.interface.js";
+import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse } from "../dto/admin.js";
+import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse } from "../dto/admin.js";
+import type { IAdminRepository } from "../repositories/admin_repository.interface.js";
+import type { AdminLaporanPayload } from "../repositories/laporan_repository.interface.js";
 import type { IObRepository } from "../repositories/ob_repository.interface.js";
+import type { ILaporanService } from "../services/laporan_service.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
-import { calculateDateRanges } from "../utils/date.js";
+import  { calculateDateRanges } from "../utils/date.js"
 import { LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { resolveFileUrl } from "../utils/url.js";
 import type { IAdminService } from "./admin_service.interface.js";
@@ -11,10 +13,12 @@ import type { IAdminService } from "./admin_service.interface.js";
 export class AdminService implements IAdminService {
     private obRepo: IObRepository;
     private adminRepo: IAdminRepository;
+    private laporanService: ILaporanService;
 
-    constructor(adminRepo: IAdminRepository, obRepo: IObRepository) {
+    constructor(adminRepo: IAdminRepository, obRepo: IObRepository, laporanService: ILaporanService) {
         this.adminRepo = adminRepo;
         this.obRepo = obRepo;
+        this.laporanService = laporanService;
     }
 
     async getUserStats(): Promise<UserStatsRes> {
@@ -28,13 +32,13 @@ export class AdminService implements IAdminService {
 
     async getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<AdminLaporanPageResponse> {
         try {
-            const [laporanData, lokasiTerpopuler, totalLaporanAktif] = await Promise.all([
-                this.adminRepo.getAllLaporan(page, limit, query),
-                this.adminRepo.getLokasiTerpopuler(6, query),
-                this.adminRepo.countLaporanAktif(query)
+            const [laporanData, ruanganTerpopuler, totalLaporanAktif] = await Promise.all([
+                this.laporanService.getAllLaporan(page, limit, query),
+                this.laporanService.getRuanganTerpopuler(6, query),
+                this.laporanService.countLaporanAktif(query)
             ]);
 
-            const laporanMapped: AdminLaporanItemResponse[] = laporanData.items.map((item, index) => {
+            const laporanMapped: AdminLaporanItemResponse[] = laporanData.items.map((item: AdminLaporanPayload, index: number) => {
                 const nomorLaporan = ((page - 1) * limit) + index + 1;
 
                 return {
@@ -67,7 +71,7 @@ export class AdminService implements IAdminService {
                         total_pages: 0
                     }
                 },
-                lokasi_terpopuler: lokasiTerpopuler,
+                ruangan_terpopuler: ruanganTerpopuler,
                 laporan_aktif: {
                     total_laporan: totalLaporanAktif
                 }
@@ -77,51 +81,36 @@ export class AdminService implements IAdminService {
         }
     }
 
-   public async getDashboardData(query: GetDashboardQuery): Promise<DashboardMainResponse> {
-    const { range } = query;
+    public async getDashboardData(query: GetDashboardQuery): Promise<DashboardMainResponse> {
+        const { period } = query;
+        
+        const { current_start, current_end, previous_start, previous_end } = calculateDateRanges(period);
 
-    const rangeToPeriodMap: Record<string, 'weekly' | 'monthly' | 'yearly'> = {
-        mingguan: 'weekly',
-        bulanan: 'monthly',
-        tahunan: 'yearly',
-    };
-    const period = rangeToPeriodMap[range] ?? 'weekly';
-
-    const { current_start, current_end, previous_start, previous_end } = calculateDateRanges(period);
-
-        const [rawActivities, currentReports, previousReports, dailyChecklist] = await Promise.all([
-            this.adminRepo.getRecentActivities(4),
-            this.adminRepo.getReportsByDateRange(current_start, current_end),
-            this.adminRepo.getReportsByDateRange(previous_start, previous_end),
-            this.adminRepo.getDailyChecklistOb()
+        const [rawActivities, currentReports, previousReports, daily_checklist_ob] = await Promise.all([
+            this.laporanService.getRecentActivities(5),
+            this.laporanService.getReportsByDateRange(current_start, current_end),
+            this.laporanService.getReportsByDateRange(previous_start, previous_end),
+            this.adminRepo.getDailyChecklistOB(new Date())
         ]);
 
     const kpi = this.calculateKpi(currentReports, previousReports);
     const pie_chart = this.calculatePieChart(currentReports);
     const bar_chart = this.calculateBarChart(currentReports, period);
 
-        const recent_laporan: RecentLaporanResponse[] = rawActivities.map(
-            (activity: RecentLaporanPayload, index: number) => ({
-                id_laporan: `LPR - ${String(index + 1).padStart(3, "0")}`,
-                nama_karyawan: activity.pelapor?.nama_lengkap ?? "Anonim",
-                lokasi: activity.lantai?.lokasi?.nama_lokasi
-                    ? `${activity.lantai.lokasi.nama_lokasi} Lantai ${activity.lantai.nomor_lantai}`
+     const recent_activities: RecentActivityResponse[] = rawActivities.map(
+            (activity: RecentActivityPayload) => ({
+                id: activity.id,
+                title: activity.deskripsi_kendala,
+                location: activity.lantai?.lokasi?.nama_lokasi
+                    ? `Lantai ${activity.lantai.nomor_lantai}, ${activity.lantai.lokasi.nama_lokasi}`
                     : "Lokasi tidak diketahui",
-                prioritas: activity.prioritas as LaporanPriority,
                 status: activity.status as LaporanStatus,
-                created_at: activity.created_at,
+                assignee_name: activity.ob?.nama_lengkap || null,
+                timestamp: activity.updated_at
             })
         );
 
-        const daily_checklist_ob: DailyChecklistObResponse[] = dailyChecklist.map((item) => ({
-            ob_id: item.ob_id,
-            nama_ob: item.nama_ob,
-            total_tugas: item.total_tugas,
-            tugas_selesai: item.tugas_selesai,
-            persentase: item.total_tugas > 0 ? Math.round((item.tugas_selesai / item.total_tugas) * 100) : 0,
-        }));
-
-        return { kpi, bar_chart, pie_chart, recent_laporan, daily_checklist_ob };
+        return { kpi, bar_chart, pie_chart, recent_activities, daily_checklist_ob };
     }
 
     private calculateKpi(current: ReportSummaryPayload[], previous: ReportSummaryPayload[]): DashboardMainResponse['kpi'] {
@@ -201,17 +190,19 @@ private calculateBarChart(reports: ReportSummaryPayload[], period: string): BarC
         4: "Kam", 5: "Jum", 6: "Sab"
     };
 
-    reports.forEach(report => {
-        const date = new Date(report.created_at);
-        let label = '';
+        reports.forEach(report => {
+            const date = new Date(report.created_at);
+            let label = '';
 
-        if (period === 'weekly') {
-            label = DAY_LABELS[date.getDay()] ?? '';
-        } else if (period === 'monthly') {
-            label = `Mgg ${Math.ceil(date.getDate() / 7)}`;
-        } else {
-            label = date.toLocaleDateString('id-ID', { month: 'short' });
-        }
+            if (period === 'harian') {
+                label = `${String(date.getHours()).padStart(2, '0')}:00`;
+            } else if (period === 'mingguan') {
+                label = date.toLocaleDateString('id-ID', { weekday: 'short' });
+            } else if (period === 'bulanan') {
+                label = `Mgg ${Math.ceil(date.getDate() / 7)}`;
+            } else {
+                label = date.toLocaleDateString('id-ID', { month: 'short' });
+            }
 
         groups[label] = (groups[label] || 0) + 1;
     });
@@ -230,38 +221,38 @@ private calculateBarChart(reports: ReportSummaryPayload[], period: string): BarC
 }
 
     public async getReportDetail(id: string): Promise<AdminReportDetailResponse> {
-    const laporan = await this.adminRepo.getReportDetailById(id);
+        const laporan = await this.laporanService.getReportDetailById(id);
 
-    if (!laporan) {
-        throw new AppError("Laporan tidak ditemukan", 404); 
-    }
-
-    const historiTerakhir = laporan.histori_pekerjaan?.[laporan.histori_pekerjaan.length - 1] ?? null;
-
-
-    const jamUpload = historiTerakhir 
-        ? historiTerakhir.created_at.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
-        : null;
-
-    return {
-        id: laporan.id,
-        status: laporan.status as LaporanStatus,
-        nama_karyawan: laporan.pelapor?.nama_lengkap ?? "Anonim",
-        lokasi: laporan.lantai?.lokasi
-            ? `Lantai ${laporan.lantai.nomor_lantai} - ${laporan.lantai.lokasi.nama_lokasi}`
-            : "Lokasi tidak diketahui",
-        kategori: laporan.kategori.nama_kategori,
-        ob_ditugaskan: laporan.ob?.nama_lengkap ?? "Belum Ditugaskan",
-        waktu_laporan: laporan.created_at,
-        waktu_selesai: historiTerakhir?.created_at ?? null,
-        deskripsi_kendala: laporan.deskripsi_kendala,
-        bukti_foto: {
-            urls: laporan.status === "SELESAI"
-                ? (historiTerakhir?.foto_selesai ?? []).map(resolveFileUrl).filter((url): url is string => !!url)
-                : laporan.foto_masalah.map(resolveFileUrl).filter((url): url is string => !!url),
-            diupload_oleh: laporan.ob?.nama_lengkap ?? null,
-            jam_upload: jamUpload
+        if (!laporan) {
+            throw new AppError("Laporan tidak ditemukan", 404);
         }
-    };
-}
+
+        const historiTerakhir = laporan.histori_pekerjaan?.[laporan.histori_pekerjaan.length - 1] ?? null;
+
+
+        const jamUpload = historiTerakhir
+            ? historiTerakhir.created_at.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
+            : null;
+
+        return {
+            id: laporan.id,
+            status: laporan.status as LaporanStatus,
+            nama_karyawan: laporan.pelapor?.nama_lengkap ?? "Anonim",
+            lokasi: laporan.lantai?.lokasi
+                ? `Lantai ${laporan.lantai.nomor_lantai} - ${laporan.lantai.lokasi.nama_lokasi}`
+                : "Lokasi tidak diketahui",
+            kategori: laporan.kategori.nama_kategori,
+            ob_ditugaskan: laporan.ob?.nama_lengkap ?? "Belum Ditugaskan",
+            waktu_laporan: laporan.created_at,
+            waktu_selesai: historiTerakhir?.created_at ?? null,
+            deskripsi_kendala: laporan.deskripsi_kendala,
+            bukti_foto: {
+                urls: laporan.status === "SELESAI"
+                    ? (historiTerakhir?.foto_selesai ?? []).map(resolveFileUrl).filter((url): url is string => !!url)
+                    : laporan.foto_masalah.map(resolveFileUrl).filter((url): url is string => !!url),
+                diupload_oleh: laporan.ob?.nama_lengkap ?? null,
+                jam_upload: jamUpload
+            }
+        };
+    }
 }

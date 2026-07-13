@@ -57,6 +57,8 @@ export class ChecklistHarianController {
 
     async create(req: Request, res: Response) {
         try {
+            const userId = req.user?.id as string;
+
             if (!req.body) {
                 return res.status(400).json(sendErrorResponse("Request body empty"));
             }
@@ -67,7 +69,7 @@ export class ChecklistHarianController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
 
-            await this.checklistService.create(validate.data);
+            await this.checklistService.create(userId, validate.data);
             return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data checklist harian"));
         } catch (err: any) {
             if (err instanceof AppError) {

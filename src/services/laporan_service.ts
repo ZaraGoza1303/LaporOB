@@ -1,10 +1,14 @@
 import type { MappedReportDetailRes } from "../dto/users.js";
-import type { ILaporanRepository } from "../repositories/laporan_repository.interface.js";
+import type { PaginatedResponse } from "../dto/response.js";
+import type { AdminLaporanQuery } from "../dto/admin.js";
+import type { ILaporanRepository, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, DetailReportPayload, ProfileReport } from "../repositories/laporan_repository.interface.js";
+import type { UserActivityRes } from "../dto/users.js";
 import type { LaporanPriority, LaporanStatus } from "../utils/constants.js";
 import { handlePrismaError } from "../utils/error.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { AppError } from "../utils/error.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
+import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 
 export class LaporanService implements ILaporanService {
     private laporanRepo: ILaporanRepository;
@@ -44,6 +48,42 @@ export class LaporanService implements ILaporanService {
         } catch (err) {
             handlePrismaError(err);
         }
+    }
+
+    async getReportDetailById(reportId: string): Promise<DetailReportPayload | null> {
+        return this.laporanRepo.getReportDetailById(reportId);
+    }
+
+    async getRecentActivities(limit: number): Promise<RecentActivityPayload[]> {
+        return this.laporanRepo.getRecentActivities(limit);
+    }
+
+    async getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]> {
+        return this.laporanRepo.getReportsByDateRange(startDate, endDate);
+    }
+
+    async getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>> {
+        return this.laporanRepo.getAllLaporan(page, limit, query);
+    }
+
+    async getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<RuanganTerpopulerPayload[]> {
+        return this.laporanRepo.getRuanganTerpopuler(limit, query);
+    }
+
+    async countLaporanAktif(query: AdminLaporanQuery): Promise<number> {
+        return this.laporanRepo.countLaporanAktif(query);
+    }
+
+    async getActivity(userId: string): Promise<UserActivityRes[]> {
+        return this.laporanRepo.getActivity(userId);
+    }
+
+    async insertReport(req: Laporan_karyawanCreateInput): Promise<void> {
+        await this.laporanRepo.insertReport(req);
+    }
+
+    async getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>> {
+        return this.laporanRepo.getReportsByUserId(userId, limit, cursor, search, status);
     }
 
 }

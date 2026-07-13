@@ -3,7 +3,7 @@ import type { ChecklistHarianQuery, CreateChecklistHarianReq, UpdateChecklistHar
 export interface IChecklistHarianService {
     getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<ChecklistHarianPageResponse>;
     getByID(checklistId: string): Promise<ChecklistHarianRes | null>;
-    create(req: CreateChecklistHarianReq): Promise<void>;
+    create(userId: string, req: CreateChecklistHarianReq): Promise<void>;
     update(checklistId: string, req: UpdateChecklistHarianReq): Promise<void>;
     delete(checklistId: string): Promise<void>;
 }
