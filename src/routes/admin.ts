@@ -7,20 +7,23 @@ const adminRouter = Router();
 adminRouter.use(verifyJWTToken);
 adminRouter.use(requireRole("admin"));
 
-
+//user crud
 adminRouter.get("/user", (req, res) => usersController.getAll(req, res));
-adminRouter.get("/user/:user_id", (req, res) => usersController.getByID(req, res));
 adminRouter.post("/user", (req, res) => usersController.create(req, res));
+
+//ob
+adminRouter.get("/user/all-ob", (req, res) => usersController.getAllOb(req, res));
+adminRouter.get("/user/:user_id/performance", (req, res) => usersController.getObPerformanceStats(req, res));
+
+adminRouter.get("/user/:user_id", (req, res) => usersController.getByID(req, res));
 adminRouter.patch("/user/:user_id", (req, res) => usersController.update(req, res));
 adminRouter.delete("/user/:user_id", (req, res) => usersController.delete(req, res));
 
-adminRouter.get("/user/:user_id/performance", (req, res) => usersController.getObPerformanceStats(req, res));
-
-
+//stats
 adminRouter.get("/dashboard", (req, res) => adminController.getDashboardData(req, res));
 adminRouter.get("/user-stats", (req, res) => adminController.getUserStats(req, res));
 
-
+//laporan
 adminRouter.get("/laporan", (req, res) => adminController.getAllLaporan(req, res));
 adminRouter.get("/laporan/:laporan_id", (req, res) => adminController.getReportDetail(req, res));
 
