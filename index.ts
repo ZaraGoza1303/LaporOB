@@ -21,6 +21,7 @@ import YAML from 'yamljs';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { initWebSocket } from './src/services/websocket_service';
+import { setBaseUrl, isBaseUrlSet } from './src/utils/url.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,6 +46,16 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '5mb' }));
+
+app.use((req, _res, next) => {
+  if (!isBaseUrlSet()) {
+    const proto = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers['x-forwarded-host'] || req.headers.host;
+    setBaseUrl(`${proto}://${host}`);
+  }
+  next();
+});
+
 app.use('/uploads', express.static('uploads'));
 app.use(upload.any());
 
