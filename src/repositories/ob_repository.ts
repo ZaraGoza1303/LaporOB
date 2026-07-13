@@ -121,6 +121,7 @@ export class ObRepository implements IObRepository {
     }
 
     async createHistoriPekerjaan(laporanId: string, fotoSelesai: string[], catatan: string): Promise<void> {
+        const now = new Date();
         await this.db.$transaction([
             this.db.histori_pekerjaan.create({
                 data: {
@@ -133,12 +134,14 @@ export class ObRepository implements IObRepository {
                 where: { id: laporanId },
                 data: {
                     status: LAPORAN_STATUS.SELESAI,
+                    selesai_at: now,
                 }
             })
         ]);
     }
 
     async tolakLaporan(laporanId: string, fotoSelesai: string[], catatan: string): Promise<void> {
+        const now = new Date();
         await this.db.$transaction([
             this.db.histori_pekerjaan.create({
                 data: {
@@ -152,6 +155,7 @@ export class ObRepository implements IObRepository {
                 data: {
                     status: LAPORAN_STATUS.DITOLAK,
                     alasan_gagal: catatan,
+                    ditolak_at: now,
                 }
             })
         ]);

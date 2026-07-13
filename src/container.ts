@@ -68,9 +68,9 @@ const tugasService = new TugasService(tugasRepository);
 const usersService = new UsersService(usersRepository);
 const notificationService = new NotificationService(notificationRepository);
 const checklistHarianService = new ChecklistHarianService(checklistHarianRepository, notificationService, usersService);
-const authService = new AuthService(authRepository, usersRepository);
-const obService = new ObService(obRepository, laporanRepository, notificationService);
-const adminService = new AdminService(adminRepository, obRepository, laporanService, laporanRepository);
+const authService = new AuthService(authRepository, usersService);
+const obService = new ObService(obRepository, laporanService, notificationService);
+const adminService = new AdminService(adminRepository, laporanService, usersService);
 const karyawanService = new KaryawanService(usersService, laporanService, kategoriService, notificationService);
 
 //  CONTROLLERS 

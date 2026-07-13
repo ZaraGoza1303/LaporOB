@@ -92,12 +92,17 @@ export interface UserStatsRes {
 export type AdminReportDetailResponse = {
     id: string;
     status: LaporanStatus;
+    prioritas: LaporanPriority;
     nama_karyawan: string;
     lokasi: string;
     kategori: string;
     ob_ditugaskan: string | null;
     waktu_laporan: Date;
     waktu_selesai: Date | null;
+    dikerjakan_at: Date | null;
+    selesai_at: Date | null;
+    ditolak_at: Date | null;
+    admin_catatan: string | null;
     deskripsi_kendala: string;
     bukti_foto: {
         urls: string[];

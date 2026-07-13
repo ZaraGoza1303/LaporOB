@@ -73,6 +73,77 @@ components:
           maxLength: 1000
           description: Catatan internal admin
 
+    AdminReportDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - BELUM_DIKERJAKAN
+            - PENDING
+            - SELESAI
+            - DITOLAK
+        prioritas:
+          type: string
+          enum:
+            - STANDARD
+            - URGENT
+        nama_karyawan:
+          type: string
+        lokasi:
+          type: string
+        kategori:
+          type: string
+        ob_ditugaskan:
+          type: string
+          nullable: true
+        waktu_laporan:
+          type: string
+          format: date-time
+        waktu_selesai:
+          type: string
+          format: date-time
+          nullable: true
+          description: Waktu histori pekerjaan terakhir (jika ada)
+        dikerjakan_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp saat laporan mulai dikerjakan (OB ambil / status PENDING)
+        selesai_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp saat admin approve sebagai selesai
+        ditolak_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp saat laporan ditolak
+        admin_catatan:
+          type: string
+          nullable: true
+          maxLength: 1000
+          description: Catatan internal admin
+        deskripsi_kendala:
+          type: string
+        bukti_foto:
+          type: object
+          properties:
+            urls:
+              type: array
+              items:
+                type: string
+            diupload_oleh:
+              type: string
+              nullable: true
+            jam_upload:
+              type: string
+              nullable: true
+
     UserProfile:
       type: object
       properties:
@@ -463,6 +534,10 @@ paths:
       tags:
         - OB
       summary: 'Submit hasil pekerjaan (OB)'
+      description: |
+        OB submit bukti penyelesaian. Side effect otomatis:
+        - `status` → `SELESAI`
+        - `selesai_at` → di-set ke waktu saat ini
       security:
         - BearerAuth: []
       parameters:
@@ -499,6 +574,11 @@ paths:
       tags:
         - OB
       summary: 'Tolak laporan (OB)'
+      description: |
+        OB menolak laporan. Side effect otomatis:
+        - `status` → `DITOLAK`
+        - `ditolak_at` → di-set ke waktu saat ini
+        - `alasan_gagal` → diisi dari catatan penolakan
       security:
         - BearerAuth: []
       parameters:
@@ -630,10 +710,11 @@ paths:
           schema:
             type: string
             enum:
-              - weekly
-              - monthly
-              - yearly
-            default: weekly
+              - harian
+              - mingguan
+              - bulanan
+              - tahunan
+            default: mingguan
       responses:
         '200':
           description: Data dashboard
@@ -756,49 +837,7 @@ paths:
                     type: string
                     example: Berhasil mendapatkan detail laporan
                   data:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                      status:
-                        type: string
-                        enum:
-                          - BELUM_DIKERJAKAN
-                          - PENDING
-                          - SELESAI
-                          - DITOLAK
-                      nama_karyawan:
-                        type: string
-                      lokasi:
-                        type: string
-                      kategori:
-                        type: string
-                      ob_ditugaskan:
-                        type: string
-                        nullable: true
-                      waktu_laporan:
-                        type: string
-                        format: date-time
-                      waktu_selesai:
-                        type: string
-                        format: date-time
-                        nullable: true
-                      deskripsi_kendala:
-                        type: string
-                      bukti_foto:
-                        type: object
-                        properties:
-                          urls:
-                            type: array
-                            items:
-                              type: string
-                          diupload_oleh:
-                            type: string
-                            nullable: true
-                          jam_upload:
-                            type: string
-                            nullable: true
+                    $ref: '#/components/schemas/AdminReportDetail'
         '400':
           description: Validation Failed (format laporan_id tidak valid)
           content:
@@ -892,7 +931,7 @@ paths:
                     type: string
                     example: Laporan berhasil diperbarui
         '400':
-          description: Validation Failed (tidak ada field non-null yang diisi, enum tidak valid, atau format UUID salah)
+          description: Validation Failed (tidak ada field non-null, enum tidak valid, format UUID salah, atau PENDING tanpa OB)
           content:
             application/json:
               schema:
@@ -902,7 +941,7 @@ paths:
         '403':
           description: Forbidden (bukan admin)
         '404':
-          description: Laporan tidak ditemukan
+          description: Laporan tidak ditemukan / OB tidak ditemukan
         '500':
           description: Gagal memperbarui laporan
 
