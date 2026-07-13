@@ -24,6 +24,10 @@ adminRouter.delete("/user/:user_id", (req, res) => usersController.delete(req, r
 adminRouter.get("/dashboard", (req, res) => adminController.getDashboardData(req, res));
 adminRouter.get("/user-stats", (req, res) => adminController.getUserStats(req, res));
 
+//penugasan ob
+adminRouter.post("/user/assign-locations", (req, res) => adminController.assignObToLocations(req, res));
+adminRouter.get("/user/assignments", (req, res) => adminController.getPenugasanByPeriode(req, res));
+
 //laporan
 adminRouter.get("/laporan", (req, res) => adminController.getAllLaporan(req, res));
 adminRouter.get("/laporan/:laporan_id", (req, res) => adminController.getReportDetail(req, res));

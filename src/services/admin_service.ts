@@ -1,6 +1,6 @@
 import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse } from "../dto/admin.js";
 import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse } from "../dto/admin.js";
-import type { IAdminRepository } from "../repositories/admin_repository.interface.js";
+import type { IAdminRepository, PenugasanObWithDetails } from "../repositories/admin_repository.interface.js";
 import type { AdminLaporanPayload } from "../repositories/laporan_repository.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
 import type { IUsersService } from "../services/users_service.interface.js";
@@ -259,6 +259,27 @@ export class AdminService implements IAdminService {
                 jam_upload: jamUpload
             }
         };
+    }
+
+    async assignObToLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number): Promise<void> {
+        try {
+            const obUser = await this.obRepo.getObById(obId);
+            if (!obUser) {
+                throw new AppError("OB user tidak ditemukan", 404);
+            }
+
+            await this.adminRepo.assignObToLocations(obId, lokasiIds, bulan, tahun);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async getPenugasanByPeriode(bulan: number, tahun: number): Promise<PenugasanObWithDetails[]> {
+        try {
+            return await this.adminRepo.getPenugasanByPeriode(bulan, tahun);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
     }
 
     public async patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void> {

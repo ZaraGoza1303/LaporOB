@@ -32,7 +32,8 @@ model User {
   tokens UserToken[]
   notifikasi_diterima Notifikasi[] @relation("NotifikasiDiterima")
   notifikasi_dikirim  Notifikasi[] @relation("NotifikasiDikirim")
-
+  penugasan_ob        PenugasanOb[]
+  
   @@map("user")
 }
 
@@ -67,8 +68,25 @@ model Lokasi {
   updated_at  DateTime @updatedAt @db.Timestamp(6)
 
   lantai Lantai[]
+  penugasan_ob PenugasanOb[]
 
   @@map("lokasi")
+}
+
+model PenugasanOb {
+  id         String   @id @default(uuid()) @db.Uuid
+  ob_id      String   @db.Uuid
+  lokasi_id  String   @db.Uuid
+  bulan      Int      // 1-12
+  tahun      Int      // e.g. 2026
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt @db.Timestamp(6)
+
+  ob     User   @relation(fields: [ob_id], references: [id], onDelete: Cascade)
+  lokasi Lokasi @relation(fields: [lokasi_id], references: [id], onDelete: Cascade)
+
+  @@unique([ob_id, lokasi_id, bulan, tahun])
+  @@map("penugasan_ob")
 }
 
 model Lantai {

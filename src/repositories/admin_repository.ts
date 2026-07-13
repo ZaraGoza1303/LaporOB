@@ -2,6 +2,8 @@ import type { UserStatsRes, AdminLaporanQuery } from "../dto/admin.js";
 import { PrismaClient } from "../generated/prisma/client.js";
 import type { IAdminRepository } from "./admin_repository.interface.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
+import type { AssignObRepoArgs } from "../dto/admin.js";
+import type { AuthService } from "../services/auth_service.js";
 
 export class AdminRepository implements IAdminRepository {
     private db: PrismaClient;
@@ -105,6 +107,48 @@ export class AdminRepository implements IAdminRepository {
                 total,
                 persentase
             };
+        });
+    }
+
+    async assignObToLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number): Promise<void> {
+        await this.db.$transaction([
+            this.db.penugasanOb.deleteMany({
+                where: {
+                    ob_id: obId,
+                    bulan: bulan,
+                    tahun: tahun,
+                }
+            }),
+            ...(lokasiIds.length > 0 ? [
+                this.db.penugasanOb.createMany({
+                    data: lokasiIds.map(lokasiId => ({
+                        ob_id: obId,
+                        lokasi_id: lokasiId,
+                        bulan: bulan,
+                        tahun: tahun,
+                    }))
+                })
+            ] : [])
+        ]);
+    }
+
+    async getPenugasanByPeriode(bulan: number, tahun: number): Promise<any[]> {
+        return this.db.penugasanOb.findMany({
+            where: {
+                bulan,
+                tahun,
+            },
+            include: {
+                ob: {
+                    select: {
+                        id: true,
+                        nama_lengkap: true,
+                        username: true,
+                        email: true,
+                    }
+                },
+                lokasi: true,
+            }
         });
     }
 }
