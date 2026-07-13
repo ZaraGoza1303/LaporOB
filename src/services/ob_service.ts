@@ -6,6 +6,7 @@ import type { NotificationData } from "../dto/notification.js";
 import type { ObHomeRes, CreateHistoriReq } from "../dto/ob.js";
 import type { MappedProfileReport } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
+import type { PeriodRange } from "../utils/date.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { CHECKLIST_STATUS, LAPORAN_PRIORITY, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
@@ -191,9 +192,9 @@ export class ObService implements IObService {
         }
     }
 
-    async getObPerformanceStats(obId: string): Promise<{ laporanDiterima: number, laporanSelesai: number }> {
+    async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }> {
         try {
-            return await this.obRepo.getObPerformanceStats(obId);
+            return await this.obRepo.getObPerformanceStats(obId, dateRange);
         } catch (err) {
             throw handlePrismaError(err);
         }

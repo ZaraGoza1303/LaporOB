@@ -4,7 +4,7 @@ import { Prisma } from "../generated/prisma/client.js";
 import type { PaginatedResponse } from './response.js';
 
 export const GetDashboardQuerySchema = z.object({
-    period: z.enum(['weekly', 'monthly', 'yearly']).default('weekly'),
+    period: z.enum(['harian', 'mingguan', 'bulanan', 'tahunan']).default('mingguan'),
 });
 export type GetDashboardQuery = z.infer<typeof GetDashboardQuerySchema>;
 

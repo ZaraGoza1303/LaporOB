@@ -1,6 +1,7 @@
 import type { PrismaClient, User } from "../generated/prisma/client.js";
 import type { IObRepository } from "./ob_repository.interface.js";
 import { LAPORAN_STATUS } from "../utils/constants.js";
+import type { PeriodRange } from "../utils/date.js";
 
 export class ObRepository implements IObRepository {
     private db: PrismaClient;
@@ -149,17 +150,23 @@ export class ObRepository implements IObRepository {
         ]);
     }
 
-    async getObPerformanceStats(obId: string): Promise<{ laporanDiterima: number, laporanSelesai: number }> {
+    async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }> {
+        const dateFilter = dateRange
+            ? { created_at: { gte: dateRange.start, lte: dateRange.end } }
+            : {};
+
         const [laporanDiterima, laporanSelesai] = await Promise.all([
             this.db.laporan_karyawan.count({
                 where: {
-                    ob_id: obId
+                    ob_id: obId,
+                    ...dateFilter
                 }
             }),
             this.db.laporan_karyawan.count({
                 where: {
                     ob_id: obId,
                     status: LAPORAN_STATUS.SELESAI,
+                    ...dateFilter
                 }
             })
         ]);

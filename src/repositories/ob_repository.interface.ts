@@ -1,4 +1,5 @@
 import type { Laporan_karyawan, User } from "../generated/prisma/client.js";
+import type { PeriodRange } from "../utils/date.js";
 
 export interface IObRepository {
     getObById(obId: string): Promise<User | null>;
@@ -8,5 +9,5 @@ export interface IObRepository {
     ambilLaporan(laporanId: string, obId: string): Promise<void>;
     createHistoriPekerjaan(laporanId: string, fotoSelesai: string[], catatan: string): Promise<void>;
     tolakLaporan(laporanId: string, fotoSelesai: string[], catatan: string): Promise<void>;
-    getObPerformanceStats(obId: string): Promise<{ laporanDiterima: number, laporanSelesai: number }>;
+    getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }>;
 }

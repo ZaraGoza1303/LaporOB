@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
+import type { Period } from "../utils/date.js";
 import type { PaginatedResponse } from "./response.js";
 import type { Tugas, Kategori, Lantai, User } from "../generated/prisma/client.js";
 
@@ -17,6 +18,7 @@ export const ChecklistHarianQuerySchema = z.object({
     lokasi_id: z.preprocess(emptyToNull, z.string().uuid().nullable()),
     lantai_id: z.preprocess(emptyToNull, z.string().uuid().nullable()),
     status: z.preprocess(emptyToNull, z.enum(checklistStatusValues).nullable()),
+    period: z.enum(['harian', 'mingguan', 'bulanan', 'tahunan']).default('harian'),
 });
 
 export type ChecklistHarianQuery = z.infer<typeof ChecklistHarianQuerySchema>;

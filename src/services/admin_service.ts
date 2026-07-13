@@ -5,7 +5,7 @@ import type { AdminLaporanPayload } from "../repositories/laporan_repository.int
 import type { IObRepository } from "../repositories/ob_repository.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
-import { calculateDateRanges } from "../utils/date.js"
+import { calculateDateRanges, type Period } from "../utils/date.js"
 import { LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { resolveFileUrl } from "../utils/url.js";
 import type { IAdminService } from "./admin_service.interface.js";
@@ -174,16 +174,18 @@ export class AdminService implements IAdminService {
         });
     }
 
-    private calculateBarChart(reports: ReportSummaryPayload[], period: string): BarChartResponse[] {
+    private calculateBarChart(reports: ReportSummaryPayload[], period: Period): BarChartResponse[] {
         const groups: Record<string, number> = {};
 
         reports.forEach(report => {
             const date = new Date(report.created_at);
             let label = '';
 
-            if (period === 'weekly') {
+            if (period === 'harian') {
+                label = `${String(date.getHours()).padStart(2, '0')}:00`;
+            } else if (period === 'mingguan') {
                 label = date.toLocaleDateString('id-ID', { weekday: 'short' });
-            } else if (period === 'monthly') {
+            } else if (period === 'bulanan') {
                 label = `Mgg ${Math.ceil(date.getDate() / 7)}`;
             } else {
                 label = date.toLocaleDateString('id-ID', { month: 'short' });
