@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { LAPORAN_PRIORITY, LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from '../utils/constants.js';
 import { Prisma } from "../generated/prisma/client.js";
+import type { PaginatedResponse } from './response.js';
 
 export const GetDashboardQuerySchema = z.object({
     period: z.enum(['weekly', 'monthly', 'yearly']).default('weekly'),
@@ -124,16 +125,7 @@ export interface LaporanAktifResponse {
 }
 
 export interface AdminLaporanPageResponse {
-    laporan: {
-        items: AdminLaporanItemResponse[];
-        next_cursor: null;
-        meta: {
-            total_items: number;
-            current_page: number;
-            limit: number;
-            total_pages: number;
-        };
-    };
+    laporan: PaginatedResponse<AdminLaporanItemResponse>;
     ruangan_terpopuler: RuanganTerpopulerResponse[];
     laporan_aktif: LaporanAktifResponse;
 }

@@ -96,6 +96,43 @@ components:
         total_pages:
           type: integer
 
+    Notifikasi:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        penerima_id:
+          type: string
+          format: uuid
+        pengirim_id:
+          type: string
+          format: uuid
+        tipe:
+          type: string
+        judul:
+          type: string
+        pesan:
+          type: string
+          nullable: true
+        is_read:
+          type: boolean
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        pengirim:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            nama_lengkap:
+              type: string
+
 # AUTH
 paths:
   /api/auth/login:
@@ -1396,3 +1433,91 @@ paths:
       responses:
         '200':
           description: Checklist berhasil dihapus
+
+# NOTIFIKASI
+  /api/notifikasi:
+    get:
+      tags:
+        - Notifikasi
+      summary: 'Ambil notifikasi hari ini & kemarin (Semua role)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar notifikasi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil mendapatkan notifikasi
+                  data:
+                    type: object
+                    properties:
+                      hari_ini:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Notifikasi'
+                      kemarin:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Notifikasi'
+
+  /api/notifikasi/unread-count:
+    get:
+      tags:
+        - Notifikasi
+      summary: 'Hitung notifikasi belum dibaca (Semua role)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Jumlah notifikasi belum dibaca
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil mendapatkan total pesan yang belum dibaca
+                  data:
+                    type: integer
+                    example: 5
+
+  /api/notifikasi/read-all:
+    patch:
+      tags:
+        - Notifikasi
+      summary: 'Tandai semua notifikasi sudah dibaca (Semua role)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Semua notifikasi berhasil dibaca
+
+  /api/notifikasi/{notification_id}/read:
+    patch:
+      tags:
+        - Notifikasi
+      summary: 'Tandai satu notifikasi sudah dibaca (Semua role)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notifikasi berhasil dibaca

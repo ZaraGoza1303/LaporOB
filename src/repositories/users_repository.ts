@@ -107,4 +107,19 @@ export class UsersRepository implements IUsersRepository {
             include: { role: true }
         });
     }
+
+    async getByRole(nama_role: string): Promise<User[]> {
+        return this.db.user.findMany({
+            where: {
+                is_deleted: false,
+                is_active: true,
+                role: {
+                    nama_role: {
+                        equals: nama_role,
+                        mode: 'insensitive'
+                    }
+                }
+            }
+        });
+    }
 }
