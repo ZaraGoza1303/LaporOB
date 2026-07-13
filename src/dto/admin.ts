@@ -31,10 +31,10 @@ export interface StatDetail {
 }
 
 export interface KpiResponse {
-    total_reports: StatDetail;
-    completed_reports: StatDetail;
-    ongoing_reports: StatDetail;
-    rejected_reports: StatDetail;
+    total_laporan: StatDetail;
+    laporan_selesai: StatDetail;
+    laporan_berjalan: StatDetail;
+    laporan_ditolak: StatDetail;
 }
 
 export interface BarChartResponse {
@@ -44,8 +44,18 @@ export interface BarChartResponse {
 
 export interface PieChartResponse {
     status: LaporanStatus;
+    label: string;
     percentage: number;
     count: number;
+}
+
+export interface RecentLaporanResponse {
+    id_laporan: string;
+    nama_karyawan: string;
+    lokasi: string;
+    prioritas: LaporanPriority;
+    status: LaporanStatus;
+    created_at: Date;
 }
 
 export interface RecentActivityResponse {
@@ -57,11 +67,11 @@ export interface RecentActivityResponse {
     timestamp: Date;
 }
 
+
 export interface DailyChecklistOBResponse {
     nama_ob: string;
-    lokasi: string;
-    selesai: number;
-    total: number;
+    total_tugas: number;
+    tugas_selesai: number;
     persentase: number;
 }
 
@@ -130,6 +140,13 @@ export interface AdminLaporanPageResponse {
     laporan_aktif: LaporanAktifResponse;
 }
 
+export interface DailyChecklistObPayload {
+    ob_id: string;
+    nama_ob: string;
+    total_tugas: number;
+    tugas_selesai: number;
+}
+
 export type RecentActivityPayload = Prisma.Laporan_karyawanGetPayload<{
     include: {
         lantai: {
@@ -144,6 +161,8 @@ export interface ReportSummaryPayload {
     status: string;
     created_at: Date;
 }
+
+
 export const UserSearchQuerySchema = z.object({
     search: z.preprocess(emptyToNull, z.string().nullable()),
     role_id: z.preprocess(emptyToNull, z.string().uuid({ message: "Format role_id harus UUID yang valid" }).nullable()),
