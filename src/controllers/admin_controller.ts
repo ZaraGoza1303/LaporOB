@@ -1,4 +1,4 @@
-import { AdminLaporanQuerySchema, GetDashboardQuerySchema } from '../dto/admin.js';
+import { AdminLaporanQuerySchema, GetDashboardQuerySchema, PatchLaporanReqSchema } from '../dto/admin.js';
 import { LaporanIdParamSchema } from '../dto/users.js';
 import type { IAdminService } from "../services/admin_service.interface.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
@@ -84,4 +84,31 @@ export class AdminController {
             return res.status(500).json(sendErrorResponse("Gagal mendapatkan data", err.message))
         }
     }
+
+    async patchLaporan(req: Request, res: Response) {
+        try {
+            const validateParams = LaporanIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const validateBody = PatchLaporanReqSchema.safeParse(req.body);
+            if (!validateBody.success) {
+                const formattedErr = validateBody.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const laporanId = validateParams.data.laporan_id;
+            await this.adminService.patchLaporan(laporanId, validateBody.data);
+
+            return res.status(200).json(sendSuccessfullResponse("Laporan berhasil diperbarui"));
+        } catch (err: any) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal memperbarui laporan", err.message));
+        }
+    }
 }
+

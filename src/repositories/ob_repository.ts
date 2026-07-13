@@ -13,15 +13,15 @@ export class ObRepository implements IObRepository {
     async getObById(obId: string): Promise<User | null> {
         return this.db.user.findFirst({
             where: { id: obId },
-                include: {
-                    role:true,
-                    tokens: {
-                        orderBy: {
-                            created_at: 'desc'
-                        },
-                        take: 1
-                    }
+            include: {
+                role: true,
+                tokens: {
+                    orderBy: {
+                        created_at: 'desc'
+                    },
+                    take: 1
                 }
+            }
         })
     }
 
@@ -84,8 +84,13 @@ export class ObRepository implements IObRepository {
         return this.db.laporan_karyawan.findMany({
             where: {
                 OR: [
+                    // Laporan milik OB ini sendiri (semua status)
                     { ob_id: obId },
-                    { ob_id: null }
+                    // Laporan yang belum dipegang siapapun (bukan PENDING terikat OB lain)
+                    {
+                        ob_id: null,
+                        status: { not: LAPORAN_STATUS.PENDING }
+                    }
                 ]
             },
             include: {
@@ -104,12 +109,14 @@ export class ObRepository implements IObRepository {
     }
 
     async ambilLaporan(laporanId: string, obId: string): Promise<void> {
+        const now = new Date();
         await this.db.laporan_karyawan.update({
             where: { id: laporanId },
             data: {
                 status: LAPORAN_STATUS.PENDING,
                 ob_id: obId,
-            }
+                dikerjakan_at: now,
+            },
         });
     }
 

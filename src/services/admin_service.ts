@@ -1,11 +1,11 @@
-import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse } from "../dto/admin.js";
+import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse } from "../dto/admin.js";
 import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse } from "../dto/admin.js";
 import type { IAdminRepository } from "../repositories/admin_repository.interface.js";
-import type { AdminLaporanPayload } from "../repositories/laporan_repository.interface.js";
+import type { AdminLaporanPayload, ILaporanRepository as ILaporanRepo } from "../repositories/laporan_repository.interface.js";
 import type { IObRepository } from "../repositories/ob_repository.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
-import  { calculateDateRanges } from "../utils/date.js"
+import { calculateDateRanges } from "../utils/date.js"
 import { LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { resolveFileUrl } from "../utils/url.js";
 import type { IAdminService } from "./admin_service.interface.js";
@@ -14,11 +14,13 @@ export class AdminService implements IAdminService {
     private obRepo: IObRepository;
     private adminRepo: IAdminRepository;
     private laporanService: ILaporanService;
+    private laporanRepo: ILaporanRepo;
 
-    constructor(adminRepo: IAdminRepository, obRepo: IObRepository, laporanService: ILaporanService) {
+    constructor(adminRepo: IAdminRepository, obRepo: IObRepository, laporanService: ILaporanService, laporanRepo: ILaporanRepo) {
         this.adminRepo = adminRepo;
         this.obRepo = obRepo;
         this.laporanService = laporanService;
+        this.laporanRepo = laporanRepo;
     }
 
     async getUserStats(): Promise<UserStatsRes> {
@@ -83,7 +85,7 @@ export class AdminService implements IAdminService {
 
     public async getDashboardData(query: GetDashboardQuery): Promise<DashboardMainResponse> {
         const { period } = query;
-        
+
         const { current_start, current_end, previous_start, previous_end } = calculateDateRanges(period);
 
         const [rawActivities, currentReports, previousReports, daily_checklist_ob] = await Promise.all([
@@ -93,11 +95,11 @@ export class AdminService implements IAdminService {
             this.adminRepo.getDailyChecklistOB(new Date())
         ]);
 
-    const kpi = this.calculateKpi(currentReports, previousReports);
-    const pie_chart = this.calculatePieChart(currentReports);
-    const bar_chart = this.calculateBarChart(currentReports, period);
+        const kpi = this.calculateKpi(currentReports, previousReports);
+        const pie_chart = this.calculatePieChart(currentReports);
+        const bar_chart = this.calculateBarChart(currentReports, period);
 
-     const recent_activities: RecentActivityResponse[] = rawActivities.map(
+        const recent_activities: RecentActivityResponse[] = rawActivities.map(
             (activity: RecentActivityPayload) => ({
                 id: activity.id,
                 title: activity.deskripsi_kendala,
@@ -114,81 +116,81 @@ export class AdminService implements IAdminService {
     }
 
     private calculateKpi(current: ReportSummaryPayload[], previous: ReportSummaryPayload[]): DashboardMainResponse['kpi'] {
-    const calculateTrend = (currCount: number, prevCount: number): StatDetail => {
-        if (prevCount === 0) {
-            return { count: currCount, trend_value: currCount > 0 ? 100 : 0, is_positive: currCount > 0 };
-        }
-        const diff = currCount - prevCount;
-        const percentage = Math.round((diff / prevCount) * 100);
-        return {
-            count: currCount,
-            trend_value: Math.abs(percentage),
-            is_positive: percentage >= 0
+        const calculateTrend = (currCount: number, prevCount: number): StatDetail => {
+            if (prevCount === 0) {
+                return { count: currCount, trend_value: currCount > 0 ? 100 : 0, is_positive: currCount > 0 };
+            }
+            const diff = currCount - prevCount;
+            const percentage = Math.round((diff / prevCount) * 100);
+            return {
+                count: currCount,
+                trend_value: Math.abs(percentage),
+                is_positive: percentage >= 0
+            };
         };
-    };
 
-    const currTotal = current.length;
-    const prevTotal = previous.length;
+        const currTotal = current.length;
+        const prevTotal = previous.length;
 
-    const currDone = current.filter(r => r.status === LAPORAN_STATUS.SELESAI).length;
-    const prevDone = previous.filter(r => r.status === LAPORAN_STATUS.SELESAI).length;
+        const currDone = current.filter(r => r.status === LAPORAN_STATUS.SELESAI).length;
+        const prevDone = previous.filter(r => r.status === LAPORAN_STATUS.SELESAI).length;
 
-    const currOngoing = current.filter(r => r.status === LAPORAN_STATUS.BELUM_DIKERJAKAN || r.status === LAPORAN_STATUS.PENDING).length;
-    const prevOngoing = previous.filter(r => r.status === LAPORAN_STATUS.BELUM_DIKERJAKAN || r.status === LAPORAN_STATUS.PENDING).length;
+        const currOngoing = current.filter(r => r.status === LAPORAN_STATUS.BELUM_DIKERJAKAN || r.status === LAPORAN_STATUS.PENDING).length;
+        const prevOngoing = previous.filter(r => r.status === LAPORAN_STATUS.BELUM_DIKERJAKAN || r.status === LAPORAN_STATUS.PENDING).length;
 
-    const currRejected = current.filter(r => r.status === LAPORAN_STATUS.DITOLAK).length;
-    const prevRejected = previous.filter(r => r.status === LAPORAN_STATUS.DITOLAK).length;
+        const currRejected = current.filter(r => r.status === LAPORAN_STATUS.DITOLAK).length;
+        const prevRejected = previous.filter(r => r.status === LAPORAN_STATUS.DITOLAK).length;
 
-    return {
-        total_laporan: calculateTrend(currTotal, prevTotal),
-        laporan_selesai: calculateTrend(currDone, prevDone),
-        laporan_berjalan: calculateTrend(currOngoing, prevOngoing),
-        laporan_ditolak: calculateTrend(currRejected, prevRejected)
-    };
-}
+        return {
+            total_laporan: calculateTrend(currTotal, prevTotal),
+            laporan_selesai: calculateTrend(currDone, prevDone),
+            laporan_berjalan: calculateTrend(currOngoing, prevOngoing),
+            laporan_ditolak: calculateTrend(currRejected, prevRejected)
+        };
+    }
 
     private calculatePieChart(reports: ReportSummaryPayload[]): PieChartResponse[] {
-    const total = reports.length;
+        const total = reports.length;
 
-    const STATUS_LABEL_MAP: Record<LaporanStatus, string> = {
-        [LAPORAN_STATUS.BELUM_DIKERJAKAN]: "Masuk",
-        [LAPORAN_STATUS.SELESAI]: "Selesai",
-        [LAPORAN_STATUS.PENDING]: "Menunggu",
-        [LAPORAN_STATUS.DITOLAK]: "Ditolak",
-    };
-
-    const counts: Record<LaporanStatus, number> = {
-        [LAPORAN_STATUS.BELUM_DIKERJAKAN]: 0,
-        [LAPORAN_STATUS.PENDING]: 0,
-        [LAPORAN_STATUS.SELESAI]: 0,
-        [LAPORAN_STATUS.DITOLAK]: 0,
-    };
-
-    reports.forEach(report => {
-        const status = report.status as LaporanStatus;
-        if (counts[status] !== undefined) {
-            counts[status]++;
-        }
-    });
-
-    return Object.keys(counts).map(key => {
-        const status = key as LaporanStatus;
-        return {
-            status,
-            label: STATUS_LABEL_MAP[status],
-            count: counts[status],
-            percentage: total > 0 ? Math.round((counts[status] / total) * 100) : 0
+        const STATUS_LABEL_MAP: Record<LaporanStatus, string> = {
+            [LAPORAN_STATUS.BELUM_DIKERJAKAN]: "Masuk",
+            [LAPORAN_STATUS.SELESAI]: "Selesai",
+            [LAPORAN_STATUS.PENDING]: "Menunggu",
+            [LAPORAN_STATUS.DITOLAK]: "Ditolak",
         };
-    });
-}
 
-private calculateBarChart(reports: ReportSummaryPayload[], period: string): BarChartResponse[] {
-    const groups: Record<string, number> = {};
+        const counts: Record<LaporanStatus, number> = {
+            [LAPORAN_STATUS.BELUM_DIKERJAKAN]: 0,
+            [LAPORAN_STATUS.PENDING]: 0,
+            [LAPORAN_STATUS.SELESAI]: 0,
+            [LAPORAN_STATUS.DITOLAK]: 0,
+        };
 
-    const DAY_LABELS: Record<number, string> = {
-        0: "Min", 1: "Sen", 2: "Sel", 3: "Rab",
-        4: "Kam", 5: "Jum", 6: "Sab"
-    };
+        reports.forEach(report => {
+            const status = report.status as LaporanStatus;
+            if (counts[status] !== undefined) {
+                counts[status]++;
+            }
+        });
+
+        return Object.keys(counts).map(key => {
+            const status = key as LaporanStatus;
+            return {
+                status,
+                label: STATUS_LABEL_MAP[status],
+                count: counts[status],
+                percentage: total > 0 ? Math.round((counts[status] / total) * 100) : 0
+            };
+        });
+    }
+
+    private calculateBarChart(reports: ReportSummaryPayload[], period: string): BarChartResponse[] {
+        const groups: Record<string, number> = {};
+
+        const DAY_LABELS: Record<number, string> = {
+            0: "Min", 1: "Sen", 2: "Sel", 3: "Rab",
+            4: "Kam", 5: "Jum", 6: "Sab"
+        };
 
         reports.forEach(report => {
             const date = new Date(report.created_at);
@@ -204,21 +206,21 @@ private calculateBarChart(reports: ReportSummaryPayload[], period: string): BarC
                 label = date.toLocaleDateString('id-ID', { month: 'short' });
             }
 
-        groups[label] = (groups[label] || 0) + 1;
-    });
+            groups[label] = (groups[label] || 0) + 1;
+        });
 
-    if (period === 'weekly') {
-        const orderedLabels = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
-        return orderedLabels
-            .filter(label => label in groups || true)
-            .map(label => ({ label, count: groups[label] || 0 }));
+        if (period === 'weekly') {
+            const orderedLabels = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+            return orderedLabels
+                .filter(label => label in groups || true)
+                .map(label => ({ label, count: groups[label] || 0 }));
+        }
+
+        return Object.keys(groups).map(label => ({
+            label,
+            count: groups[label] || 0
+        }));
     }
-
-    return Object.keys(groups).map(label => ({
-        label,
-        count: groups[label] || 0
-    }));
-}
 
     public async getReportDetail(id: string): Promise<AdminReportDetailResponse> {
         const laporan = await this.laporanService.getReportDetailById(id);
@@ -254,5 +256,16 @@ private calculateBarChart(reports: ReportSummaryPayload[], period: string): BarC
                 jam_upload: jamUpload
             }
         };
+    }
+
+    public async patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void> {
+        try {
+            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+
+            await this.laporanRepo.patchLaporan(laporanId, dto);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
     }
 }

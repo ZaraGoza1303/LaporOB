@@ -1,6 +1,6 @@
 import type { PaginatedResponse } from "../dto/response.js";
 import type { UserActivityRes } from "../dto/users.js";
-import type { AdminLaporanQuery } from "../dto/admin.js";
+import type { AdminLaporanQuery, PatchLaporanReq } from "../dto/admin.js";
 import type { PrismaClient } from "../generated/prisma/client.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { ILaporanRepository, ProfileReport, DetailReportPayload, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload } from "./laporan_repository.interface.js";
@@ -40,6 +40,35 @@ export class LaporanRepository implements ILaporanRepository {
         await this.db.laporan_karyawan.create({
             data: req
         })
+    }
+
+    async patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void> {
+        const now = new Date();
+        const data: Prisma.Laporan_karyawanUncheckedUpdateInput = {};
+
+        if (dto.status != null) {
+            data.status = dto.status;
+
+            if (dto.status === LAPORAN_STATUS.PENDING) {
+                data.dikerjakan_at = now;
+            } else if (dto.status === LAPORAN_STATUS.SELESAI) {
+                data.selesai_at = now;
+            } else if (dto.status === LAPORAN_STATUS.DITOLAK) {
+                data.ditolak_at = now;
+            } else if (dto.status === LAPORAN_STATUS.BELUM_DIKERJAKAN) {
+                data.ob_id = { set: null };
+                data.dikerjakan_at = { set: null };
+            }
+        }
+
+        if (dto.prioritas != null) data.prioritas = dto.prioritas;
+        if (dto.ob_id !== undefined) data.ob_id = { set: dto.ob_id };
+        if (dto.admin_catatan !== undefined) data.admin_catatan = { set: dto.admin_catatan };
+
+        await this.db.laporan_karyawan.update({
+            where: { id: laporanId },
+            data,
+        });
     }
 
     async getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>> {
