@@ -81,6 +81,14 @@ export class UsersService implements IUsersService {
         }
     }
 
+    async getByRole(nama_role: string): Promise<User[]> {
+        try {
+            return await this.usersRepo.getByRole(nama_role);
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
     async create(req: CreateUserReq): Promise<CreateUserRes> {
         try {
             const activationToken = generateActivationToken(1);

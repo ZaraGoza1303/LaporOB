@@ -14,18 +14,24 @@ import lantaiRouter from './src/routes/lantai.js';
 import ruanganRouter from './src/routes/ruangan.js';
 import kategoriRouter from './src/routes/kategori.js';
 import tugasRouter from './src/routes/tugas.js';
+import notifikasiRouter from './src/routes/notifikasi.js';
 import swaggerUi from 'swagger-ui-express';
 import path from 'node:path';
 import YAML from 'yamljs';
 import { fileURLToPath } from 'node:url';
+import { createServer } from 'node:http';
+import { initWebSocket } from './src/services/websocket_service';
+import { setBaseUrlMiddleware } from './src/middleware/setBaseUrl';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));
 
 const app = express();
-const upload = multer();
+const server = createServer(app);
+initWebSocket(server)
 
+const upload = multer();
 const corsOptions = {
     origin: 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -40,6 +46,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '5mb' }));
+app.use(setBaseUrlMiddleware);
+
 app.use('/uploads', express.static('uploads'));
 app.use(upload.any());
 
@@ -56,12 +64,13 @@ const initRouter = () => {
     app.use('/api/ruangan', ruanganRouter);
     app.use('/api/kategori', kategoriRouter);
     app.use('/api/tugas', tugasRouter);
+    app.use('/api/notifikasi', notifikasiRouter);
 }
 
 const startApp = async () => {
     await connectDB();
     initRouter();
-    app.listen(process.env.APP_PORT, () => { console.log("Server Nyala cik") })
+    server.listen(process.env.APP_PORT, () => { console.log("Server Nyala cik") })
 }
 
 startApp();

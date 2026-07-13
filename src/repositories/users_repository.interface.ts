@@ -18,5 +18,6 @@ export interface IUsersRepository {
     insertActivationToken(activationToken: UserTokenCreateInput): Promise<void>;
     markTokenAsUsed(tokenId: string): Promise<void>;
     getUserWithRoleById(userId: string): Promise<ProfileUser | null>;
+    getByRole(nama_role: string): Promise<User[]>;
     countLaporanByUserId(userId: string): Promise<number>;
 }

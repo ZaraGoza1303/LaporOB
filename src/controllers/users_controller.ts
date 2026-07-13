@@ -4,11 +4,12 @@ import type { IObService } from "../services/ob_service.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
 import type { IStorageService } from "../services/storage_service.interface.js";
 import { CreateUserSchema, UpdateUserSchema, UpdateProfileSchema, ProfileLaporanQuerySchema, UserIdParamSchema, LaporanIdParamSchema } from "../dto/users.js";
-import { UserSearchQuerySchema } from "../dto/admin.js";
+import { UserSearchQuerySchema, GetDashboardQuerySchema } from "../dto/admin.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
 import type { Request, Response } from "express";
 import { AppError } from "../utils/error.js";
+import { calculatePeriodRange } from "../utils/date.js";
 
 export class UsersController {
     private usersService: IUsersService;
@@ -287,6 +288,33 @@ export class UsersController {
         } catch (err: any) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
+            }
+            return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server", err.message));
+        }
+    }
+
+    async getObPerformanceStats(req: Request, res: Response) {
+        try {
+            const validateParams = UserIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formatedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
+            }
+            const userId = validateParams.data.user_id;
+
+            const validateQuery = GetDashboardQuerySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formatedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
+            }
+
+            const dateRange = calculatePeriodRange(validateQuery.data.period);
+            const response = await this.obService.getObPerformanceStats(userId, dateRange);
+
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan statistik performa OB", response));
+        } catch (err: any) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
             return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server", err.message));
         }

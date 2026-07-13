@@ -1,8 +1,10 @@
 import { z } from 'zod';
 import { LAPORAN_PRIORITY, LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from '../utils/constants.js';
+import { Prisma } from "../generated/prisma/client.js";
+import type { PaginatedResponse } from './response.js';
 
 export const GetDashboardQuerySchema = z.object({
-    range: z.enum(['mingguan', 'bulanan', 'tahunan']).default('mingguan'),
+    period: z.enum(['harian', 'mingguan', 'bulanan', 'tahunan']).default('mingguan'),
 });
 export type GetDashboardQuery = z.infer<typeof GetDashboardQuerySchema>;
 
@@ -56,7 +58,17 @@ export interface RecentLaporanResponse {
     created_at: Date;
 }
 
-export interface DailyChecklistObResponse {
+export interface RecentActivityResponse {
+    id: string;
+    title: string;
+    location: string;
+    status: LaporanStatus;
+    assignee_name: string | null;
+    timestamp: Date;
+}
+
+
+export interface DailyChecklistOBResponse {
     nama_ob: string;
     total_tugas: number;
     tugas_selesai: number;
@@ -67,8 +79,8 @@ export interface DashboardMainResponse {
     kpi: KpiResponse;
     bar_chart: BarChartResponse[];
     pie_chart: PieChartResponse[];
-    recent_laporan: RecentLaporanResponse[];
-    daily_checklist_ob: DailyChecklistObResponse[];
+    recent_activities: RecentActivityResponse[];
+    daily_checklist_ob: DailyChecklistOBResponse[];
 }
 
 export interface UserStatsRes {
@@ -90,7 +102,7 @@ export type AdminReportDetailResponse = {
     bukti_foto: {
         urls: string[];
         diupload_oleh: string | null;
-        jam_upload: string | null;   
+        jam_upload: string | null;
     };
 };
 
@@ -110,8 +122,10 @@ export interface AdminLaporanItemResponse {
     updated_at: string;
 }
 
-export interface LokasiTerpopulerResponse {
-    lokasi_id: string | null;
+export interface RuanganTerpopulerResponse {
+    ruangan_id: string | null;
+    nama_ruangan: string;
+    nama_lantai: string;
     nama_lokasi: string;
     total_laporan: number;
 }
@@ -121,17 +135,8 @@ export interface LaporanAktifResponse {
 }
 
 export interface AdminLaporanPageResponse {
-    laporan: {
-        items: AdminLaporanItemResponse[];
-        next_cursor: null;
-        meta: {
-            total_items: number;
-            current_page: number;
-            limit: number;
-            total_pages: number;
-        };
-    };
-    lokasi_terpopuler: LokasiTerpopulerResponse[];
+    laporan: PaginatedResponse<AdminLaporanItemResponse>;
+    ruangan_terpopuler: RuanganTerpopulerResponse[];
     laporan_aktif: LaporanAktifResponse;
 }
 
@@ -140,6 +145,21 @@ export interface DailyChecklistObPayload {
     nama_ob: string;
     total_tugas: number;
     tugas_selesai: number;
+}
+
+export type RecentActivityPayload = Prisma.Laporan_karyawanGetPayload<{
+    include: {
+        lantai: {
+            include: { lokasi: true }
+        };
+        ob: true;
+    };
+}>;
+
+export interface ReportSummaryPayload {
+    id: string;
+    status: string;
+    created_at: Date;
 }
 
 

@@ -1,17 +1,24 @@
 import type { ChecklistHarianQuery, CreateChecklistHarianReq, UpdateChecklistHarianReq, ChecklistHarianRes, ChecklistHarianPageResponse, ChecklistHarianGroupedByOB } from "../dto/checklist_harian.js";
-import type { PaginatedResponse } from "../dto/response.js";
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { ChecklistHarianWithRelations } from "../repositories/checklistHarian_repository.interface.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
-import { CHECKLIST_STATUS } from "../utils/constants.js";
+import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE } from "../utils/constants.js";
+import type { NotificationData } from "../dto/notification.js";
+import type { INotificationService } from "./notification_service.interface.js";
+import { calculatePeriodRange } from "../utils/date.js";
 
 export class ChecklistHarianService implements IChecklistHarianService {
     private checklistRepo: IChecklistHarianRepository;
+    private notificationService: INotificationService;
 
-    constructor(checklistRepo: IChecklistHarianRepository) {
+    constructor(
+        checklistRepo: IChecklistHarianRepository,
+        notificationService: INotificationService,
+        ) {
         this.checklistRepo = checklistRepo;
+        this.notificationService = notificationService;
     }
 
     private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {
@@ -34,6 +41,8 @@ export class ChecklistHarianService implements IChecklistHarianService {
 
     async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<ChecklistHarianPageResponse> {
         try {
+            const dateRange = calculatePeriodRange(query.period);
+
             const [
                 data, 
                 total, 
@@ -42,10 +51,10 @@ export class ChecklistHarianService implements IChecklistHarianService {
                 late
             ] = await Promise.all([
                 this.checklistRepo.getAll(page, limit, query),
-                this.checklistRepo.countTotalChecklist(),
-                this.checklistRepo.countTotalChecklistDone(),
-                this.checklistRepo.countTotalChecklistPending(),
-                this.checklistRepo.countTotalChecklistLate()
+                this.checklistRepo.countTotalChecklist(dateRange),
+                this.checklistRepo.countTotalChecklistDone(dateRange),
+                this.checklistRepo.countTotalChecklistPending(dateRange),
+                this.checklistRepo.countTotalChecklistLate(dateRange)
             ]);
 
             const mappedItems = data.items.map(item => this.mapToResponse(item));
@@ -92,7 +101,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
         }
     }
 
-    async create(req: CreateChecklistHarianReq): Promise<void> {
+    async create(userId: string, req: CreateChecklistHarianReq): Promise<void> {
         try {
             const dataToInsert: Checklist_harianUncheckedCreateInput = {
                 tugas_id: req.tugas_id,
@@ -100,8 +109,19 @@ export class ChecklistHarianService implements IChecklistHarianService {
                 lantai_id: req.lantai_id,
                 tanggal: new Date(),
                 status: CHECKLIST_STATUS.BELUM_DIKERJAKAN,
+                ob_id: req.ob_id,
             };
+
             await this.checklistRepo.insert(dataToInsert);
+
+            const notifData: NotificationData = {
+                penerima_id: req.ob_id,
+                pengirim_id: userId,
+                tipe: NOTIFICATION_TYPE.PENUGASAN_CHECKLIST,
+                judul: NOTIFICATION_TITLE.PENUGASAN_CHECKLIST,
+                pesan: NOTIFICATION_MESSAGE.ADMIN_MENUGASKAN_OB,
+            };
+            await this.notificationService.sendNotification(notifData);
         } catch (err) {
             handlePrismaError(err);
         }

@@ -49,11 +49,5 @@ export interface LokasiTerpopulerPayload {
 
 export interface IAdminRepository {
     getUserStats(): Promise<UserStatsRes>;
-    getRecentActivities(limit: number): Promise<RecentLaporanPayload[]>;
-    getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]>;
-    getReportDetailById(laporanId: string): Promise<LaporanDetailPayload | null>;
-    getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>>;
-    getLokasiTerpopuler(limit: number, query: AdminLaporanQuery): Promise<LokasiTerpopulerPayload[]>;
-    countLaporanAktif(query: AdminLaporanQuery): Promise<number>;
-    getDailyChecklistOb(): Promise<DailyChecklistObPayload[]>;
+    getDailyChecklistOB(tanggal: Date): Promise<any[]>;
 }

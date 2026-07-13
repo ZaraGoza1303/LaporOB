@@ -1,20 +1,25 @@
 import type { IObService } from "./ob_service.interface.js";
 import type { IObRepository } from "../repositories/ob_repository.interface.js";
 import type { ILaporanRepository, ProfileReport } from "../repositories/laporan_repository.interface.js";
+import type { INotificationService } from "./notification_service.interface.js";
+import type { NotificationData } from "../dto/notification.js";
 import type { ObHomeRes, CreateHistoriReq } from "../dto/ob.js";
 import type { MappedProfileReport, MappedReportDetailRes } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
+import type { PeriodRange } from "../utils/date.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
-import { CHECKLIST_STATUS, LAPORAN_PRIORITY, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
+import { CHECKLIST_STATUS, LAPORAN_PRIORITY, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 
 export class ObService implements IObService {
     private obRepo: IObRepository;
     private laporanRepo: ILaporanRepository;
+    private notificationService: INotificationService;
 
-    constructor(obRepo: IObRepository, laporanRepo: ILaporanRepository) {
+    constructor(obRepo: IObRepository, laporanRepo: ILaporanRepository, notificationService: INotificationService) {
         this.obRepo = obRepo;
         this.laporanRepo = laporanRepo;
+        this.notificationService = notificationService;
     }
 
     async getHomeStats(obId: string): Promise<ObHomeRes> {
@@ -94,23 +99,59 @@ export class ObService implements IObService {
     }
     async ambilLaporan(laporanId: string, obId: string): Promise<void> {
         try {
+            const laporan = await this.laporanRepo.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+
             await this.obRepo.ambilLaporan(laporanId, obId);
+
+            const notifData: NotificationData = {
+                penerima_id: laporan.pelapor_id,
+                pengirim_id: obId,
+                tipe: NOTIFICATION_TYPE.LAPORAN_DIKERJAKAN,
+                judul: NOTIFICATION_TITLE.LAPORAN_DIKERJAKAN,
+                pesan: NOTIFICATION_MESSAGE.LAPORAN_DIKERJAKAN,
+            };
+            await this.notificationService.sendNotification(notifData);
         } catch (err: any) {
             throw handlePrismaError(err);
         }
     }
 
-    async createHistoriPekerjaan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq): Promise<void> {
+    async createHistoriPekerjaan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq, obId: string): Promise<void> {
         try {
+            const laporan = await this.laporanRepo.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+
             await this.obRepo.createHistoriPekerjaan(laporanId, fotoUrls, dto.catatan);
+
+            const notifData: NotificationData = {
+                penerima_id: laporan.pelapor_id,
+                pengirim_id: obId,
+                tipe: NOTIFICATION_TYPE.LAPORAN_BERES,
+                judul: NOTIFICATION_TITLE.LAPORAN_BERES,
+                pesan: dto.catatan,
+            };
+            await this.notificationService.sendNotification(notifData);
         } catch (err: any) {
             throw handlePrismaError(err);
         }
     }
 
-    async tolakLaporan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq): Promise<void> {
+    async tolakLaporan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq, obId: string): Promise<void> {
         try {
+            const laporan = await this.laporanRepo.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+
             await this.obRepo.tolakLaporan(laporanId, fotoUrls, dto.catatan);
+
+            const notifData: NotificationData = {
+                penerima_id: laporan.pelapor_id,
+                pengirim_id: obId,
+                tipe: NOTIFICATION_TYPE.LAPORAN_DITOLAK,
+                judul: NOTIFICATION_TITLE.LAPORAN_DITOLAK,
+                pesan: dto.catatan,
+            };
+            await this.notificationService.sendNotification(notifData);
         } catch (err: any) {
             throw handlePrismaError(err);
         }
@@ -123,9 +164,9 @@ export class ObService implements IObService {
         email: string;
         role: string;
         profile_picture: string | null;
-        tasksCompleted: number;
-        komplain_ditangani: number;
-        rejected: number;           
+        laporanDiterima: number;
+        laporanSelesai: number;
+
     }> {
         try {
             const user = await this.obRepo.getObById(obId);
@@ -142,9 +183,8 @@ export class ObService implements IObService {
                 email: user.email,
                 role: user.role_id || "OB",
                 profile_picture: resolveFileUrl(user.profile_picture),
-                tasksCompleted: obStats.tasksCompleted || 0,
-                komplain_ditangani: obStats.komplain_ditangani || 0,
-                rejected: obStats.rejected || 0
+                laporanDiterima: obStats.laporanDiterima || 0,
+                laporanSelesai: obStats.laporanSelesai || 0,
             };
         } catch (err: any) {
             handlePrismaError(err);
@@ -186,6 +226,7 @@ export class ObService implements IObService {
         }
     }
 
+   
     async getDetailRiwayat(obId: string, laporanId: string): Promise<MappedReportDetailRes> {
         try {
             const item = await this.laporanRepo.getReportDetailById(laporanId);
@@ -218,10 +259,9 @@ export class ObService implements IObService {
             handlePrismaError(err);
         }
     }
-
-    async getObPerformanceStats(obId: string): Promise<{ tasksCompleted: number, komplain_ditangani: number, rejected: number }> {
+ async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }> {
         try {
-            return await this.obRepo.getObPerformanceStats(obId);
+            return await this.obRepo.getObPerformanceStats(obId, dateRange);
         } catch (err) {
             throw handlePrismaError(err);
         }

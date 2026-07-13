@@ -96,6 +96,43 @@ components:
         total_pages:
           type: integer
 
+    Notifikasi:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        penerima_id:
+          type: string
+          format: uuid
+        pengirim_id:
+          type: string
+          format: uuid
+        tipe:
+          type: string
+        judul:
+          type: string
+        pesan:
+          type: string
+          nullable: true
+        is_read:
+          type: boolean
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        pengirim:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            nama_lengkap:
+              type: string
+
 # AUTH
 paths:
   /api/auth/login:
@@ -289,12 +326,16 @@ paths:
               type: object
               required:
                 - lantai_id
+                - ruangan_id
                 - kategori_id
                 - deskripsi_kendala
                 - prioritas
                 - foto_masalah
               properties:
                 lantai_id:
+                  type: string
+                  format: uuid
+                ruangan_id:
                   type: string
                   format: uuid
                 kategori_id:
@@ -460,7 +501,7 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
               required:
@@ -587,7 +628,11 @@ paths:
             default: desc
       responses:
         '200':
-          description: Daftar laporan
+          description: |
+            Daftar laporan. Response body berisi:
+            - `laporan` (paginated): item laporan beserta meta pagination
+            - `ruangan_terpopuler`: array ruangan dengan laporan terbanyak (berisi ruangan_id, nama_ruangan, nama_lantai, nama_lokasi, total_laporan)
+            - `laporan_aktif`: total laporan aktif
 
   /api/admin/laporan/{laporan_id}:
     get:
@@ -785,6 +830,14 @@ paths:
       summary: 'List semua lantai (Admin)'
       security:
         - BearerAuth: []
+      parameters:
+        - name: lokasi_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter lantai berdasarkan lokasi id (optional)
       responses:
         '200':
           description: Daftar lantai
@@ -827,6 +880,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: lokasi_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter berdasarkan lokasi id (optional)
       responses:
         '200':
           description: Data lantai
@@ -843,6 +903,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: lokasi_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter berdasarkan lokasi id (optional)
       requestBody:
         required: true
         content:
@@ -870,6 +937,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: lokasi_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter berdasarkan lokasi id (optional)
       responses:
         '200':
           description: Lantai berhasil dihapus
@@ -882,6 +956,14 @@ paths:
       summary: 'List semua ruangan (Admin)'
       security:
         - BearerAuth: []
+      parameters:
+        - name: lantai_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter ruangan berdasarkan lantai id (optional)
       responses:
         '200':
           description: Daftar ruangan
@@ -924,6 +1006,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: lantai_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter berdasarkan lantai id (optional)
       responses:
         '200':
           description: Data ruangan
@@ -940,6 +1029,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: lantai_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter berdasarkan lantai id (optional)
       requestBody:
         required: true
         content:
@@ -967,6 +1063,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: lantai_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter berdasarkan lantai id (optional)
       responses:
         '200':
           description: Ruangan berhasil dihapus
@@ -1070,6 +1173,14 @@ paths:
       summary: 'List jenis tugas (Admin)'
       security:
         - BearerAuth: []
+      parameters:
+        - name: kategori_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter tugas berdasarkan kategori id (optional)
       responses:
         '200':
           description: Daftar tugas
@@ -1181,6 +1292,33 @@ paths:
           schema:
             type: integer
             default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Cari checklist berdasarkan nama tugas
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter checklist berdasarkan lokasi id
+        - name: lantai_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter checklist berdasarkan lantai id
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - BELUM_DIKERJAKAN
+              - SEDANG_DIKERJAKAN
+              - SELESAI
+              - TERLEWAT
+          description: Filter checklist berdasarkan status
       responses:
         '200':
           description: Daftar checklist
@@ -1201,6 +1339,7 @@ paths:
                 - kategori_id
                 - lokasi_id
                 - lantai_id
+                - ob_id
               properties:
                 tugas_id:
                   type: string
@@ -1212,6 +1351,9 @@ paths:
                   type: string
                   format: uuid
                 lantai_id:
+                  type: string
+                  format: uuid
+                ob_id:
                   type: string
                   format: uuid
       responses:
@@ -1295,3 +1437,140 @@ paths:
       responses:
         '200':
           description: Checklist berhasil dihapus
+
+# NOTIFIKASI
+  /api/notifikasi:
+    get:
+      tags:
+        - Notifikasi
+      summary: 'Ambil notifikasi hari ini & kemarin (Semua role)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar notifikasi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil mendapatkan notifikasi
+                  data:
+                    type: object
+                    properties:
+                      hari_ini:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Notifikasi'
+                      kemarin:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Notifikasi'
+
+  /api/notifikasi/unread-count:
+    get:
+      tags:
+        - Notifikasi
+      summary: 'Hitung notifikasi belum dibaca (Semua role)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Jumlah notifikasi belum dibaca
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil mendapatkan total pesan yang belum dibaca
+                  data:
+                    type: integer
+                    example: 5
+
+  /api/notifikasi/read-all:
+    patch:
+      tags:
+        - Notifikasi
+      summary: 'Tandai semua notifikasi sudah dibaca (Semua role)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Semua notifikasi berhasil dibaca
+
+  /api/notifikasi/{notification_id}/read:
+    patch:
+      tags:
+        - Notifikasi
+      summary: 'Tandai satu notifikasi sudah dibaca (Semua role)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notifikasi berhasil dibaca
+
+# WEBSOCKET
+  /ws:
+    get:
+      tags:
+        - WebSocket
+      summary: 'Koneksi WebSocket untuk notifikasi real-time (Semua role)'
+      description: |
+        Upgrade koneksi HTTP ke WebSocket. Server akan mengirim notifikasi
+        real-time saat ada notifikasi baru untuk user tersebut.
+
+        **Endpoint:** `ws://hostname/ws?token=xxx`
+
+        **Query Parameters:**
+        - `token` (required) — JWT token (sama dengan Bearer token auth)
+
+        **Event setelah connect:**
+        ```json
+        { "type": "CONNECTED" }
+        ```
+
+        **Format data notifikasi yang diterima (real-time):**
+        ```json
+        {
+          "id": "uuid",
+          "penerima_id": "uuid",
+          "pengirim_id": "uuid",
+          "tipe": "LAPORAN_BARU",
+          "judul": "Laporan baru",
+          "pesan": "string",
+          "is_read": false,
+          "read_at": null,
+          "created_at": "2026-07-13T10:00:00Z"
+        }
+        ```
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: JWT token autentikasi
+      responses:
+        '101':
+          description: Switching Protocols — koneksi WebSocket berhasil
+        '400':
+          description: Token invalid/kosong
