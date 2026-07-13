@@ -1,4 +1,4 @@
-import type { UserStatsRes } from "../dto/admin.js";
+import type { UserStatsRes, AdminLaporanQuery } from "../dto/admin.js";
 import { PrismaClient } from "../generated/prisma/client.js";
 import type { IAdminRepository } from "./admin_repository.interface.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";

@@ -12,17 +12,17 @@ export class ObRepository implements IObRepository {
 
     async getObById(obId: string): Promise<User | null> {
         return this.db.user.findFirst({
-            where: {
-                id: obId,
-                role: {
-                    nama_role: {
-                        equals: "ob",
-                        mode: "insensitive"
+            where: { id: obId },
+                include: {
+                    role:true,
+                    tokens: {
+                        orderBy: {
+                            created_at: 'desc'
+                        },
+                        take: 1
                     }
-                },
-                is_deleted: false
-            }
-        });
+                }
+        })
     }
 
     async getTodayChecklists(obId: string, tanggal: Date): Promise<any[]> {

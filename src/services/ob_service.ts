@@ -4,7 +4,7 @@ import type { ILaporanRepository, ProfileReport } from "../repositories/laporan_
 import type { INotificationService } from "./notification_service.interface.js";
 import type { NotificationData } from "../dto/notification.js";
 import type { ObHomeRes, CreateHistoriReq } from "../dto/ob.js";
-import type { MappedProfileReport } from "../dto/users.js";
+import type { MappedProfileReport, MappedReportDetailRes } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { PeriodRange } from "../utils/date.js";
 import { resolveFileUrl } from "../utils/url.js";
@@ -157,6 +157,40 @@ export class ObService implements IObService {
         }
     }
 
+   async getProfile(obId: string): Promise<{
+        id: string;
+        nama_lengkap: string;
+        username: string;
+        email: string;
+        role: string;
+        profile_picture: string | null;
+        laporanDiterima: number;
+        laporanSelesai: number;
+
+    }> {
+        try {
+            const user = await this.obRepo.getObById(obId);
+            if (!user) {
+                throw new Error("OB tidak ditemukan");
+            }
+
+            const obStats = await this.getObPerformanceStats(obId);
+
+            return {
+                id: user.id,
+                nama_lengkap: user.nama_lengkap,
+                username: user.username,
+                email: user.email,
+                role: user.role_id || "OB",
+                profile_picture: resolveFileUrl(user.profile_picture),
+                laporanDiterima: obStats.laporanDiterima || 0,
+                laporanSelesai: obStats.laporanSelesai || 0,
+            };
+        } catch (err: any) {
+            handlePrismaError(err);
+        }
+    }
+
     async getRiwayat(obId: string, limit: number, params: { cursor?: string | null; search?: string | null; status?: string | null }): Promise<PaginatedResponse<MappedProfileReport>> {
         try {
             const reportsData = await this.laporanRepo.getReportsByObId(obId, limit, params.cursor, params.search, params.status);
@@ -192,7 +226,40 @@ export class ObService implements IObService {
         }
     }
 
-    async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }> {
+   
+    async getDetailRiwayat(obId: string, laporanId: string): Promise<MappedReportDetailRes> {
+        try {
+            const item = await this.laporanRepo.getReportDetailById(laporanId);
+            if (!item) {
+                throw new AppError("Laporan tidak ditemukan", 404);
+            }
+
+            if (item.ob_id !== obId) {
+                throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
+            }
+
+            const history = item.histori_pekerjaan?.[0];
+
+            return {
+                id: item.id,
+                kategori: item.kategori?.nama_kategori || "",
+                deskripsi_kendala: item.deskripsi_kendala || "",
+                status: item.status as LaporanStatus,
+                prioritas: item.prioritas as LaporanPriority,
+                foto_masalah: Array.isArray(item.foto_masalah) ? (item.foto_masalah as string[]).map(resolveFileUrl).filter((url): url is string => !!url) : [],
+                foto_selesai: history && Array.isArray(history.foto_selesai) ? history.foto_selesai.map(resolveFileUrl).filter((url): url is string => !!url) : [],
+                catatan: history?.catatan || "",
+                lokasi: item.lantai?.lokasi?.nama_lokasi || "",
+                nomor_lantai: item.lantai?.nomor_lantai || 0,
+                nama_karyawan: item.pelapor?.nama_lengkap || "",
+                nama_ob: item.ob?.nama_lengkap || null,
+                created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
+            };
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+ async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }> {
         try {
             return await this.obRepo.getObPerformanceStats(obId, dateRange);
         } catch (err) {
