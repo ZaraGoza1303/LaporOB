@@ -65,6 +65,18 @@ export class UsersController {
         }
     }
 
+    async getAllKaryawan(req: Request, res: Response) {
+        try {
+            const response = await this.usersService.getByRole("karyawan")
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data karyawan", response))
+        } catch (err: any) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message))
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data user", err.message))
+        }
+    }
+
     async getByID(req: Request, res: Response) {
         try {
             const validate = UserIdParamSchema.safeParse(req.params);
