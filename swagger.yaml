@@ -1521,3 +1521,52 @@ paths:
       responses:
         '200':
           description: Notifikasi berhasil dibaca
+
+# WEBSOCKET
+  /ws:
+    get:
+      tags:
+        - WebSocket
+      summary: 'Koneksi WebSocket untuk notifikasi real-time (Semua role)'
+      description: |
+        Upgrade koneksi HTTP ke WebSocket. Server akan mengirim notifikasi
+        real-time saat ada notifikasi baru untuk user tersebut.
+
+        **Endpoint:** `ws://hostname/ws?token=xxx`
+
+        **Query Parameters:**
+        - `token` (required) — JWT token (sama dengan Bearer token auth)
+
+        **Event setelah connect:**
+        ```json
+        { "type": "CONNECTED" }
+        ```
+
+        **Format data notifikasi yang diterima (real-time):**
+        ```json
+        {
+          "id": "uuid",
+          "penerima_id": "uuid",
+          "pengirim_id": "uuid",
+          "tipe": "LAPORAN_BARU",
+          "judul": "Laporan baru",
+          "pesan": "string",
+          "is_read": false,
+          "read_at": null,
+          "created_at": "2026-07-13T10:00:00Z"
+        }
+        ```
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: JWT token autentikasi
+      responses:
+        '101':
+          description: Switching Protocols — koneksi WebSocket berhasil
+        '400':
+          description: Token invalid/kosong
