@@ -3,6 +3,7 @@ import type { PaginatedResponse } from "../dto/response.js";
 import { Prisma, type PrismaClient } from "../generated/prisma/client.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
+import { calculatePeriodRange, type PeriodRange } from "../utils/date.js";
 import type { IChecklistHarianRepository, ChecklistHarianWithRelations } from "./checklistHarian_repository.interface.js";
 
 export class ChecklistHarianRepository implements IChecklistHarianRepository {
@@ -12,35 +13,40 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
         this.db = db
     }
 
-    async countTotalChecklist(): Promise<number> {
-        const data = await this.db.checklist_harian.count();
+    async countTotalChecklist(dateRange?: PeriodRange): Promise<number> {
+        const data = await this.db.checklist_harian.count({
+            where: dateRange ? { tanggal: { gte: dateRange.start, lte: dateRange.end } } : {}
+        });
         return data;
     }
     
-    async countTotalChecklistDone(): Promise<number> {
+    async countTotalChecklistDone(dateRange?: PeriodRange): Promise<number> {
         const data = await this.db.checklist_harian.count({
             where: {
-                status: CHECKLIST_STATUS.SELESAI
+                status: CHECKLIST_STATUS.SELESAI,
+                ...(dateRange ? { tanggal: { gte: dateRange.start, lte: dateRange.end } } : {})
             }
         });
 
         return data;
     }
     
-    async countTotalChecklistPending(): Promise<number> {
+    async countTotalChecklistPending(dateRange?: PeriodRange): Promise<number> {
         const data = await this.db.checklist_harian.count({
             where: {
-                status: CHECKLIST_STATUS.SEDANG_DIKERJAKAN
+                status: CHECKLIST_STATUS.SEDANG_DIKERJAKAN,
+                ...(dateRange ? { tanggal: { gte: dateRange.start, lte: dateRange.end } } : {})
             }
         });
         
         return data;
     }
 
-    async countTotalChecklistLate(): Promise<number> {
+    async countTotalChecklistLate(dateRange?: PeriodRange): Promise<number> {
         const data = await this.db.checklist_harian.count({
             where: {
-                status: CHECKLIST_STATUS.TERLEWAT
+                status: CHECKLIST_STATUS.TERLEWAT,
+                ...(dateRange ? { tanggal: { gte: dateRange.start, lte: dateRange.end } } : {})
             }
         });
         
@@ -48,10 +54,16 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
     }
 
     async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<PaginatedResponse<ChecklistHarianWithRelations>> {
-        const { search, lokasi_id, lantai_id, status } = query;
+        const { search, lokasi_id, lantai_id, status, period } = query;
         const offset = (page - 1) * limit;
 
         const where: Prisma.Checklist_harianWhereInput = {};
+
+      
+        if (period) {
+            const range = calculatePeriodRange(period);
+            where.tanggal = { gte: range.start, lte: range.end };
+        }
 
         if (search) {
             where.tugas = { nama_tugas: { contains: search, mode: 'insensitive' } };

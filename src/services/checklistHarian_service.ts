@@ -7,6 +7,7 @@ import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpd
 import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE } from "../utils/constants.js";
 import type { NotificationData } from "../dto/notification.js";
 import type { INotificationService } from "./notification_service.interface.js";
+import { calculatePeriodRange } from "../utils/date.js";
 
 export class ChecklistHarianService implements IChecklistHarianService {
     private checklistRepo: IChecklistHarianRepository;
@@ -40,6 +41,8 @@ export class ChecklistHarianService implements IChecklistHarianService {
 
     async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<ChecklistHarianPageResponse> {
         try {
+            const dateRange = calculatePeriodRange(query.period);
+
             const [
                 data, 
                 total, 
@@ -48,10 +51,10 @@ export class ChecklistHarianService implements IChecklistHarianService {
                 late
             ] = await Promise.all([
                 this.checklistRepo.getAll(page, limit, query),
-                this.checklistRepo.countTotalChecklist(),
-                this.checklistRepo.countTotalChecklistDone(),
-                this.checklistRepo.countTotalChecklistPending(),
-                this.checklistRepo.countTotalChecklistLate()
+                this.checklistRepo.countTotalChecklist(dateRange),
+                this.checklistRepo.countTotalChecklistDone(dateRange),
+                this.checklistRepo.countTotalChecklistPending(dateRange),
+                this.checklistRepo.countTotalChecklistLate(dateRange)
             ]);
 
             const mappedItems = data.items.map(item => this.mapToResponse(item));
