@@ -11,5 +11,6 @@ obRouter.get("/dashboard", (req, res) => obController.getHomeStats(req, res));
 obRouter.patch("/laporan/:laporan_id", (req, res) => obController.takeLapor(req, res));
 obRouter.post("/laporan/:laporan_id/histori", (req, res) => obController.submitHistori(req, res));
 obRouter.post("/laporan/:laporan_id/tolak", (req, res) => obController.rejectLapor(req, res));
+obRouter.patch("/checklist/:checklist_id/claim", (req, res) => obController.claimChecklist(req, res));
 
 export default obRouter;

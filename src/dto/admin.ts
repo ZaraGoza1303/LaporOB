@@ -167,6 +167,11 @@ export interface ReportSummaryPayload {
     created_at: Date;
 }
 
+export interface AssignObRepoArgs{
+    obId: string;
+    lokasiId: string;
+}
+
 
 export const UserSearchQuerySchema = z.object({
     search: z.preprocess(emptyToNull, z.string().nullable()),
@@ -174,8 +179,6 @@ export const UserSearchQuerySchema = z.object({
 });
 
 export type UserSearchQuery = z.infer<typeof UserSearchQuerySchema>;
-
-// ─── Admin Patch Laporan ───
 
 export const PatchLaporanReqSchema = z.object({
     status: z.preprocess(
@@ -199,4 +202,12 @@ export const PatchLaporanReqSchema = z.object({
 });
 
 export type PatchLaporanReq = z.infer<typeof PatchLaporanReqSchema>;
+export const AssignObToLocationsSchema = z.object({
+    obId: z.string().uuid({ message: "Format obId harus UUID yang valid" }),
+    lokasiIds: z.array(z.string().uuid({ message: "Format lokasiId harus UUID yang valid" })),
+    bulan: z.number().int().min(1).max(12),
+    tahun: z.number().int().min(2000).max(2100),
+});
+
+export type AssignObToLocationsReq = z.infer<typeof AssignObToLocationsSchema>;
 

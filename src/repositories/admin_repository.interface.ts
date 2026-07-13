@@ -1,6 +1,8 @@
 import type { Prisma } from "../generated/prisma/client.js";
 import type { AdminLaporanQuery, UserStatsRes, DailyChecklistObPayload } from "../dto/admin.js";
 import type { PaginatedResponse } from "../dto/response.js";
+import type { AssignObRepoArgs } from "../dto/admin.js";
+
 
 export type RecentLaporanPayload = {
     id: string;
@@ -40,14 +42,31 @@ export type AdminLaporanPayload = Prisma.Laporan_karyawanGetPayload<{
     };
 }>;
 
-export interface LokasiTerpopulerPayload {
-    lokasi_id: string | null;
-    nama_lokasi: string;
-    total_laporan: number;
+export type PenugasanObWithDetails = Prisma.PenugasanObGetPayload<{
+    include: {
+        ob: {
+            select: {
+                id: true;
+                nama_lengkap: true;
+                username: true;
+                email: true;
+            }
+        };
+        lokasi: true;
+    };
+}>;
+
+export interface DailyChecklistObReport {
+    nama_ob: string;
+    lokasi: string;
+    selesai: number;
+    total: number;
+    persentase: number;
 }
 
-
 export interface IAdminRepository {
+    assignObToLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number): Promise<void>;
     getUserStats(): Promise<UserStatsRes>;
-    getDailyChecklistOB(tanggal: Date): Promise<any[]>;
+    getDailyChecklistOB(tanggal: Date): Promise<DailyChecklistObReport[]>;
+    getPenugasanByPeriode(bulan: number, tahun: number): Promise<PenugasanObWithDetails[]>;
 }

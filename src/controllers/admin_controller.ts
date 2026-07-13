@@ -1,9 +1,11 @@
-import { AdminLaporanQuerySchema, GetDashboardQuerySchema, PatchLaporanReqSchema } from '../dto/admin.js';
+
+import { AdminLaporanQuerySchema, AssignObToLocationsSchema, GetDashboardQuerySchema, PatchLaporanReqSchema } from '../dto/admin.js';
 import { LaporanIdParamSchema } from '../dto/users.js';
 import type { IAdminService } from "../services/admin_service.interface.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { Request, Response } from "express";
 import { AppError } from "../utils/error.js";
+import { z } from "zod";
 
 export class AdminController {
     private adminService: IAdminService;
@@ -85,7 +87,8 @@ export class AdminController {
         }
     }
 
-    async patchLaporan(req: Request, res: Response) {
+
+  async patchLaporan(req: Request, res: Response) {
         try {
             const validateParams = LaporanIdParamSchema.safeParse(req.params);
             if (!validateParams.success) {
@@ -110,5 +113,48 @@ export class AdminController {
             return res.status(500).json(sendErrorResponse("Gagal memperbarui laporan", err.message));
         }
     }
-}
 
+    async assignObToLocations(req: Request, res: Response) {
+        try {
+            const validateBody = AssignObToLocationsSchema.safeParse(req.body);
+            if (!validateBody.success) {
+                const formattedErr = validateBody.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const { obId, lokasiIds, bulan, tahun } = validateBody.data;
+            await this.adminService.assignObToLocations(obId, lokasiIds, bulan, tahun);
+
+            return res.status(200).json(sendSuccessfullResponse("Berhasil memperbarui penugasan OB", null));
+        } catch (err: any) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal memperbarui penugasan OB", err.message));
+        }
+    }
+
+    async getPenugasanByPeriode(req: Request, res: Response) {
+        try {
+            const querySchema = z.object({
+                bulan: z.coerce.number().int().min(1).max(12),
+                tahun: z.coerce.number().int().min(2000).max(2100),
+            });
+            const validateQuery = querySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formattedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const { bulan, tahun } = validateQuery.data;
+            const assignments = await this.adminService.getPenugasanByPeriode(bulan, tahun);
+
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan penugasan OB", assignments));
+        } catch (err: any) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan penugasan OB", err.message));
+        }
+    }
+}

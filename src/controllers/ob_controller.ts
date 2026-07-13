@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import type { IObService } from "../services/ob_service.interface.js";
 import { sendSuccessfullResponse, sendErrorResponse } from "../utils/response.js";
 import type { IStorageService } from "../services/storage_service.interface.js";
-import { CreateHistoriSchema } from "../dto/ob.js";
+import { CreateHistoriSchema, ChecklistIdParamSchema } from "../dto/ob.js";
 import { LaporanIdParamSchema } from "../dto/users.js";
 import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
 import { AppError } from "../utils/error.js";
@@ -155,6 +155,28 @@ export class ObController {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
             return res.status(500).json(sendErrorResponse("Terjadi kesalahan, tidak bisa menolak laporan"))
+        }
+    }
+
+    async claimChecklist(req: Request, res: Response) {
+        try {
+            const validateParams = ChecklistIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const checklistId = validateParams.data.checklist_id;
+            const obId = req.user?.id as string;
+
+            await this.obService.ambilChecklist(checklistId, obId);
+
+            return res.status(200).json(sendSuccessfullResponse("Checklist berhasil diklaim"));
+        } catch (err: any) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Terjadi kesalahan, tidak bisa mengklaim checklist"));
         }
     }
 }

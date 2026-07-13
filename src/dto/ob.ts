@@ -39,3 +39,6 @@ export const CreateHistoriSchema = z.object({
 
 export type CreateHistoriReq = z.infer<typeof CreateHistoriSchema>;
 
+export const ChecklistIdParamSchema = z.object({
+    checklist_id: z.string().uuid({ message: "Format checklist_id harus UUID yang valid" }),
+});

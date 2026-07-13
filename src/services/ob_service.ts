@@ -118,6 +118,14 @@ export class ObService implements IObService {
         }
     }
 
+    async ambilChecklist(checklistId: string, obId: string): Promise<void> {
+        try {
+            await this.obRepo.ambilChecklist(checklistId, obId);
+        } catch (err: any) {
+            throw handlePrismaError(err);
+        }
+    }
+
     async createHistoriPekerjaan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq, obId: string): Promise<void> {
         try {
             const laporan = await this.laporanService.getReportDetailById(laporanId);
