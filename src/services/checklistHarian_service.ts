@@ -114,7 +114,6 @@ export class ChecklistHarianService implements IChecklistHarianService {
 
             await this.checklistRepo.insert(dataToInsert);
 
-            // Notify the assigned OB only
             const notifData: NotificationData = {
                 penerima_id: req.ob_id,
                 pengirim_id: userId,
