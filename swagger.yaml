@@ -493,6 +493,38 @@ paths:
         '200':
           description: Daftar user
 
+    post:
+      tags:
+        - Admin
+      summary: 'Buat user baru (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - nama_lengkap
+                - role_id
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                nama_lengkap:
+                  type: string
+                role_id:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: User berhasil dibuat
+
   /api/admin/user/all-ob:
     get:
       tags:
