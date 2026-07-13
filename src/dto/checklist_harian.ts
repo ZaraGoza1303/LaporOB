@@ -30,7 +30,7 @@ export const CreateChecklistHarianSchema = z.object({
     kategori_id: z.string().trim().uuid({ message: "Format kategori_id harus berupa UUID yang valid" }),
     lokasi_id: z.string().trim().uuid({ message: "Format lokasi_id harus berupa UUID yang valid" }),
     lantai_id: z.string().trim().uuid({ message: "Format lantai_id harus berupa UUID yang valid" }),
-    ob_id: z.string().trim().uuid({ message: "Format ob_id harus berupa UUID yang valid" }).optional(),
+    ob_id: z.string().trim().uuid({ message: "Format ob_id harus berupa UUID yang valid" }),
 });
 
 export const UpdateChecklistHarianSchema = z.object({
