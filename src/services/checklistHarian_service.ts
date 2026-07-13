@@ -5,20 +5,24 @@ import type { IChecklistHarianService } from "./checklistHarian_service.interfac
 import type { ChecklistHarianWithRelations } from "../repositories/checklistHarian_repository.interface.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE } from "../utils/constants.js";
-import type { NotificationData } from "../dto/notification.js";
+import type { BulkNotificationData } from "../dto/notification.js";
 import type { INotificationService } from "./notification_service.interface.js";
+import type { IUsersService } from "./users_service.interface.js";
 import { calculatePeriodRange } from "../utils/date.js";
 
 export class ChecklistHarianService implements IChecklistHarianService {
     private checklistRepo: IChecklistHarianRepository;
     private notificationService: INotificationService;
+    private usersService: IUsersService;
 
     constructor(
         checklistRepo: IChecklistHarianRepository,
         notificationService: INotificationService,
-        ) {
+        usersService: IUsersService,
+    ) {
         this.checklistRepo = checklistRepo;
         this.notificationService = notificationService;
+        this.usersService = usersService;
     }
 
     private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {
@@ -44,10 +48,10 @@ export class ChecklistHarianService implements IChecklistHarianService {
             const dateRange = calculatePeriodRange(query.period);
 
             const [
-                data, 
-                total, 
-                done, 
-                pending, 
+                data,
+                total,
+                done,
+                pending,
                 late
             ] = await Promise.all([
                 this.checklistRepo.getAll(page, limit, query),
@@ -109,19 +113,21 @@ export class ChecklistHarianService implements IChecklistHarianService {
                 lantai_id: req.lantai_id,
                 tanggal: new Date(),
                 status: CHECKLIST_STATUS.BELUM_DIKERJAKAN,
-                ob_id: req.ob_id,
+                ob_id: null,
             };
 
             await this.checklistRepo.insert(dataToInsert);
 
-            const notifData: NotificationData = {
-                penerima_id: req.ob_id,
+            const allOb = await this.usersService.getByRole('ob');
+            const notifData: BulkNotificationData = {
+                penerima_ids: allOb.map(ob => ob.id),
                 pengirim_id: userId,
                 tipe: NOTIFICATION_TYPE.PENUGASAN_CHECKLIST,
                 judul: NOTIFICATION_TITLE.PENUGASAN_CHECKLIST,
                 pesan: NOTIFICATION_MESSAGE.ADMIN_MENUGASKAN_OB,
             };
-            await this.notificationService.sendNotification(notifData);
+                
+            await this.notificationService.sendBulkNotification(notifData);
         } catch (err) {
             handlePrismaError(err);
         }
