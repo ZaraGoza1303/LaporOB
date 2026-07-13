@@ -154,4 +154,17 @@ export class UsersService implements IUsersService {
             handlePrismaError(err)
         }
     }
+
+    async completeActivation(userId: string, password: string, tokenId: string): Promise<void> {
+        try {
+            const hashedPassword = await bcrypt.hash(password, 16);
+            await this.usersRepo.update(userId, {
+                password: hashedPassword,
+                is_active: true,
+            } as UserUpdateInput);
+            await this.usersRepo.markTokenAsUsed(tokenId);
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
 }

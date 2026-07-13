@@ -1,6 +1,6 @@
 import type { MappedReportDetailRes } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
-import type { AdminLaporanQuery } from "../dto/admin.js";
+import type { AdminLaporanQuery, PatchLaporanReq } from "../dto/admin.js";
 import type { ILaporanRepository, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, DetailReportPayload, ProfileReport } from "../repositories/laporan_repository.interface.js";
 import type { UserActivityRes } from "../dto/users.js";
 import type { LaporanPriority, LaporanStatus } from "../utils/constants.js";
@@ -84,6 +84,14 @@ export class LaporanService implements ILaporanService {
 
     async getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>> {
         return this.laporanRepo.getReportsByUserId(userId, limit, cursor, search, status);
+    }
+
+    async getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>> {
+        return this.laporanRepo.getReportsByObId(obId, limit, cursor, search, status);
+    }
+
+    async patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void> {
+        await this.laporanRepo.patchLaporan(laporanId, dto);
     }
 
 }

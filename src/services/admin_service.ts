@@ -1,9 +1,9 @@
 import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse } from "../dto/admin.js";
 import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse } from "../dto/admin.js";
 import type { IAdminRepository } from "../repositories/admin_repository.interface.js";
-import type { AdminLaporanPayload, ILaporanRepository as ILaporanRepo } from "../repositories/laporan_repository.interface.js";
-import type { IObRepository } from "../repositories/ob_repository.interface.js";
+import type { AdminLaporanPayload } from "../repositories/laporan_repository.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
+import type { IUsersService } from "../services/users_service.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { calculateDateRanges } from "../utils/date.js"
 import { LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
@@ -11,16 +11,14 @@ import { resolveFileUrl } from "../utils/url.js";
 import type { IAdminService } from "./admin_service.interface.js";
 
 export class AdminService implements IAdminService {
-    private obRepo: IObRepository;
     private adminRepo: IAdminRepository;
     private laporanService: ILaporanService;
-    private laporanRepo: ILaporanRepo;
+    private usersService: IUsersService;
 
-    constructor(adminRepo: IAdminRepository, obRepo: IObRepository, laporanService: ILaporanService, laporanRepo: ILaporanRepo) {
+    constructor(adminRepo: IAdminRepository, laporanService: ILaporanService, usersService: IUsersService) {
         this.adminRepo = adminRepo;
-        this.obRepo = obRepo;
         this.laporanService = laporanService;
-        this.laporanRepo = laporanRepo;
+        this.usersService = usersService;
     }
 
     async getUserStats(): Promise<UserStatsRes> {
@@ -209,7 +207,7 @@ export class AdminService implements IAdminService {
             groups[label] = (groups[label] || 0) + 1;
         });
 
-        if (period === 'weekly') {
+        if (period === 'mingguan') {
             const orderedLabels = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
             return orderedLabels
                 .filter(label => label in groups || true)
@@ -239,6 +237,7 @@ export class AdminService implements IAdminService {
         return {
             id: laporan.id,
             status: laporan.status as LaporanStatus,
+            prioritas: laporan.prioritas as LaporanPriority,
             nama_karyawan: laporan.pelapor?.nama_lengkap ?? "Anonim",
             lokasi: laporan.lantai?.lokasi
                 ? `Lantai ${laporan.lantai.nomor_lantai} - ${laporan.lantai.lokasi.nama_lokasi}`
@@ -247,6 +246,10 @@ export class AdminService implements IAdminService {
             ob_ditugaskan: laporan.ob?.nama_lengkap ?? "Belum Ditugaskan",
             waktu_laporan: laporan.created_at,
             waktu_selesai: historiTerakhir?.created_at ?? null,
+            dikerjakan_at: laporan.dikerjakan_at,
+            selesai_at: laporan.selesai_at,
+            ditolak_at: laporan.ditolak_at,
+            admin_catatan: laporan.admin_catatan,
             deskripsi_kendala: laporan.deskripsi_kendala,
             bukti_foto: {
                 urls: laporan.status === "SELESAI"
@@ -263,7 +266,21 @@ export class AdminService implements IAdminService {
             const laporan = await this.laporanService.getReportDetailById(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
 
-            await this.laporanRepo.patchLaporan(laporanId, dto);
+            if (dto.ob_id) {
+                const obUser = await this.usersService.getByID(dto.ob_id);
+                if (!obUser || obUser.role?.nama_role !== "ob") {
+                    throw new AppError("OB tidak ditemukan", 404);
+                }
+            }
+
+            if (dto.status === LAPORAN_STATUS.PENDING) {
+                const targetObId = dto.ob_id ?? laporan.ob_id;
+                if (!targetObId) {
+                    throw new AppError("Status PENDING memerlukan OB yang ditugaskan", 400);
+                }
+            }
+
+            await this.laporanService.patchLaporan(laporanId, dto);
         } catch (err) {
             throw handlePrismaError(err);
         }

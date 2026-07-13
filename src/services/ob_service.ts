@@ -1,6 +1,7 @@
 import type { IObService } from "./ob_service.interface.js";
 import type { IObRepository } from "../repositories/ob_repository.interface.js";
-import type { ILaporanRepository, ProfileReport } from "../repositories/laporan_repository.interface.js";
+import type { ProfileReport } from "../repositories/laporan_repository.interface.js";
+import type { ILaporanService } from "./laporan_service.interface.js";
 import type { INotificationService } from "./notification_service.interface.js";
 import type { NotificationData } from "../dto/notification.js";
 import type { ObHomeRes, CreateHistoriReq } from "../dto/ob.js";
@@ -13,12 +14,12 @@ import { CHECKLIST_STATUS, LAPORAN_PRIORITY, NOTIFICATION_TYPE, NOTIFICATION_TIT
 
 export class ObService implements IObService {
     private obRepo: IObRepository;
-    private laporanRepo: ILaporanRepository;
+    private laporanService: ILaporanService;
     private notificationService: INotificationService;
 
-    constructor(obRepo: IObRepository, laporanRepo: ILaporanRepository, notificationService: INotificationService) {
+    constructor(obRepo: IObRepository, laporanService: ILaporanService, notificationService: INotificationService) {
         this.obRepo = obRepo;
-        this.laporanRepo = laporanRepo;
+        this.laporanService = laporanService;
         this.notificationService = notificationService;
     }
 
@@ -99,7 +100,7 @@ export class ObService implements IObService {
     }
     async ambilLaporan(laporanId: string, obId: string): Promise<void> {
         try {
-            const laporan = await this.laporanRepo.getReportDetailById(laporanId);
+            const laporan = await this.laporanService.getReportDetailById(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
 
             await this.obRepo.ambilLaporan(laporanId, obId);
@@ -119,7 +120,7 @@ export class ObService implements IObService {
 
     async createHistoriPekerjaan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq, obId: string): Promise<void> {
         try {
-            const laporan = await this.laporanRepo.getReportDetailById(laporanId);
+            const laporan = await this.laporanService.getReportDetailById(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
 
             await this.obRepo.createHistoriPekerjaan(laporanId, fotoUrls, dto.catatan);
@@ -139,7 +140,7 @@ export class ObService implements IObService {
 
     async tolakLaporan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq, obId: string): Promise<void> {
         try {
-            const laporan = await this.laporanRepo.getReportDetailById(laporanId);
+            const laporan = await this.laporanService.getReportDetailById(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
 
             await this.obRepo.tolakLaporan(laporanId, fotoUrls, dto.catatan);
@@ -193,7 +194,7 @@ export class ObService implements IObService {
 
     async getRiwayat(obId: string, limit: number, params: { cursor?: string | null; search?: string | null; status?: string | null }): Promise<PaginatedResponse<MappedProfileReport>> {
         try {
-            const reportsData = await this.laporanRepo.getReportsByObId(obId, limit, params.cursor, params.search, params.status);
+            const reportsData = await this.laporanService.getReportsByObId(obId, limit, params.cursor, params.search, params.status);
 
             const laporanMapped: MappedProfileReport[] = reportsData.items.map((item: ProfileReport) => {
                 return {
@@ -229,7 +230,7 @@ export class ObService implements IObService {
    
     async getDetailRiwayat(obId: string, laporanId: string): Promise<MappedReportDetailRes> {
         try {
-            const item = await this.laporanRepo.getReportDetailById(laporanId);
+            const item = await this.laporanService.getReportDetailById(laporanId);
             if (!item) {
                 throw new AppError("Laporan tidak ditemukan", 404);
             }

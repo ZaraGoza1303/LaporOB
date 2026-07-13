@@ -62,7 +62,9 @@ export class LaporanRepository implements ILaporanRepository {
         }
 
         if (dto.prioritas != null) data.prioritas = dto.prioritas;
-        if (dto.ob_id !== undefined) data.ob_id = { set: dto.ob_id };
+        if (dto.ob_id !== undefined && dto.status !== LAPORAN_STATUS.BELUM_DIKERJAKAN) {
+            data.ob_id = { set: dto.ob_id };
+        }
         if (dto.admin_catatan !== undefined) data.admin_catatan = { set: dto.admin_catatan };
 
         await this.db.laporan_karyawan.update({

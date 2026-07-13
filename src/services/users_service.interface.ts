@@ -19,4 +19,5 @@ export interface IUsersService {
         profile_picture: string | null;
         total_laporan: number;
     }>;
+    completeActivation(userId: string, password: string, tokenId: string): Promise<void>;
 }
