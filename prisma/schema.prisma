@@ -129,16 +129,19 @@ model Tugas {
 }
 
 model Checklist_harian {
-  id          String   @id @default(uuid()) @db.Uuid
-  tanggal     DateTime @db.Date
-  ob_id       String?  @db.Uuid
-  lantai_id   String   @db.Uuid
-  kategori_id String   @db.Uuid
-  tugas_id    String   @db.Uuid
-  status      String   @db.VarChar(30)
-  catatan     String?  @db.Text
-  created_at  DateTime @default(now()) @db.Timestamp(6)
-  updated_at  DateTime @updatedAt @db.Timestamp(6)
+  id              String    @id @default(uuid()) @db.Uuid
+  tanggal         DateTime  @db.Date
+  ob_id           String?   @db.Uuid
+  lantai_id       String    @db.Uuid
+  kategori_id     String    @db.Uuid
+  tugas_id        String    @db.Uuid
+  status          String    @db.VarChar(30)
+  catatan         String?   @db.Text
+  dikerjakan_at   DateTime? @db.Timestamp(6)
+  selesai_at      DateTime? @db.Timestamp(6)
+  terlewat_at     DateTime? @db.Timestamp(6)
+  created_at      DateTime  @default(now()) @db.Timestamp(6)
+  updated_at      DateTime  @updatedAt @db.Timestamp(6)
 
   ob       User?    @relation(fields: [ob_id], references: [id])
   lantai   Lantai   @relation(fields: [lantai_id], references: [id])

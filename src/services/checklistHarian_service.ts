@@ -34,6 +34,9 @@ export class ChecklistHarianService implements IChecklistHarianService {
             ob_id: item.ob_id,
             status: item.status,
             catatan: item.catatan,
+            dikerjakan_at: (item as any).dikerjakan_at ?? null,
+            selesai_at: (item as any).selesai_at ?? null,
+            terlewat_at: (item as any).terlewat_at ?? null,
             created_at: item.created_at,
             updated_at: item.updated_at,
             tugas: item.tugas,
@@ -126,7 +129,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
                 judul: NOTIFICATION_TITLE.PENUGASAN_CHECKLIST,
                 pesan: NOTIFICATION_MESSAGE.ADMIN_MENUGASKAN_OB,
             };
-                
+
             await this.notificationService.sendBulkNotification(notifData);
         } catch (err) {
             handlePrismaError(err);
@@ -139,10 +142,21 @@ export class ChecklistHarianService implements IChecklistHarianService {
             if (req.tugas_id !== undefined) dataToUpdate.tugas_id = req.tugas_id;
             if (req.kategori_id !== undefined) dataToUpdate.kategori_id = req.kategori_id;
             if (req.lantai_id !== undefined) dataToUpdate.lantai_id = req.lantai_id;
-            if (req.status !== undefined) dataToUpdate.status = req.status;
-
             if (req.ob_id !== undefined) dataToUpdate.ob_id = req.ob_id ?? null;
             if (req.catatan !== undefined) dataToUpdate.catatan = req.catatan ?? null;
+
+            // Set timestamp otomatis sesuai transisi status
+            if (req.status !== undefined) {
+                dataToUpdate.status = req.status;
+                const now = new Date();
+                if (req.status === CHECKLIST_STATUS.SEDANG_DIKERJAKAN) {
+                    (dataToUpdate as any).dikerjakan_at = now;
+                } else if (req.status === CHECKLIST_STATUS.SELESAI) {
+                    (dataToUpdate as any).selesai_at = now;
+                } else if (req.status === CHECKLIST_STATUS.TERLEWAT) {
+                    (dataToUpdate as any).terlewat_at = now;
+                }
+            }
 
             await this.checklistRepo.update(checklistId, dataToUpdate);
         } catch (err) {
