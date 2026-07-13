@@ -536,6 +536,17 @@ paths:
         '200':
           description: Daftar ob
 
+  /api/admin/user/all-karyawan:
+    get:
+      tags:
+        - Admin
+      summary: 'List semua karyawan (Admin)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar karyawan
+
   /api/admin/dashboard:
     get:
       tags:

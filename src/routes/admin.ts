@@ -13,6 +13,7 @@ adminRouter.post("/user", (req, res) => usersController.create(req, res));
 
 //ob
 adminRouter.get("/user/all-ob", (req, res) => usersController.getAllOb(req, res));
+adminRouter.get("/user/all-karyawan", (req, res) => usersController.getAllKaryawan(req, res));
 adminRouter.get("/user/:user_id/performance", (req, res) => usersController.getObPerformanceStats(req, res));
 
 adminRouter.get("/user/:user_id", (req, res) => usersController.getByID(req, res));
