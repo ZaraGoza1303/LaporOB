@@ -38,6 +38,41 @@ components:
         data:
           type: object
 
+    PatchLaporanRequest:
+      type: object
+      description: |
+        Partial update laporan admin. Setidaknya satu field harus berisi nilai non-null.
+        String kosong (`""`) otomatis dianggap `null` oleh server.
+      properties:
+        status:
+          type: string
+          nullable: true
+          enum:
+            - BELUM_DIKERJAKAN
+            - PENDING
+            - SELESAI
+            - DITOLAK
+          description: Status baru laporan (auto-set timestamp sesuai status)
+        prioritas:
+          type: string
+          nullable: true
+          enum:
+            - STANDARD
+            - URGENT
+          description: Prioritas laporan
+        ob_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: |
+            UUID OB yang ditugaskan. Untuk un-assign OB, gunakan `status: BELUM_DIKERJAKAN`
+            (otomatis reset ob_id) — mengirim `ob_id: null` saja akan gagal validasi.
+        admin_catatan:
+          type: string
+          nullable: true
+          maxLength: 1000
+          description: Catatan internal admin
+
     UserProfile:
       type: object
       properties:
@@ -364,6 +399,11 @@ paths:
       tags:
         - OB
       summary: 'Dashboard OB (OB)'
+      description: |
+        Menampilkan checklist harian dan daftar laporan OB.
+        Laporan yang ditampilkan:
+        - Semua laporan yang sudah di-assign ke OB ini (`ob_id` = OB login)
+        - Laporan belum di-assign (`ob_id` null) dengan status selain `PENDING`
       security:
         - BearerAuth: []
       responses:
@@ -375,6 +415,11 @@ paths:
       tags:
         - OB
       summary: 'Ambil laporan (OB)'
+      description: |
+        OB mengambil laporan yang tersedia. Side effect otomatis:
+        - `status` → `PENDING`
+        - `ob_id` → di-set ke OB yang login
+        - `dikerjakan_at` → di-set ke waktu saat ini
       security:
         - BearerAuth: []
       parameters:
@@ -386,7 +431,32 @@ paths:
             format: uuid
       responses:
         '200':
-          description: Berhasil mengambil laporan
+          description: Laporan berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Laporan berhasil diambil
+        '400':
+          description: Validation Failed (format laporan_id tidak valid)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (bukan OB)
+        '404':
+          description: Laporan tidak ditemukan
+        '500':
+          description: Terjadi kesalahan, tidak bisa mengambil laporan
 
   /api/ob/laporan/{laporan_id}/histori:
     post:
@@ -673,7 +743,168 @@ paths:
             format: uuid
       responses:
         '200':
-          description: Detail laporan
+          description: Berhasil mendapatkan detail laporan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil mendapatkan detail laporan
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      status:
+                        type: string
+                        enum:
+                          - BELUM_DIKERJAKAN
+                          - PENDING
+                          - SELESAI
+                          - DITOLAK
+                      nama_karyawan:
+                        type: string
+                      lokasi:
+                        type: string
+                      kategori:
+                        type: string
+                      ob_ditugaskan:
+                        type: string
+                        nullable: true
+                      waktu_laporan:
+                        type: string
+                        format: date-time
+                      waktu_selesai:
+                        type: string
+                        format: date-time
+                        nullable: true
+                      deskripsi_kendala:
+                        type: string
+                      bukti_foto:
+                        type: object
+                        properties:
+                          urls:
+                            type: array
+                            items:
+                              type: string
+                          diupload_oleh:
+                            type: string
+                            nullable: true
+                          jam_upload:
+                            type: string
+                            nullable: true
+        '400':
+          description: Validation Failed (format laporan_id tidak valid)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (bukan admin)
+        '404':
+          description: Laporan tidak ditemukan
+        '500':
+          description: Gagal mendapatkan detail laporan
+
+    patch:
+      tags:
+        - Admin
+      summary: 'Update status/prioritas/catatan/OB laporan (Admin)'
+      description: |
+        Admin dapat mengubah berbagai field laporan secara partial.
+        Setidaknya satu field harus berisi nilai non-null (string kosong dianggap null).
+
+        **Aturan status & auto-timestamp (field DB: `dikerjakan_at`, `selesai_at`, `ditolak_at`):**
+        - `BELUM_DIKERJAKAN` → Re-open laporan: `ob_id` di-reset ke null, `dikerjakan_at` di-clear
+        - `PENDING` → Set `dikerjakan_at` ke waktu saat ini (OB sedang mengerjakan)
+        - `SELESAI` → Set `selesai_at` ke waktu saat ini (approval admin)
+        - `DITOLAK` → Set `ditolak_at` ke waktu saat ini
+
+        **Field DB lain:** `admin_catatan` disimpan sebagai catatan internal admin.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchLaporanRequest'
+            examples:
+              approval_selesai:
+                summary: Admin approve laporan sebagai selesai
+                value:
+                  status: "SELESAI"
+                  admin_catatan: "Sudah dikonfirmasi selesai oleh admin"
+              re_open:
+                summary: Admin re-open laporan (reset OB & dikerjakan_at)
+                value:
+                  status: "BELUM_DIKERJAKAN"
+                  admin_catatan: "Laporan perlu dikerjakan ulang"
+              ubah_prioritas:
+                summary: Ubah prioritas menjadi URGENT
+                value:
+                  prioritas: "URGENT"
+              tambah_catatan:
+                summary: Hanya tambah catatan admin
+                value:
+                  admin_catatan: "OB sudah konfirmasi secara lisan"
+              reassign_ob:
+                summary: Re-assign ke OB lain
+                value:
+                  ob_id: "550e8400-e29b-41d4-a716-446655440000"
+              tolak_laporan:
+                summary: Admin tolak laporan
+                value:
+                  status: "DITOLAK"
+                  admin_catatan: "Laporan tidak valid"
+              assign_ob_pending:
+                summary: Admin assign OB dan set status pending
+                value:
+                  status: "PENDING"
+                  ob_id: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Laporan berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Laporan berhasil diperbarui
+        '400':
+          description: Validation Failed (tidak ada field non-null yang diisi, enum tidak valid, atau format UUID salah)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (bukan admin)
+        '404':
+          description: Laporan tidak ditemukan
+        '500':
+          description: Gagal memperbarui laporan
 
   /api/admin/user/{user_id}:
     get:

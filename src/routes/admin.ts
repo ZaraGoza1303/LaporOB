@@ -27,5 +27,6 @@ adminRouter.get("/user-stats", (req, res) => adminController.getUserStats(req, r
 //laporan
 adminRouter.get("/laporan", (req, res) => adminController.getAllLaporan(req, res));
 adminRouter.get("/laporan/:laporan_id", (req, res) => adminController.getReportDetail(req, res));
+adminRouter.patch("/laporan/:laporan_id", (req, res) => adminController.patchLaporan(req, res));
 
 export default adminRouter;

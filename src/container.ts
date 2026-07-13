@@ -70,7 +70,7 @@ const notificationService = new NotificationService(notificationRepository);
 const checklistHarianService = new ChecklistHarianService(checklistHarianRepository, notificationService, usersService);
 const authService = new AuthService(authRepository, usersRepository);
 const obService = new ObService(obRepository, laporanRepository, notificationService);
-const adminService = new AdminService(adminRepository, obRepository, laporanService);
+const adminService = new AdminService(adminRepository, obRepository, laporanService, laporanRepository);
 const karyawanService = new KaryawanService(usersService, laporanService, kategoriService, notificationService);
 
 //  CONTROLLERS 

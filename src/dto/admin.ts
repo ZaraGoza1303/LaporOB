@@ -169,3 +169,29 @@ export const UserSearchQuerySchema = z.object({
 });
 
 export type UserSearchQuery = z.infer<typeof UserSearchQuerySchema>;
+
+// ─── Admin Patch Laporan ───
+
+export const PatchLaporanReqSchema = z.object({
+    status: z.preprocess(
+        emptyToNull,
+        z.enum(Object.values(LAPORAN_STATUS) as [string, ...string[]]).nullable().optional()
+    ),
+    prioritas: z.preprocess(
+        emptyToNull,
+        z.enum(Object.values(LAPORAN_PRIORITY) as [string, ...string[]]).nullable().optional()
+    ),
+    ob_id: z.preprocess(
+        emptyToNull,
+        z.string().uuid({ message: "Format ob_id harus UUID yang valid" }).nullable().optional()
+    ),
+    admin_catatan: z.preprocess(
+        emptyToNull,
+        z.string().max(1000).nullable().optional()
+    ),
+}).refine(data => Object.values(data).some(v => v !== undefined && v !== null), {
+    message: "Setidaknya satu field harus diisi"
+});
+
+export type PatchLaporanReq = z.infer<typeof PatchLaporanReqSchema>;
+

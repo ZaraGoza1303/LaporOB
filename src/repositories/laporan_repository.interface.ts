@@ -1,6 +1,6 @@
 import type { PaginatedResponse } from "../dto/response.js";
 import type { UserActivityRes } from "../dto/users.js";
-import type { AdminLaporanQuery } from "../dto/admin.js";
+import type { AdminLaporanQuery, PatchLaporanReq } from "../dto/admin.js";
 import type { User, Kategori, Lantai, Lokasi, Laporan_karyawan, Prisma } from "../generated/prisma/client.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 
@@ -55,6 +55,7 @@ export interface RuanganTerpopulerPayload {
 export interface ILaporanRepository {
     getActivity(userId: string): Promise<UserActivityRes[]>;
     insertReport(req: Laporan_karyawanCreateInput): Promise<void>;
+    patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void>;
     getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     getReportDetailById(reportId: string): Promise<DetailReportPayload | null>;
@@ -64,3 +65,4 @@ export interface ILaporanRepository {
     getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<RuanganTerpopulerPayload[]>;
     countLaporanAktif(query: AdminLaporanQuery): Promise<number>;
 }
+
