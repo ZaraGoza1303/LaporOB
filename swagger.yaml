@@ -1339,6 +1339,7 @@ paths:
                 - kategori_id
                 - lokasi_id
                 - lantai_id
+                - ob_id
               properties:
                 tugas_id:
                   type: string
@@ -1350,6 +1351,9 @@ paths:
                   type: string
                   format: uuid
                 lantai_id:
+                  type: string
+                  format: uuid
+                ob_id:
                   type: string
                   format: uuid
       responses:
