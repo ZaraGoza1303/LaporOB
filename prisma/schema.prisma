@@ -30,6 +30,8 @@ model User {
   laporan_sebagai_pelapor Laporan_karyawan[] @relation("LaporanPelapor")
   laporan_sebagai_ob      Laporan_karyawan[] @relation("LaporanOb")
   tokens UserToken[]
+  notifikasi_diterima Notifikasi[] @relation("NotifikasiDiterima")
+  notifikasi_dikirim  Notifikasi[] @relation("NotifikasiDikirim")
 
   @@map("user")
 }
@@ -183,4 +185,21 @@ model Histori_pekerjaan {
   laporan Laporan_karyawan @relation(fields: [laporan_karyawan_id], references: [id], onDelete: Cascade)
 
   @@map("histori_pekerjaan")
+}
+
+model Notifikasi {
+  id          String    @id @default(uuid()) @db.Uuid
+  penerima_id     String    @db.Uuid
+  pengirim_id String    @db.Uuid
+  tipe        String    @db.VarChar(50)
+  judul       String    @db.VarChar(200)
+  pesan       String?   @db.Text
+  is_read     Boolean   @default(false)
+  read_at     DateTime? @db.Timestamp(6)
+  created_at  DateTime  @default(now()) @db.Timestamp(6)
+
+  penerima     User @relation("NotifikasiDiterima", fields: [penerima_id], references: [id], onDelete: Cascade)
+  pengirim User @relation("NotifikasiDikirim", fields: [pengirim_id], references: [id])
+
+  @@map("notifikasi")
 }

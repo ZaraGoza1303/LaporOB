@@ -1,17 +1,27 @@
 import type { ChecklistHarianQuery, CreateChecklistHarianReq, UpdateChecklistHarianReq, ChecklistHarianRes, ChecklistHarianPageResponse, ChecklistHarianGroupedByOB } from "../dto/checklist_harian.js";
-import type { PaginatedResponse } from "../dto/response.js";
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { ChecklistHarianWithRelations } from "../repositories/checklistHarian_repository.interface.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
-import { CHECKLIST_STATUS } from "../utils/constants.js";
+import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE } from "../utils/constants.js";
+import type { BulkNotificationData } from "../dto/notification.js";
+import type { IUsersService } from "./users_service.interface.js";
+import type { INotificationService } from "./notification_service.interface.js";
 
 export class ChecklistHarianService implements IChecklistHarianService {
     private checklistRepo: IChecklistHarianRepository;
+    private usersService: IUsersService;
+    private notificationService: INotificationService;
 
-    constructor(checklistRepo: IChecklistHarianRepository) {
+    constructor(
+        checklistRepo: IChecklistHarianRepository,
+        usersService: IUsersService,
+        notificationService: INotificationService,
+        ) {
         this.checklistRepo = checklistRepo;
+        this.usersService = usersService;
+        this.notificationService = notificationService;
     }
 
     private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {
@@ -92,7 +102,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
         }
     }
 
-    async create(req: CreateChecklistHarianReq): Promise<void> {
+    async create(userId: string, req: CreateChecklistHarianReq): Promise<void> {
         try {
             const dataToInsert: Checklist_harianUncheckedCreateInput = {
                 tugas_id: req.tugas_id,
@@ -102,6 +112,17 @@ export class ChecklistHarianService implements IChecklistHarianService {
                 status: CHECKLIST_STATUS.BELUM_DIKERJAKAN,
             };
             await this.checklistRepo.insert(dataToInsert);
+
+            const allOB = await this.usersService.getByRole('ob');
+            const notifData: BulkNotificationData = {
+                penerima_ids: allOB.map(ob => ob.id),
+                pengirim_id: userId,
+                tipe: NOTIFICATION_TYPE.LAPORAN_DITOLAK,
+                judul: NOTIFICATION_TITLE.LAPORAN_DITOLAK,
+                pesan: NOTIFICATION_MESSAGE.ADMIN_MENUGASKAN_OB,
+            };
+
+            await this.notificationService.sendBulkNotification(notifData);
         } catch (err) {
             handlePrismaError(err);
         }

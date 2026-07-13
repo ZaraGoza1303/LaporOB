@@ -1,7 +1,9 @@
 import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse } from "../dto/admin.js";
 import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse } from "../dto/admin.js";
-import type { IAdminRepository, AdminLaporanPayload } from "../repositories/admin_repository.interface.js";
+import type { IAdminRepository } from "../repositories/admin_repository.interface.js";
+import type { AdminLaporanPayload } from "../repositories/laporan_repository.interface.js";
 import type { IObRepository } from "../repositories/ob_repository.interface.js";
+import type { ILaporanService } from "../services/laporan_service.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { calculateDateRanges } from "../utils/date.js"
 import { LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
@@ -11,10 +13,12 @@ import type { IAdminService } from "./admin_service.interface.js";
 export class AdminService implements IAdminService {
     private obRepo: IObRepository;
     private adminRepo: IAdminRepository;
+    private laporanService: ILaporanService;
 
-    constructor(adminRepo: IAdminRepository, obRepo: IObRepository) {
+    constructor(adminRepo: IAdminRepository, obRepo: IObRepository, laporanService: ILaporanService) {
         this.adminRepo = adminRepo;
         this.obRepo = obRepo;
+        this.laporanService = laporanService;
     }
 
     async getUserStats(): Promise<UserStatsRes> {
@@ -29,9 +33,9 @@ export class AdminService implements IAdminService {
     async getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<AdminLaporanPageResponse> {
         try {
             const [laporanData, ruanganTerpopuler, totalLaporanAktif] = await Promise.all([
-                this.adminRepo.getAllLaporan(page, limit, query),
-                this.adminRepo.getRuanganTerpopuler(6, query),
-                this.adminRepo.countLaporanAktif(query)
+                this.laporanService.getAllLaporan(page, limit, query),
+                this.laporanService.getRuanganTerpopuler(6, query),
+                this.laporanService.countLaporanAktif(query)
             ]);
 
             const laporanMapped: AdminLaporanItemResponse[] = laporanData.items.map((item: AdminLaporanPayload, index: number) => {
@@ -83,9 +87,9 @@ export class AdminService implements IAdminService {
         const { current_start, current_end, previous_start, previous_end } = calculateDateRanges(period);
 
         const [rawActivities, currentReports, previousReports, daily_checklist_ob] = await Promise.all([
-            this.adminRepo.getRecentActivities(5),
-            this.adminRepo.getReportsByDateRange(current_start, current_end),
-            this.adminRepo.getReportsByDateRange(previous_start, previous_end),
+            this.laporanService.getRecentActivities(5),
+            this.laporanService.getReportsByDateRange(current_start, current_end),
+            this.laporanService.getReportsByDateRange(previous_start, previous_end),
             this.adminRepo.getDailyChecklistOB(new Date())
         ]);
 
@@ -195,7 +199,7 @@ export class AdminService implements IAdminService {
     }
 
     public async getReportDetail(id: string): Promise<AdminReportDetailResponse> {
-        const laporan = await this.adminRepo.getReportDetailById(id);
+        const laporan = await this.laporanService.getReportDetailById(id);
 
         if (!laporan) {
             throw new AppError("Laporan tidak ditemukan", 404);
