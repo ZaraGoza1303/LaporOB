@@ -33,7 +33,10 @@ export class ObRepository implements IObRepository {
 
         return this.db.checklist_harian.findMany({
             where: {
-                ob_id: obId,
+                OR: [
+                    { ob_id: obId },
+                    { ob_id: null }
+                ],
                 tanggal: {
                     gte: startOfDay,
                     lte: endOfDay
@@ -64,7 +67,10 @@ export class ObRepository implements IObRepository {
 
         return this.db.checklist_harian.count({
             where: {
-                ob_id: obId,
+                OR: [
+                    { ob_id: obId },
+                    { ob_id: null }
+                ],
                 tanggal: {
                     gte: startOfDay,
                     lte: endOfDay
