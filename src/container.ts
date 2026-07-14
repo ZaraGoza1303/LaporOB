@@ -37,6 +37,9 @@ import { UsersController } from "./controllers/users_controller.js";
 import { NotificationRepository } from "./repositories/notification_repository.js";
 import { NotificationService } from "./services/notification_service.js";
 import { NotificationController } from "./controllers/notification_controller.js";
+import { KolaborasiRepository } from "./repositories/kolaborasi_repository.js";
+import { KolaborasiService } from "./services/kolaborasi_service.js";
+import { KolaborasiController } from "./controllers/kolaborasi_controller.js";
 
 // PRISMA
 const prisma = new PrismaClient();
@@ -54,6 +57,7 @@ const ruanganRepository = new RuanganRepository(prisma);
 const tugasRepository = new TugasRepository(prisma);
 const usersRepository = new UsersRepository(prisma);
 const notificationRepository = new NotificationRepository(prisma);
+const kolaborasiRepository = new KolaborasiRepository(prisma);
 
 //  STORAGE 
 const storageService = StorageServiceFactory.getProvider();
@@ -70,6 +74,7 @@ const notificationService = new NotificationService(notificationRepository);
 const checklistHarianService = new ChecklistHarianService(checklistHarianRepository, notificationService, usersService);
 const authService = new AuthService(authRepository, usersService);
 const obService = new ObService(obRepository, laporanService, notificationService);
+const kolaborasiService = new KolaborasiService(kolaborasiRepository, laporanService, notificationService);
 const adminService = new AdminService(adminRepository, laporanService, usersService);
 const karyawanService = new KaryawanService(usersService, laporanService, kategoriService, notificationService);
 
@@ -92,3 +97,4 @@ export const usersController = new UsersController(
     storageService
 );
 export const notificationController = new NotificationController(notificationService);
+export const kolaborasiController = new KolaborasiController(kolaborasiService);

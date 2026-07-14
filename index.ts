@@ -15,6 +15,7 @@ import ruanganRouter from './src/routes/ruangan.js';
 import kategoriRouter from './src/routes/kategori.js';
 import tugasRouter from './src/routes/tugas.js';
 import notifikasiRouter from './src/routes/notifikasi.js';
+import kolaborasiRouter from './src/routes/kolaborasi.js';
 import swaggerUi from 'swagger-ui-express';
 import path from 'node:path';
 import YAML from 'yamljs';
@@ -56,6 +57,7 @@ const initRouter = () => {
     app.use('/api/user', userRouter);
     app.use('/api/auth', authRouter);
     app.use('/api/ob', obRouter);
+    app.use('/api/ob', kolaborasiRouter);
     app.use('/api/admin', adminRouter);
     app.use('/api/karyawan', karyawanRouter);
     app.use('/api/lokasi', lokasiRouter);
