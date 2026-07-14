@@ -51,7 +51,7 @@ components:
             - BELUM_DIKERJAKAN
             - PENDING
             - SELESAI
-            - DITOLAK
+            - DIBATALKAN
           description: Status baru laporan (auto-set timestamp sesuai status)
         prioritas:
           type: string
@@ -95,7 +95,7 @@ components:
             - BELUM_DIKERJAKAN
             - PENDING
             - SELESAI
-            - DITOLAK
+            - DIBATALKAN
         prioritas:
           type: string
           enum:
@@ -128,11 +128,11 @@ components:
           format: date-time
           nullable: true
           description: Timestamp saat admin approve sebagai selesai
-        ditolak_at:
+        dibatalkan_at:
           type: string
           format: date-time
           nullable: true
-          description: Timestamp saat laporan ditolak
+          description: Timestamp saat laporan dibatalkan
         admin_catatan:
           type: string
           nullable: true
@@ -188,7 +188,7 @@ components:
             - BELUM_DIKERJAKAN
             - PENDING
             - SELESAI
-            - DITOLAK
+            - DIBATALKAN
         prioritas:
           type: string
           enum:
@@ -741,12 +741,13 @@ paths:
     post:
       tags:
         - OB
-      summary: 'Tolak laporan (OB)'
+      summary: 'Batalkan laporan (OB)'
       description: |
-        OB menolak laporan. Side effect otomatis:
-        - `status` → `DITOLAK`
-        - `ditolak_at` → di-set ke waktu saat ini
-        - `alasan_gagal` → diisi dari catatan penolakan
+        OB membatalkan laporan (membatalkan pengambilan). Laporan dikembalikan ke antrean. Side effect otomatis:
+        - `status` → `BELUM_DIKERJAKAN`
+        - `ob_id` → `null` (laporan bisa diambil OB lain)
+        - `ditolak_at` → di-set ke waktu saat ini (riwayat pembatalan)
+        - `alasan_gagal` → diisi dari catatan pembatalan
       security:
         - BearerAuth: []
       parameters:
@@ -768,16 +769,16 @@ paths:
               properties:
                 catatan:
                   type: string
-                  description: Catatan penolakan (min 5 karakter)
+                  description: Catatan pembatalan (min 5 karakter)
                 foto_selesai:
                   type: array
                   items:
                     type: string
                     format: binary
-                  description: Foto bukti penolakan laporan
+                  description: Foto bukti pembatalan laporan
       responses:
         '200':
-          description: Laporan ditolak
+          description: Laporan dibatalkan
         '403':
           description: Anda tidak memiliki akses ke laporan ini (bukan OB pemilik)
           content:
@@ -1164,11 +1165,11 @@ paths:
         Admin dapat mengubah berbagai field laporan secara partial.
         Setidaknya satu field harus berisi nilai non-null (string kosong dianggap null).
 
-        **Aturan status & auto-timestamp (field DB: `dikerjakan_at`, `selesai_at`, `ditolak_at`):**
+        **Aturan status & auto-timestamp (field DB: `dikerjakan_at`, `selesai_at`, `dibatalkan_at`):**
         - `BELUM_DIKERJAKAN` → Re-open laporan: `ob_id` di-reset ke null, `dikerjakan_at` di-clear
         - `PENDING` → Set `dikerjakan_at` ke waktu saat ini (OB sedang mengerjakan)
         - `SELESAI` → Set `selesai_at` ke waktu saat ini (approval admin)
-        - `DITOLAK` → Set `ditolak_at` ke waktu saat ini
+        - `DIBATALKAN` → Set `dibatalkan_at` ke waktu saat ini (laporan dikembalikan ke antrean, `ob_id` di-reset ke null)
 
         **Field DB lain:** `admin_catatan` disimpan sebagai catatan internal admin.
       security:
@@ -1209,10 +1210,10 @@ paths:
                 summary: Re-assign ke OB lain
                 value:
                   ob_id: "550e8400-e29b-41d4-a716-446655440000"
-              tolak_laporan:
-                summary: Admin tolak laporan
+              batalkan_laporan:
+                summary: Admin batalkan laporan
                 value:
-                  status: "DITOLAK"
+                  status: "DIBATALKAN"
                   admin_catatan: "Laporan tidak valid"
               assign_ob_pending:
                 summary: Admin assign OB dan set status pending

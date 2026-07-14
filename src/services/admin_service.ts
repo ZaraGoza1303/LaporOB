@@ -145,14 +145,14 @@ export class AdminService implements IAdminService {
         const currOngoing = current.filter(r => r.status === LAPORAN_STATUS.BELUM_DIKERJAKAN || r.status === LAPORAN_STATUS.PENDING).length;
         const prevOngoing = previous.filter(r => r.status === LAPORAN_STATUS.BELUM_DIKERJAKAN || r.status === LAPORAN_STATUS.PENDING).length;
 
-        const currRejected = current.filter(r => r.status === LAPORAN_STATUS.DITOLAK).length;
-        const prevRejected = previous.filter(r => r.status === LAPORAN_STATUS.DITOLAK).length;
+        const currDibatalkan = current.filter(r => r.status === LAPORAN_STATUS.DIBATALKAN).length;
+        const prevDibatalkan = previous.filter(r => r.status === LAPORAN_STATUS.DIBATALKAN).length;
 
         return {
             total_laporan: calculateTrend(currTotal, prevTotal),
             laporan_selesai: calculateTrend(currDone, prevDone),
             laporan_berjalan: calculateTrend(currOngoing, prevOngoing),
-            laporan_ditolak: calculateTrend(currRejected, prevRejected)
+            laporan_dibatalkan: calculateTrend(currDibatalkan, prevDibatalkan)
         };
     }
 
@@ -163,14 +163,14 @@ export class AdminService implements IAdminService {
             [LAPORAN_STATUS.BELUM_DIKERJAKAN]: "Masuk",
             [LAPORAN_STATUS.SELESAI]: "Selesai",
             [LAPORAN_STATUS.PENDING]: "Menunggu",
-            [LAPORAN_STATUS.DITOLAK]: "Ditolak",
+            [LAPORAN_STATUS.DIBATALKAN]: "Dibatalkan",
         };
 
         const counts: Record<LaporanStatus, number> = {
             [LAPORAN_STATUS.BELUM_DIKERJAKAN]: 0,
             [LAPORAN_STATUS.PENDING]: 0,
             [LAPORAN_STATUS.SELESAI]: 0,
-            [LAPORAN_STATUS.DITOLAK]: 0,
+            [LAPORAN_STATUS.DIBATALKAN]: 0,
         };
 
         reports.forEach(report => {
@@ -257,7 +257,7 @@ export class AdminService implements IAdminService {
             waktu_selesai: historiTerakhir?.created_at ?? null,
             dikerjakan_at: laporan.dikerjakan_at,
             selesai_at: laporan.selesai_at,
-            ditolak_at: laporan.ditolak_at,
+            dibatalkan_at: laporan.dibatalkan_at,
             admin_catatan: laporan.admin_catatan,
             deskripsi_kendala: laporan.deskripsi_kendala,
             bukti_foto: {
