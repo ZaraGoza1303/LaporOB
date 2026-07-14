@@ -1,5 +1,5 @@
 import type { IUsersService } from "../services/users_service.interface.js";
-import type { IKaryawanService } from "../services/karyawan_service.interface.js";
+import type { IProfileService } from "../services/profile_service.interface.js";
 import type { IObService } from "../services/ob_service.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
 import type { IStorageService } from "../services/storage_service.interface.js";
@@ -14,20 +14,20 @@ import { calculatePeriodRange } from "../utils/date.js";
 
 export class UsersController {
     private usersService: IUsersService;
-    private karyawanService: IKaryawanService;
+    private profileService: IProfileService;
     private obService: IObService;
     private laporanService: ILaporanService;
     private storageService: IStorageService;
 
     constructor(
         usersService: IUsersService,
-        karyawanService: IKaryawanService,
+        profileService: IProfileService,
         obService: IObService,
         laporanService: ILaporanService,
         storageService: IStorageService
     ) {
         this.usersService = usersService;
-        this.karyawanService = karyawanService;
+        this.profileService = profileService;
         this.obService = obService;
         this.laporanService = laporanService;
         this.storageService = storageService;
@@ -275,41 +275,7 @@ export class UsersController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
             }
 
-            const { search, status, cursor, limit } = validate.data;
-            const isOb = role.toLowerCase() === "ob";
-
-            const userProfile = isOb
-                ? await this.obService.getProfile(userId)
-                : await this.usersService.getProfile(userId);
-
-            const laporan = isOb
-                ? await this.obService.getRiwayat(userId, limit, { cursor, search, status })
-                : await this.karyawanService.getRiwayat(userId, limit, { cursor, search, status });
-
-            const responseData: ProfileRes = {
-                user: isOb
-                    ? {
-                        id: userProfile.id,
-                        nama_lengkap: userProfile.nama_lengkap,
-                        username: userProfile.username,
-                        email: userProfile.email,
-                        role: userProfile.role,
-                        profile_picture: userProfile.profile_picture,
-                        tasksCompleted: (userProfile as ObProfileResponse).laporanSelesai,
-                        rejected: (userProfile as ObProfileResponse).laporanDiterima - (userProfile as ObProfileResponse).laporanSelesai,
-                      }
-                    : {
-                        id: userProfile.id,
-                        nama_lengkap: userProfile.nama_lengkap,
-                        username: userProfile.username,
-                        email: userProfile.email,
-                        role: userProfile.role,
-                        profile_picture: userProfile.profile_picture,
-                        total_laporan: (userProfile as UserProfileResponse).total_laporan,
-                      },
-                laporan
-            };
-
+            const responseData = await this.profileService.getProfile(userId, role, validate.data);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data profile", responseData));
         } catch (err: any) {
             if (err instanceof AppError) {

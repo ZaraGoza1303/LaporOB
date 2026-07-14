@@ -22,6 +22,7 @@ import { ObService } from "./services/ob_service.js";
 import { RuanganService } from "./services/ruangan_service.js";
 import { TugasService } from "./services/tugas_service.js";
 import { UsersService } from "./services/users_service.js";
+import { ProfileService } from "./services/profile_service.js";
 import { StorageServiceFactory } from "./services/storage_service.factory.js";
 import { AdminController } from "./controllers/admin_controller.js";
 import { AuthController } from "./controllers/auth_controller.js";
@@ -77,6 +78,7 @@ const obService = new ObService(obRepository, laporanService, notificationServic
 const kolaborasiService = new KolaborasiService(kolaborasiRepository, laporanService, notificationService);
 const adminService = new AdminService(adminRepository, laporanService, usersService);
 const karyawanService = new KaryawanService(usersService, laporanService, kategoriService, notificationService);
+const profileService = new ProfileService(usersService, karyawanService, obService);
 
 //  CONTROLLERS 
 export const adminController = new AdminController(adminService);
@@ -91,7 +93,7 @@ export const ruanganController = new RuanganController(ruanganService);
 export const tugasController = new TugasController(tugasService);
 export const usersController = new UsersController(
     usersService,
-    karyawanService,
+    profileService,
     obService,
     laporanService,
     storageService

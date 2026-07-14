@@ -166,8 +166,6 @@ export class LaporanRepository implements ILaporanRepository {
         return filters.length === 1 ? filters[0]! : { AND: filters };
     }
 
-    // ───── Laporan methods (admin) ─────
-
     async getRecentActivities(limit: number): Promise<RecentActivityPayload[]> {
         return this.db.laporan_karyawan.findMany({
             include: {

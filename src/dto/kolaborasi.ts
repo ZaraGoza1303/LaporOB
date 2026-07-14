@@ -30,10 +30,4 @@ export interface DaftarGabungItem {
     created_at: string;
 }
 
-export const KOLABORASI_STATUS = {
-    PENDING: "PENDING",
-    APPROVED: "APPROVED",
-    REJECTED: "REJECTED",
-} as const;
-
-export type KolaborasiStatus = typeof KOLABORASI_STATUS[keyof typeof KOLABORASI_STATUS];
+export type KolaborasiStatus = "PENDING" | "APPROVED" | "REJECTED";

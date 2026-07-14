@@ -5,7 +5,7 @@ import type { INotificationService } from "./notification_service.interface.js";
 import type { GabungResponse, DaftarGabungItem } from "../dto/kolaborasi.js";
 import type { NotificationData } from "../dto/notification.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
-import { NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE } from "../utils/constants.js";
+import { NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, KOLABORASI_STATUS } from "../utils/constants.js";
 
 export class KolaborasiService implements IKolaborasiService {
     private kolaborasiRepo: IKolaborasiRepository;
@@ -31,9 +31,9 @@ export class KolaborasiService implements IKolaborasiService {
 
             const existing = await this.kolaborasiRepo.findByLaporanAndOb(laporanId, obId);
             if (existing) {
-                if (existing.status === "PENDING") throw new AppError("Permintaan gabung sudah dikirim, tunggu persetujuan", 409);
-                if (existing.status === "APPROVED") throw new AppError("Anda sudah tergabung dalam laporan ini", 409);
-                if (existing.status === "REJECTED") throw new AppError("Permintaan gabung sebelumnya ditolak", 409);
+                if (existing.status === KOLABORASI_STATUS.PENDING) throw new AppError("Permintaan gabung sudah dikirim, tunggu persetujuan", 409);
+                if (existing.status === KOLABORASI_STATUS.APPROVED) throw new AppError("Anda sudah tergabung dalam laporan ini", 409);
+                if (existing.status === KOLABORASI_STATUS.REJECTED) throw new AppError("Permintaan gabung sebelumnya ditolak", 409);
             }
 
             const kolaborasi = await this.kolaborasiRepo.create(laporanId, obId);
@@ -68,16 +68,16 @@ export class KolaborasiService implements IKolaborasiService {
             const kolaborasi = await this.kolaborasiRepo.findById(kolaborasiId);
             if (!kolaborasi) throw new AppError("Permintaan tidak ditemukan", 404);
             if (kolaborasi.laporan_id !== laporanId) throw new AppError("Permintaan tidak sesuai dengan laporan", 400);
-            if (kolaborasi.status !== "PENDING") throw new AppError("Permintaan sudah diproses", 400);
+            if (kolaborasi.status !== KOLABORASI_STATUS.PENDING) throw new AppError("Permintaan sudah diproses", 400);
 
-            await this.kolaborasiRepo.updateStatus(kolaborasiId, "APPROVED");
+            await this.kolaborasiRepo.updateStatus(kolaborasiId, KOLABORASI_STATUS.APPROVED);
 
             const notifData: NotificationData = {
                 penerima_id: kolaborasi.ob_id,
                 pengirim_id: primaryObId,
                 tipe: NOTIFICATION_TYPE.GABUNG_DISETUJUI,
                 judul: NOTIFICATION_TITLE.GABUNG_DISETUJUI,
-                pesan: "Permintaan bergabung anda disetujui",
+                pesan: NOTIFICATION_MESSAGE.GABUNG_DISETUJUI,
             };
             await this.notificationService.sendNotification(notifData);
         } catch (err) {
@@ -94,16 +94,16 @@ export class KolaborasiService implements IKolaborasiService {
             const kolaborasi = await this.kolaborasiRepo.findById(kolaborasiId);
             if (!kolaborasi) throw new AppError("Permintaan tidak ditemukan", 404);
             if (kolaborasi.laporan_id !== laporanId) throw new AppError("Permintaan tidak sesuai dengan laporan", 400);
-            if (kolaborasi.status !== "PENDING") throw new AppError("Permintaan sudah diproses", 400);
+            if (kolaborasi.status !== KOLABORASI_STATUS.PENDING) throw new AppError("Permintaan sudah diproses", 400);
 
-            await this.kolaborasiRepo.updateStatus(kolaborasiId, "REJECTED");
+            await this.kolaborasiRepo.updateStatus(kolaborasiId, KOLABORASI_STATUS.REJECTED);
 
             const notifData: NotificationData = {
                 penerima_id: kolaborasi.ob_id,
                 pengirim_id: primaryObId,
                 tipe: NOTIFICATION_TYPE.GABUNG_DITOLAK,
                 judul: NOTIFICATION_TITLE.GABUNG_DITOLAK,
-                pesan: "Permintaan bergabung anda ditolak",
+                pesan: NOTIFICATION_MESSAGE.GABUNG_DITOLAK,
             };
             await this.notificationService.sendNotification(notifData);
         } catch (err) {
@@ -131,6 +131,6 @@ export class KolaborasiService implements IKolaborasiService {
 
     async isKolaborator(laporanId: string, obId: string): Promise<boolean> {
         const kolaborasi = await this.kolaborasiRepo.findByLaporanAndOb(laporanId, obId);
-        return !!kolaborasi && kolaborasi.status === "APPROVED";
+        return !!kolaborasi && kolaborasi.status === KOLABORASI_STATUS.APPROVED;
     }
 }

@@ -17,6 +17,12 @@ export const LAPORAN_PRIORITY = {
     STANDARD: "STANDARD",
 } as const;
 
+export const KOLABORASI_STATUS = {
+    PENDING: "PENDING",
+    APPROVED: "APPROVED",
+    REJECTED: "REJECTED",
+} as const;
+
 export const NOTIFICATION_TYPE = {
     LAPORAN_BARU: "LAPORAN_BARU",
     LAPORAN_DIKERJAKAN: "LAPORAN_DIKERJAKAN",
@@ -45,6 +51,8 @@ export const NOTIFICATION_MESSAGE = {
     LAPORAN_DIKERJAKAN: "Laporan anda sedang dikerjakan oleh OB",
     ADMIN_MENUGASKAN_OB: "Admin baru saja menugaskan anda",
     GABUNG_LAPORAN: "OB meminta bergabung mengerjakan laporan",
+    GABUNG_DISETUJUI: "Permintaan bergabung anda disetujui",
+    GABUNG_DITOLAK: "Permintaan bergabung anda ditolak",
 } as const;
 
 export type LaporanStatus = typeof LAPORAN_STATUS[keyof typeof LAPORAN_STATUS];
