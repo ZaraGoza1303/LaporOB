@@ -19,7 +19,7 @@ export function handlePrismaError(error: unknown): never {
         }
     }
     if (error instanceof PrismaClientValidationError) {
-        throw new AppError("Invalid data format", 400);
+        throw new AppError(`Invalid data format: ${error.message}`, 400);
     }
     throw error;
 }
