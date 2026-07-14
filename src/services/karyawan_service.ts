@@ -1,5 +1,5 @@
 import type { CreateLaporanKaryawanInput, UserHomeRes, MappedProfileReport, ProfileRes } from "../dto/users.js";
-import { LAPORAN_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
+import { LAPORAN_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, USER_ROLE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { IUsersService } from "./users_service.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
@@ -102,7 +102,7 @@ export class KaryawanService implements IKaryawanService {
 
             await this.laporanService.insertReport(laporanReq);
             
-            const allOB = await this.usersService.getByRole('ob');
+            const allOB = await this.usersService.getByRole(USER_ROLE.OB);
             
             console.log("OB users found:", allOB?.length || 0);
             

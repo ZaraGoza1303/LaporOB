@@ -12,6 +12,7 @@ import type { Request, Response } from "express";
 import { AppError } from "../utils/error.js";
 import { calculatePeriodRange } from "../utils/date.js";
 import type { IKaryawanService } from "../services/karyawan_service.interface.js";
+import { USER_ROLE } from "../utils/constants.js";
 
 export class UsersController {
     private usersService: IUsersService;
@@ -60,7 +61,7 @@ export class UsersController {
 
     async getAllOb(req: Request, res: Response) {
         try {
-            const response = await this.usersService.getByRole("ob")
+            const response = await this.usersService.getByRole(USER_ROLE.OB)
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data ob", response))
         } catch (err: any) {
             if (err instanceof AppError) {
@@ -72,7 +73,7 @@ export class UsersController {
 
     async getAllKaryawan(req: Request, res: Response) {
         try {
-            const response = await this.usersService.getByRole("karyawan")
+            const response = await this.usersService.getByRole(USER_ROLE.KARYAWAN)
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data karyawan", response))
         } catch (err: any) {
             if (err instanceof AppError) {

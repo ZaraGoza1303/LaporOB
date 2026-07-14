@@ -4,7 +4,7 @@ import { handlePrismaError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { ChecklistHarianWithRelations } from "../repositories/checklistHarian_repository.interface.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
-import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE } from "../utils/constants.js";
+import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE, USER_ROLE } from "../utils/constants.js";
 import type { BulkNotificationData } from "../dto/notification.js";
 import type { INotificationService } from "./notification_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
@@ -121,7 +121,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
 
             await this.checklistRepo.insert(dataToInsert);
 
-            const allOb = await this.usersService.getByRole('ob');
+            const allOb = await this.usersService.getByRole(USER_ROLE.OB);
             const notifData: BulkNotificationData = {
                 penerima_ids: allOb.map(ob => ob.id),
                 pengirim_id: userId,
