@@ -301,9 +301,10 @@ export class ObRepository implements IObRepository {
             this.db.laporan_karyawan.update({
                 where: { id: laporanId },
                 data: {
-                    status: LAPORAN_STATUS.DITOLAK,
+                    status: LAPORAN_STATUS.BELUM_DIKERJAKAN,
+                    ob_id: null,
                     alasan_gagal: catatan,
-                    ditolak_at: now,
+                    dibatalkan_at: now,
                 }
             })
         ]);

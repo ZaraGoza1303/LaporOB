@@ -188,7 +188,7 @@ model Laporan_karyawan {
   is_approved       Boolean   @default(false)
   dikerjakan_at     DateTime? @db.Timestamp(6)
   selesai_at        DateTime? @db.Timestamp(6)
-  ditolak_at        DateTime? @db.Timestamp(6)
+  dibatalkan_at     DateTime? @db.Timestamp(6)
   created_at        DateTime  @default(now()) @db.Timestamp(6)
   updated_at        DateTime  @updatedAt @db.Timestamp(6)
 
