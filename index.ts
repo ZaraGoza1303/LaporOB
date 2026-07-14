@@ -3,9 +3,10 @@ import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
 import connectDB from './src/database/db.js';
-import userRouter from './src/routes/user.js';
+import profileRouter from './src/routes/profile.js';
 import authRouter from './src/routes/auth.js';
 import obRouter from './src/routes/ob.js';
+import adminUserManagementRouter from './src/routes/userManagement.js';
 import adminRouter from './src/routes/admin.js';
 import karyawanRouter from './src/routes/karyawan.js';
 import lokasiRouter from './src/routes/lokasi.js';
@@ -21,8 +22,8 @@ import path from 'node:path';
 import YAML from 'yamljs';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
-import { initWebSocket } from './src/services/websocket_service';
-import { setBaseUrlMiddleware } from './src/middleware/setBaseUrl';
+import { initWebSocket } from './src/services/websocket_service.js';
+import { setBaseUrlMiddleware } from './src/middleware/setBaseUrl.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,11 +55,12 @@ app.use(upload.any());
 
 const initRouter = () => {
     app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-    app.use('/api/user', userRouter);
+    app.use('/api/admin', adminUserManagementRouter);
+    app.use('/api/admin', adminRouter);
+    app.use('/api/user', profileRouter);
     app.use('/api/auth', authRouter);
     app.use('/api/ob', obRouter);
     app.use('/api/ob', kolaborasiRouter);
-    app.use('/api/admin', adminRouter);
     app.use('/api/karyawan', karyawanRouter);
     app.use('/api/lokasi', lokasiRouter);
     app.use('/api/checklist-harian', checklistHarianRouter);

@@ -1,5 +1,5 @@
 import type { PrismaClient, KolaborasiLaporan } from "../generated/prisma/client.js";
-import type { IKolaborasiRepository } from "./kolaborasi_repository.interface.js";
+import type { IKolaborasiRepository, KolaborasiLaporanWithOb } from "./kolaborasi_repository.interface.js";
 
 export class KolaborasiRepository implements IKolaborasiRepository {
     private db: PrismaClient;
@@ -23,18 +23,18 @@ export class KolaborasiRepository implements IKolaborasiRepository {
         });
     }
 
-    async findPendingByLaporanId(laporanId: string): Promise<KolaborasiLaporan[]> {
+    async findPendingByLaporanId(laporanId: string): Promise<KolaborasiLaporanWithOb[]> {
         return this.db.kolaborasiLaporan.findMany({
             where: { laporan_id: laporanId, status: "PENDING" },
             include: { ob: { select: { id: true, nama_lengkap: true } } }
-        });
+        }) as unknown as Promise<KolaborasiLaporanWithOb[]>;
     }
 
-    async findApprovedByLaporanId(laporanId: string): Promise<KolaborasiLaporan[]> {
+    async findApprovedByLaporanId(laporanId: string): Promise<KolaborasiLaporanWithOb[]> {
         return this.db.kolaborasiLaporan.findMany({
             where: { laporan_id: laporanId, status: "APPROVED" },
             include: { ob: { select: { id: true, nama_lengkap: true } } }
-        });
+        }) as unknown as Promise<KolaborasiLaporanWithOb[]>;
     }
 
     async findApprovedByObId(obId: string): Promise<KolaborasiLaporan[]> {

@@ -1,5 +1,5 @@
 import type { UserSearchQuery } from "../dto/admin.js";
-import type { CreateUserReq, CreateUserRes, UpdateProfileReq, UpdateUserReq } from "../dto/users.js";
+import type { CreateUserReq, CreateUserRes, UpdateProfileReq, UpdateUserReq, UserProfileResponse } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { User } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
@@ -49,15 +49,7 @@ export class UsersService implements IUsersService {
         }
     }
 
-    async getProfile(userId: string): Promise<{
-        id: string;
-        nama_lengkap: string;
-        username: string;
-        email: string;
-        role: string;
-        profile_picture: string | null;
-        total_laporan: number;
-    }> {
+    async getProfile(userId: string): Promise<UserProfileResponse> {
         try {
             const user = await this.usersRepo.getUserWithRoleById(userId);
             if (!user) {
@@ -77,7 +69,7 @@ export class UsersService implements IUsersService {
                 total_laporan: totalLaporan || 0
             };
         } catch (err) {
-            handlePrismaError(err);
+            throw handlePrismaError(err);
         }
     }
 

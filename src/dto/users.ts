@@ -161,3 +161,24 @@ export interface MappedReportDetailRes {
   nama_ob: string | null;
   created_at: string;
 }
+
+export interface UserProfileResponse {
+  id: string;
+  nama_lengkap: string;
+  username: string;
+  email: string;
+  role: string;
+  profile_picture: string | null;
+  total_laporan: number;
+}
+
+export interface ObProfileResponse {
+  id: string;
+  nama_lengkap: string;
+  username: string;
+  email: string;
+  role: string;
+  profile_picture: string | null;
+  laporanDiterima: number;
+  laporanSelesai: number;
+}

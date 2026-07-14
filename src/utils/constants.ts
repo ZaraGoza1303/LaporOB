@@ -44,6 +44,7 @@ export const NOTIFICATION_TITLE: Record<keyof typeof NOTIFICATION_TYPE, string> 
 export const NOTIFICATION_MESSAGE = {
     LAPORAN_DIKERJAKAN: "Laporan anda sedang dikerjakan oleh OB",
     ADMIN_MENUGASKAN_OB: "Admin baru saja menugaskan anda",
+    GABUNG_LAPORAN: "OB meminta bergabung mengerjakan laporan",
 } as const;
 
 export type LaporanStatus = typeof LAPORAN_STATUS[keyof typeof LAPORAN_STATUS];

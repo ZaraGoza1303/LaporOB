@@ -163,7 +163,7 @@ export class LaporanRepository implements ILaporanRepository {
             filters.push({ status: { equals: status, mode: "insensitive" as const } });
         }
 
-        return filters.length === 1 ? filters[0] : { AND: filters };
+        return filters.length === 1 ? filters[0]! : { AND: filters };
     }
 
     // ───── Laporan methods (admin) ─────
