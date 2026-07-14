@@ -5,9 +5,10 @@ import type { ILaporanService } from "./laporan_service.interface.js";
 import type { INotificationService } from "./notification_service.interface.js";
 import type { NotificationData } from "../dto/notification.js";
 import type { ObHomeRes, CreateHistoriReq } from "../dto/ob.js";
-import type { MappedProfileReport, MappedReportDetailRes } from "../dto/users.js";
+import type { MappedProfileReport, MappedReportDetailRes, ObProfileResponse } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { PeriodRange } from "../utils/date.js";
+import type { RiwayatParams } from "./karyawan_service.interface.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { CHECKLIST_STATUS, LAPORAN_PRIORITY, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
@@ -172,17 +173,7 @@ export class ObService implements IObService {
         }
     }
 
-   async getProfile(obId: string): Promise<{
-        id: string;
-        nama_lengkap: string;
-        username: string;
-        email: string;
-        role: string;
-        profile_picture: string | null;
-        laporanDiterima: number;
-        laporanSelesai: number;
-
-    }> {
+    async getProfile(obId: string): Promise<ObProfileResponse> {
         try {
             const user = await this.obRepo.getObById(obId);
             if (!user) {
@@ -202,11 +193,11 @@ export class ObService implements IObService {
                 laporanSelesai: obStats.laporanSelesai || 0,
             };
         } catch (err: unknown) {
-            handlePrismaError(err);
+            throw handlePrismaError(err);
         }
     }
 
-    async getRiwayat(obId: string, limit: number, params: { cursor?: string | null; search?: string | null; status?: string | null }): Promise<PaginatedResponse<MappedProfileReport>> {
+    async getRiwayat(obId: string, limit: number, params: RiwayatParams): Promise<PaginatedResponse<MappedProfileReport>> {
         try {
             const reportsData = await this.laporanService.getReportsByObId(obId, limit, params.cursor, params.search, params.status);
 

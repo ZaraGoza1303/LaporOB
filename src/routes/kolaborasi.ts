@@ -7,8 +7,8 @@ const kolaborasiRouter = Router();
 kolaborasiRouter.use(verifyJWTToken);
 kolaborasiRouter.use(requireRole("ob"));
 
-kolaborasiRouter.post("/laporan/:laporan_id/gabung", (req, res) => kolaborasiController.gabung(req, res));
 kolaborasiRouter.get("/laporan/:laporan_id/gabung", (req, res) => kolaborasiController.daftarRequest(req, res));
+kolaborasiRouter.post("/laporan/:laporan_id/gabung", (req, res) => kolaborasiController.gabung(req, res));
 kolaborasiRouter.patch("/laporan/:laporan_id/gabung/:kolaborasi_id/setujui", (req, res) => kolaborasiController.setujui(req, res));
 kolaborasiRouter.patch("/laporan/:laporan_id/gabung/:kolaborasi_id/tolak", (req, res) => kolaborasiController.tolak(req, res));
 

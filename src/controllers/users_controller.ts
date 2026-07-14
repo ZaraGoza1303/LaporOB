@@ -4,6 +4,7 @@ import type { IObService } from "../services/ob_service.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
 import type { IStorageService } from "../services/storage_service.interface.js";
 import { CreateUserSchema, UpdateUserSchema, UpdateProfileSchema, ProfileLaporanQuerySchema, UserIdParamSchema, LaporanIdParamSchema } from "../dto/users.js";
+import type { ProfileRes, ObProfileResponse, UserProfileResponse } from "../dto/users.js";
 import { UserSearchQuerySchema, GetDashboardQuerySchema } from "../dto/admin.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
@@ -285,10 +286,31 @@ export class UsersController {
                 ? await this.obService.getRiwayat(userId, limit, { cursor, search, status })
                 : await this.karyawanService.getRiwayat(userId, limit, { cursor, search, status });
 
-            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data profile", {
-                user: userProfile,
+            const responseData: ProfileRes = {
+                user: isOb
+                    ? {
+                        id: userProfile.id,
+                        nama_lengkap: userProfile.nama_lengkap,
+                        username: userProfile.username,
+                        email: userProfile.email,
+                        role: userProfile.role,
+                        profile_picture: userProfile.profile_picture,
+                        tasksCompleted: (userProfile as ObProfileResponse).laporanSelesai,
+                        rejected: (userProfile as ObProfileResponse).laporanDiterima - (userProfile as ObProfileResponse).laporanSelesai,
+                      }
+                    : {
+                        id: userProfile.id,
+                        nama_lengkap: userProfile.nama_lengkap,
+                        username: userProfile.username,
+                        email: userProfile.email,
+                        role: userProfile.role,
+                        profile_picture: userProfile.profile_picture,
+                        total_laporan: (userProfile as UserProfileResponse).total_laporan,
+                      },
                 laporan
-            }));
+            };
+
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data profile", responseData));
         } catch (err: any) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))

@@ -5,7 +5,7 @@ import type { INotificationService } from "./notification_service.interface.js";
 import type { GabungResponse, DaftarGabungItem } from "../dto/kolaborasi.js";
 import type { NotificationData } from "../dto/notification.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
-import { NOTIFICATION_TYPE, NOTIFICATION_TITLE } from "../utils/constants.js";
+import { NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE } from "../utils/constants.js";
 
 export class KolaborasiService implements IKolaborasiService {
     private kolaborasiRepo: IKolaborasiRepository;
@@ -43,7 +43,7 @@ export class KolaborasiService implements IKolaborasiService {
                 pengirim_id: obId,
                 tipe: NOTIFICATION_TYPE.GABUNG_LAPORAN,
                 judul: NOTIFICATION_TITLE.GABUNG_LAPORAN,
-                pesan: "OB meminta bergabung mengerjakan laporan",
+                pesan: NOTIFICATION_MESSAGE.GABUNG_LAPORAN,
             };
             await this.notificationService.sendNotification(notifData);
 
