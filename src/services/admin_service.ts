@@ -6,7 +6,7 @@ import type { ILaporanService } from "../services/laporan_service.interface.js";
 import type { IUsersService } from "../services/users_service.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { calculateDateRanges } from "../utils/date.js"
-import { LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
+import { LAPORAN_STATUS, USER_ROLE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { resolveFileUrl } from "../utils/url.js";
 import type { IAdminService } from "./admin_service.interface.js";
 import type { Laporan_karyawan } from "../generated/prisma/client.js";
@@ -276,7 +276,7 @@ export class AdminService implements IAdminService {
             if (!obUser) {
                 throw new AppError("OB user tidak ditemukan", 404);
             }
-            if (obUser.role?.nama_role?.toLowerCase() !== "ob") {
+            if (obUser.role?.nama_role?.toLowerCase() !== USER_ROLE.OB) {
                 throw new AppError("User bukan merupakan OB", 400);
             }
 
@@ -301,7 +301,7 @@ export class AdminService implements IAdminService {
 
             if (dto.ob_id) {
                 const obUser = await this.usersService.getByID(dto.ob_id);
-                if (!obUser || obUser.role?.nama_role !== "ob") {
+                if (!obUser || obUser.role?.nama_role !== USER_ROLE.OB) {
                     throw new AppError("OB tidak ditemukan", 404);
                 }
             }

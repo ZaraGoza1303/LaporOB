@@ -1,7 +1,7 @@
 import type { UserStatsRes, AdminLaporanQuery } from "../dto/admin.js";
 import { PrismaClient, type Laporan_karyawan } from "../generated/prisma/client.js";
 import type { IAdminRepository, DailyChecklistObReport, PenugasanObWithDetails } from "./admin_repository.interface.js";
-import { CHECKLIST_STATUS, LAPORAN_STATUS } from "../utils/constants.js";
+import { CHECKLIST_STATUS, LAPORAN_STATUS, USER_ROLE } from "../utils/constants.js";
 import type { AssignObRepoArgs } from "../dto/admin.js";
 import type { AuthService } from "../services/auth_service.js";
 
@@ -19,7 +19,7 @@ export class AdminRepository implements IAdminRepository {
             this.db.user.count({ where: notDeleted }),
             this.db.user.count({ where: { ...notDeleted, is_active: true } }),
             this.db.user.count({ where: { ...notDeleted, is_active: false } }),
-            this.db.role.findFirst({ where: { nama_role: 'ob' } })
+            this.db.role.findFirst({ where: { nama_role: USER_ROLE.OB } })
         ]);
 
         let totalOb = 0;
@@ -52,7 +52,7 @@ export class AdminRepository implements IAdminRepository {
         const obRole = await this.db.role.findFirst({
             where: {
                 nama_role: {
-                    equals: "ob",
+                    equals: USER_ROLE.OB,
                     mode: "insensitive"
                 }
             }

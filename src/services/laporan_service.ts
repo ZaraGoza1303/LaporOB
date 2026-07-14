@@ -3,7 +3,7 @@ import type { PaginatedResponse } from "../dto/response.js";
 import type { AdminLaporanQuery, PatchLaporanReq } from "../dto/admin.js";
 import type { ILaporanRepository, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, DetailReportPayload, ProfileReport } from "../repositories/laporan_repository.interface.js";
 import type { UserActivityRes } from "../dto/users.js";
-import type { LaporanPriority, LaporanStatus } from "../utils/constants.js";
+import { USER_ROLE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { handlePrismaError } from "../utils/error.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { AppError } from "../utils/error.js";
@@ -24,7 +24,7 @@ export class LaporanService implements ILaporanService {
                 throw new AppError("Laporan tidak ditemukan", 404);
             }
 
-        if (role !== "ob" || item.ob_id !== userId) {
+        if (role !== USER_ROLE.OB || item.ob_id !== userId) {
                 throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
             }
 
