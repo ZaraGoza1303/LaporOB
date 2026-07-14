@@ -12,6 +12,7 @@ import type { RiwayatParams } from "./karyawan_service.interface.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { CHECKLIST_STATUS, LAPORAN_PRIORITY, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
+import { AppError } from '../utils/error';
 
 export class ObService implements IObService {
     private obRepo: IObRepository;
@@ -28,7 +29,7 @@ export class ObService implements IObService {
         try {
             const obUser = await this.obRepo.getObById(obId);
             if (!obUser) {
-                throw new Error("OB user tidak ditemukan");
+                throw new AppError("OB user tidak ditemukan", 404);
             }
 
             const today = new Date();
@@ -177,7 +178,7 @@ export class ObService implements IObService {
         try {
             const user = await this.obRepo.getObById(obId);
             if (!user) {
-                throw new Error("OB tidak ditemukan");
+                throw new AppError("OB tidak ditemukan", 404);
             }
 
             const obStats = await this.getObPerformanceStats(obId);

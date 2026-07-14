@@ -9,6 +9,7 @@ import { generateActivationToken } from "../utils/token.js";
 import { buildActivationUrl, resolveFileUrl } from "../utils/url.js";
 import type { IUsersService } from "./users_service.interface.js";
 import bcrypt from 'bcrypt';
+import { AppError } from '../utils/error';
 
 export class UsersService implements IUsersService {
     private usersRepo: IUsersRepository;
@@ -53,7 +54,7 @@ export class UsersService implements IUsersService {
         try {
             const user = await this.usersRepo.getUserWithRoleById(userId);
             if (!user) {
-                throw new Error("User tidak ditemukan");
+                throw new AppError("User tidak ditemukan", 404);
             }
 
 

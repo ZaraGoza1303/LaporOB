@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express"
 import { sendErrorResponse } from "../utils/response.js";
 import jwt from 'jsonwebtoken'
+import { AppError } from '../utils/error';
 
 export const verifyJWTToken = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
@@ -8,7 +9,7 @@ export const verifyJWTToken = (req: Request, res: Response, next: NextFunction) 
     if(!token) return res.status(401).json(sendErrorResponse("Unauthorized"));
 
     const secret = process.env.JWT_TOKEN;
-    if (!secret) throw new Error("JWT_APP env is not defined");
+    if (!secret) throw new AppError("JWT_APP env is not defined", 500);
 
     try {
         const decoded = jwt.verify(token, secret) as {id: string, username: string, role: string, password: string}

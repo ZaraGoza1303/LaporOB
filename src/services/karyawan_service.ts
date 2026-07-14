@@ -11,6 +11,7 @@ import type { IKategoriService } from "./kategori_service.interface.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { INotificationService } from "./notification_service.interface.js";
 import type { BulkNotificationData, NotificationData } from "../dto/notification.js";
+import { AppError } from '../utils/error';
 
 export class KaryawanService implements IKaryawanService {
     private usersService: IUsersService;
@@ -34,7 +35,7 @@ export class KaryawanService implements IKaryawanService {
         try {
             const karyawanUser = await this.usersService.getByID(userId);
             if (!karyawanUser) {
-                throw new Error("Karyawan tidak ditemukan")
+                throw new AppError("Karyawan tidak ditemukan", 404)
             }
 
             const activity = await this.laporanService.getActivity(userId);
