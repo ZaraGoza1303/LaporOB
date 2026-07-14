@@ -1,5 +1,5 @@
 import type { PrismaClient, User } from "../generated/prisma/client.js";
-import type { IObRepository, ChecklistHarianWithDetails, LaporanKaryawanWithDetails } from "./ob_repository.interface.js";
+import type { IObRepository, ChecklistHarianWithDetails, LaporanKaryawanWithDetails, PenugasanWithLokasi } from "./ob_repository.interface.js";
 import { LAPORAN_STATUS, CHECKLIST_STATUS } from "../utils/constants.js";
 import type { PeriodRange } from "../utils/date.js";
 
@@ -220,6 +220,20 @@ export class ObRepository implements IObRepository {
         });
 
         return [...ownReports, ...backupReports] as unknown as LaporanKaryawanWithDetails[];
+    }
+
+
+    async getActiveAssignments(obId: string, bulan: number, tahun: number): Promise<PenugasanWithLokasi[]> {
+        return this.db.penugasanOb.findMany({
+            where: {
+                ob_id: obId,
+                bulan: bulan,
+                tahun: tahun,
+            },
+            include: {
+                lokasi: true
+            }
+        });
     }
 
     async ambilLaporan(laporanId: string, obId: string): Promise<void> {
