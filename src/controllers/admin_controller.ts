@@ -196,7 +196,7 @@ export class AdminController {
             }
 
             const schemaBody = z.object({
-                catatan: z.string().min(1, "Catatan alasan penolakan wajib diisi"),
+                catatan: z.string().min(1, "Catatan alasan pembatalan wajib diisi"),
             });
             const validateBody = schemaBody.safeParse(req.body);
             if (!validateBody.success) {
@@ -207,12 +207,12 @@ export class AdminController {
             const laporanId = validateParams.data.laporan_id;
             const response = await this.adminService.rejectLaporan(laporanId, validateBody.data.catatan);
 
-            return res.status(200).json(sendSuccessfullResponse("Pekerjaan berhasil ditolak dan dikembalikan", response));
+            return res.status(200).json(sendSuccessfullResponse("Pekerjaan berhasil dibatalkan dan dikembalikan ke antrean", response));
         } catch (err: any) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
-            return res.status(500).json(sendErrorResponse("Gagal menolak pekerjaan", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal membatalkan pekerjaan", err.message));
         }
     }
 }

@@ -53,8 +53,9 @@ export class LaporanRepository implements ILaporanRepository {
                 data.dikerjakan_at = now;
             } else if (dto.status === LAPORAN_STATUS.SELESAI) {
                 data.selesai_at = now;
-            } else if (dto.status === LAPORAN_STATUS.DITOLAK) {
-                data.ditolak_at = now;
+            } else if (dto.status === LAPORAN_STATUS.DIBATALKAN) {
+                data.dibatalkan_at = now;
+                data.ob_id = { set: null };
             } else if (dto.status === LAPORAN_STATUS.BELUM_DIKERJAKAN) {
                 data.ob_id = { set: null };
                 data.dikerjakan_at = { set: null };
@@ -62,7 +63,7 @@ export class LaporanRepository implements ILaporanRepository {
         }
 
         if (dto.prioritas != null) data.prioritas = dto.prioritas;
-        if (dto.ob_id !== undefined && dto.status !== LAPORAN_STATUS.BELUM_DIKERJAKAN) {
+        if (dto.ob_id !== undefined && dto.status !== LAPORAN_STATUS.BELUM_DIKERJAKAN && dto.status !== LAPORAN_STATUS.DIBATALKAN) {
             data.ob_id = { set: dto.ob_id };
         }
         if (dto.admin_catatan !== undefined) data.admin_catatan = { set: dto.admin_catatan };
