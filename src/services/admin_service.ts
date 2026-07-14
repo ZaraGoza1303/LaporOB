@@ -1,5 +1,5 @@
 import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse } from "../dto/admin.js";
-import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse } from "../dto/admin.js";
+import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse, DailyChecklistOBResponse } from "../dto/admin.js";
 import type { IAdminRepository, PenugasanObWithDetails } from "../repositories/admin_repository.interface.js";
 import type { AdminLaporanPayload } from "../repositories/laporan_repository.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
@@ -9,6 +9,7 @@ import { calculateDateRanges } from "../utils/date.js"
 import { LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { resolveFileUrl } from "../utils/url.js";
 import type { IAdminService } from "./admin_service.interface.js";
+import type { Laporan_karyawan } from "../generated/prisma/client.js";
 
 export class AdminService implements IAdminService {
     private adminRepo: IAdminRepository;
@@ -110,7 +111,14 @@ export class AdminService implements IAdminService {
             })
         );
 
-        return { kpi, bar_chart, pie_chart, recent_activities, daily_checklist_ob };
+        const daily_checklist_ob_mapped: DailyChecklistOBResponse[] = daily_checklist_ob.map((item: any) => ({
+            nama_ob: item.nama_ob,
+            total_tugas: item.total,
+            tugas_selesai: item.selesai,
+            persentase: item.persentase
+        }));
+
+        return { kpi, bar_chart, pie_chart, recent_activities, daily_checklist_ob: daily_checklist_ob_mapped };
     }
 
     private calculateKpi(current: ReportSummaryPayload[], previous: ReportSummaryPayload[]): DashboardMainResponse['kpi'] {
@@ -263,9 +271,12 @@ export class AdminService implements IAdminService {
 
     async assignObToLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number): Promise<void> {
         try {
-            const obUser = await this.obRepo.getObById(obId);
+            const obUser = await this.usersService.getByID(obId);
             if (!obUser) {
                 throw new AppError("OB user tidak ditemukan", 404);
+            }
+            if (obUser.role?.nama_role?.toLowerCase() !== "ob") {
+                throw new AppError("User bukan merupakan OB", 400);
             }
 
             await this.adminRepo.assignObToLocations(obId, lokasiIds, bulan, tahun);
@@ -302,6 +313,28 @@ export class AdminService implements IAdminService {
             }
 
             await this.laporanService.patchLaporan(laporanId, dto);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan> {
+        try {
+            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+
+            return await this.adminRepo.approveLaporan(laporanId, catatan);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan> {
+        try {
+            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+
+            return await this.adminRepo.rejectLaporan(laporanId, catatan);
         } catch (err) {
             throw handlePrismaError(err);
         }

@@ -183,11 +183,13 @@ model Laporan_karyawan {
   foto_masalah      String[]   @db.VarChar(255)
   alasan_gagal      String?   @db.Text
   admin_catatan     String?   @db.Text
+  is_approved       Boolean   @default(false)
   dikerjakan_at     DateTime? @db.Timestamp(6)
   selesai_at        DateTime? @db.Timestamp(6)
   ditolak_at        DateTime? @db.Timestamp(6)
   created_at        DateTime  @default(now()) @db.Timestamp(6)
   updated_at        DateTime  @updatedAt @db.Timestamp(6)
+
 
   pelapor  User     @relation("LaporanPelapor", fields: [pelapor_id], references: [id])
   ob       User?    @relation("LaporanOb", fields: [ob_id], references: [id])
