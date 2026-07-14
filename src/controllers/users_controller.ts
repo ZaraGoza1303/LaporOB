@@ -11,11 +11,13 @@ import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file
 import type { Request, Response } from "express";
 import { AppError } from "../utils/error.js";
 import { calculatePeriodRange } from "../utils/date.js";
+import type { IKaryawanService } from "../services/karyawan_service.interface.js";
 
 export class UsersController {
     private usersService: IUsersService;
     private profileService: IProfileService;
     private obService: IObService;
+    private karyawanService: IKaryawanService;
     private laporanService: ILaporanService;
     private storageService: IStorageService;
 
@@ -23,12 +25,14 @@ export class UsersController {
         usersService: IUsersService,
         profileService: IProfileService,
         obService: IObService,
+        karyawanService: IKaryawanService,
         laporanService: ILaporanService,
         storageService: IStorageService
     ) {
         this.usersService = usersService;
         this.profileService = profileService;
         this.obService = obService;
+        this.karyawanService = karyawanService;
         this.laporanService = laporanService;
         this.storageService = storageService;
     }
@@ -295,6 +299,7 @@ export class UsersController {
             const laporanId = validateParams.data.laporan_id;
             const userId = req.user?.id as string;
             const role = req.user?.role as string;
+            
             const response = await this.laporanService.getReportDetail(laporanId, userId, role);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan detail laporan", response));
         } catch (err: any) {
@@ -304,7 +309,7 @@ export class UsersController {
             return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server", err.message));
         }
     }
-
+    
     async getObPerformanceStats(req: Request, res: Response) {
         try {
             const validateParams = UserIdParamSchema.safeParse(req.params);
@@ -312,7 +317,7 @@ export class UsersController {
                 const formatedErr = validateParams.error.flatten().fieldErrors;
                 return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
             }
-            const userId = validateParams.data.user_id;
+            const obId = validateParams.data.user_id;
 
             const validateQuery = GetDashboardQuerySchema.safeParse(req.query);
             if (!validateQuery.success) {
@@ -321,9 +326,36 @@ export class UsersController {
             }
 
             const dateRange = calculatePeriodRange(validateQuery.data.period);
-            const response = await this.obService.getObPerformanceStats(userId, dateRange);
+            const response = await this.obService.getObPerformanceStats(obId, dateRange);
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan statistik performa OB", response));
+        } catch (err: any) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server", err.message));
+        }
+    }
+
+    async getKarywanPerformanceStats(req: Request, res: Response) {
+        try {
+            const validateParams = UserIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formatedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
+            }
+
+            const karyawanId = validateParams.data.user_id;
+
+            const validateQuery = GetDashboardQuerySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formatedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
+            }
+
+            const response = await this.karyawanService.getKaryawanPerformanceStats(karyawanId);
+
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan statistik performa karyawan", response));
         } catch (err: any) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));

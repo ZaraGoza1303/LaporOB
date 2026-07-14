@@ -94,4 +94,8 @@ export class LaporanService implements ILaporanService {
         await this.laporanRepo.patchLaporan(laporanId, dto);
     }
 
+    async getLaporanCountByUserId(userId: string): Promise<number> {
+        return this.laporanRepo.getLaporanCountByUserId(userId);
+    }
+
 }

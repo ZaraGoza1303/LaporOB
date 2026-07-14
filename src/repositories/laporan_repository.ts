@@ -358,4 +358,12 @@ export class LaporanRepository implements ILaporanRepository {
             { created_at: "desc" }
         ];
     }
+
+    async getLaporanCountByUserId(userId: string): Promise<number> {
+        return this.db.laporan_karyawan.count({
+            where: {
+                pelapor_id: userId
+            }
+        });
+    }
 }

@@ -30,6 +30,8 @@ export class ObController {
         }
     }
 
+    
+
 
     async takeLapor(req: Request, res: Response) {
         try {
