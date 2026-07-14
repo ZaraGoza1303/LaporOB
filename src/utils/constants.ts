@@ -55,6 +55,14 @@ export const NOTIFICATION_MESSAGE = {
     GABUNG_DITOLAK: "Permintaan bergabung anda ditolak",
 } as const;
 
+export const USER_ROLE = {
+    OB: "ob",
+    HR: "hr",
+    ADMIN: "admin",
+    KARYAWAN: "karyawan",
+} as const;
+
 export type LaporanStatus = typeof LAPORAN_STATUS[keyof typeof LAPORAN_STATUS];
 export type LaporanPriority = typeof LAPORAN_PRIORITY[keyof typeof LAPORAN_PRIORITY];
 export type NotificationType = typeof NOTIFICATION_TYPE[keyof typeof NOTIFICATION_TYPE];
+export type UserRoleType = typeof USER_ROLE[keyof typeof USER_ROLE];

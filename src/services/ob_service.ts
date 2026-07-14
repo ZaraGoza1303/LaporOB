@@ -11,7 +11,7 @@ import type { PeriodRange } from "../utils/date.js";
 import type { RiwayatParams } from "./karyawan_service.interface.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
-import { CHECKLIST_STATUS, LAPORAN_PRIORITY, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
+import { CHECKLIST_STATUS, LAPORAN_PRIORITY, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, type LaporanPriority, type LaporanStatus, USER_ROLE } from "../utils/constants.js";
 
 export class ObService implements IObService {
     private obRepo: IObRepository;
@@ -200,7 +200,7 @@ export class ObService implements IObService {
                 nama_lengkap: user.nama_lengkap,
                 username: user.username,
                 email: user.email,
-                role: user.role_id || "OB",
+                role: user.role_id || USER_ROLE.OB,
                 profile_picture: resolveFileUrl(user.profile_picture),
                 laporanDiterima: obStats.laporanDiterima || 0,
                 laporanSelesai: obStats.laporanSelesai || 0,

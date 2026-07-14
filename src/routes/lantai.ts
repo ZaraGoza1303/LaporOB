@@ -2,10 +2,11 @@ import { Router } from "express";
 import { verifyJWTToken } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/role.js";
 import { lantaiController } from "../container.js";
+import { USER_ROLE } from "../utils/constants.js";
 
 const lantaiRouter = Router();
 lantaiRouter.use(verifyJWTToken);
-lantaiRouter.use(requireRole("admin"));
+lantaiRouter.use(requireRole(USER_ROLE.ADMIN));
 
 lantaiRouter.get('/', (req, res) => lantaiController.getAll(req, res));
 lantaiRouter.get('/:lantai_id', (req, res) => lantaiController.getByID(req, res));

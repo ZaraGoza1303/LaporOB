@@ -2,10 +2,11 @@ import { Router } from "express";
 import { verifyJWTToken } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/role.js";
 import { usersController } from "../container.js";
+import { USER_ROLE } from "../utils/constants.js";
 
 const adminUserManagementRouter = Router();
 adminUserManagementRouter.use(verifyJWTToken);
-adminUserManagementRouter.use(requireRole("admin"));
+adminUserManagementRouter.use(requireRole(USER_ROLE.ADMIN));
 
 // user crud
 adminUserManagementRouter.get("/user", (req, res) => usersController.getAll(req, res));

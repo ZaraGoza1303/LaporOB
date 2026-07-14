@@ -7,5 +7,5 @@ export interface INotificationService {
     markAsRead(notifId: string): Promise<void>
     markAllAsRead(userId: string): Promise<void>
     countUnread(userId: string): Promise<number>
-    getAllNotifications(userId: string): Promise<NotifikasiGroupedResponse>
+    getAllNotifications(userId: string, role: string): Promise<NotifikasiGroupedResponse>
 }

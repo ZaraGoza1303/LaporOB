@@ -61,8 +61,9 @@ export class NotificationController {
     async getAllNotifications(req: Request, res: Response) {
         try {
             const userId = req.user?.id as string;
+            const userRole = req.user?.role as string;
 
-            const data = await this.notificationService.getAllNotifications(userId);
+            const data = await this.notificationService.getAllNotifications(userId, userRole);
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan notifikasi", data));
         } catch (err: any) {

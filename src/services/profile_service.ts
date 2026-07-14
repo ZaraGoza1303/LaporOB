@@ -4,6 +4,7 @@ import type { IKaryawanService } from "./karyawan_service.interface.js";
 import type { IObService } from "./ob_service.interface.js";
 import type { ProfileLaporanQuery, ProfileRes, ObProfileResponse, UserProfileResponse, MappedProfileReport } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
+import { USER_ROLE } from "../utils/constants.js";
 
 export class ProfileService implements IProfileService {
   constructor(
@@ -13,7 +14,7 @@ export class ProfileService implements IProfileService {
   ) {}
 
   async getProfile(userId: string, role: string, query: ProfileLaporanQuery): Promise<ProfileRes> {
-    const isOb = role.toLowerCase() === "ob";
+    const isOb = role.toLowerCase() === USER_ROLE.OB;
     const { search, status, cursor, limit } = query;
 
     const userProfile = isOb
