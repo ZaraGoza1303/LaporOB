@@ -249,9 +249,13 @@ export class ObRepository implements IObRepository {
         await this.db.$transaction([
             this.db.histori_pekerjaan.create({
                 data: {
-                    laporan_karyawan_id: laporanId,
-                    ob_id: obId,
-                    foto_selesai: fotoSelesai,
+                    laporan: {
+                        connect: { id: laporanId }
+                    },
+                    ob: {
+                        connect: { id: obId }
+                    },
+                    foto_selesai: { set: fotoSelesai },
                     catatan: catatan,
                 }
             }),
@@ -270,9 +274,13 @@ export class ObRepository implements IObRepository {
         await this.db.$transaction([
             this.db.histori_pekerjaan.create({
                 data: {
-                    laporan_karyawan_id: laporanId,
-                    ob_id: obId,
-                    foto_selesai: fotoSelesai,
+                    laporan: {
+                        connect: { id: laporanId }
+                    },
+                    ob: {
+                        connect: { id: obId }
+                    },
+                    foto_selesai: { set: fotoSelesai },
                     catatan: catatan,
                 }
             }),
