@@ -181,7 +181,20 @@ export class ObService implements IObService {
                 throw new AppError("OB tidak ditemukan", 404);
             }
 
-            const obStats = await this.getObPerformanceStats(obId);
+            const today = new Date();
+            const bulan = today.getMonth() + 1;
+            const tahun = today.getFullYear();
+
+            const [obStats, penugasan] = await Promise.all([
+                this.getObPerformanceStats(obId),
+                this.obRepo.getActiveAssignments(obId, bulan, tahun)
+            ]);
+
+            const lokasiAktif = penugasan.map((p) => ({
+                id: p.lokasi.id,
+                nama_lokasi: p.lokasi.nama_lokasi || "",
+                status: "Aktif",
+            }));
 
             return {
                 id: user.id,
@@ -192,6 +205,7 @@ export class ObService implements IObService {
                 profile_picture: resolveFileUrl(user.profile_picture),
                 laporanDiterima: obStats.laporanDiterima || 0,
                 laporanSelesai: obStats.laporanSelesai || 0,
+                lokasiAktif: lokasiAktif,
             };
         } catch (err: unknown) {
             throw handlePrismaError(err);

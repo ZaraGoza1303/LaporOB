@@ -181,4 +181,9 @@ export interface ObProfileResponse {
   profile_picture: string | null;
   laporanDiterima: number;
   laporanSelesai: number;
+  lokasiAktif: Array<{
+    id: string;
+    nama_lokasi: string;
+    status: string;
+  }>
 }

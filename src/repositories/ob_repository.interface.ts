@@ -24,6 +24,10 @@ export type LaporanKaryawanWithDetails = Prisma.Laporan_karyawanGetPayload<{
     };
 }>;
 
+export type PenugasanWithLokasi = Prisma.PenugasanObGetPayload<{
+    include: { lokasi: true }
+}>;
+
 export interface IObRepository {
     getObById(obId: string): Promise<User | null>;
     getTodayChecklists(obId: string, tanggal: Date): Promise<ChecklistHarianWithDetails[]>;
@@ -34,4 +38,5 @@ export interface IObRepository {
     createHistoriPekerjaan(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void>;
     tolakLaporan(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void>;
     getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }>;
+    getActiveAssignments(obId: string, bulan: number, tahun: number): Promise<PenugasanWithLokasi[]>;
 }
