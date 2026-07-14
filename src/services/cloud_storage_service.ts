@@ -22,7 +22,7 @@ export class CloudStorageService implements IStorageService {
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Cloud server upload failed with status ${response.status}`);
+                    throw new AppError(`Cloud server upload failed with status ${response.status}`, 500);
                 }
 
                 const data: any = await response.json();
@@ -49,6 +49,7 @@ export class CloudStorageService implements IStorageService {
             // 3. OPSI C: Jika menggunakan AWS S3 / R2 (Nanti perlu: npm install @aws-sdk/client-s3)
             /*
             import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { AppError } from '../utils/error';
             const s3 = new S3Client({ region: process.env.AWS_REGION });
             const filename = `${Date.now()}-${file.originalname}`;
             await s3.send(new PutObjectCommand({
@@ -65,7 +66,7 @@ export class CloudStorageService implements IStorageService {
             return `https://cloud-storage.mock/uploads/${Date.now()}-${file.originalname}`;
         } catch (err: any) {
             console.error("Cloud storage upload error:", err.message);
-            throw new Error(`Cloud storage upload failed: ${err.message}`);
+            throw new AppError(`Cloud storage upload failed: ${err.message}`, 500);
         }
     }
 
