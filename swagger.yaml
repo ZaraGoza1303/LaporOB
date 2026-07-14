@@ -172,6 +172,136 @@ components:
           type: string
           nullable: true
 
+    MappedProfileReport:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        kategori:
+          type: string
+        deskripsi_kendala:
+          type: string
+        status:
+          type: string
+          enum:
+            - BELUM_DIKERJAKAN
+            - PENDING
+            - SELESAI
+            - DITOLAK
+        prioritas:
+          type: string
+          enum:
+            - STANDARD
+            - URGENT
+        foto_masalah:
+          type: array
+          items:
+            type: string
+        lokasi:
+          type: string
+        nomor_lantai:
+          type: integer
+        nama_ob:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PaginatedProfileReports:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappedProfileReport'
+        next_cursor:
+          type: string
+          nullable: true
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    ProfileRes:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            nama_lengkap:
+              type: string
+            username:
+              type: string
+            email:
+              type: string
+            role:
+              type: string
+            profile_picture:
+              type: string
+              nullable: true
+            total_laporan:
+              type: integer
+              nullable: true
+            tasksCompleted:
+              type: integer
+              nullable: true
+            rejected:
+              type: integer
+              nullable: true
+        laporan:
+          $ref: '#/components/schemas/PaginatedProfileReports'
+    GabungResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        laporan_id:
+          type: string
+          format: uuid
+        ob_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - PENDING
+            - APPROVED
+            - REJECTED
+        created_at:
+          type: string
+          format: date-time
+
+    DaftarGabungItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ob:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            nama_lengkap:
+              type: string
+        status:
+          type: string
+          enum:
+            - PENDING
+            - APPROVED
+            - REJECTED
+        created_at:
+          type: string
+          format: date-time
+
     LoginRequest:
       type: object
       required:
@@ -366,6 +496,18 @@ paths:
       responses:
         '200':
           description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ProfileRes'
 
     patch:
       tags:
@@ -646,6 +788,131 @@ paths:
           description: Laporan tidak ditemukan
         '500':
           description: Terjadi kesalahan
+
+  /api/ob/laporan/{laporan_id}/gabung:
+    get:
+      tags:
+        - OB
+      summary: 'Daftar permintaan gabung untuk laporan (OB)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar permintaan gabung
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DaftarGabungItem'
+        '400':
+          description: Validation Failed
+        '401':
+          description: Unauthorized
+
+    post:
+      tags:
+        - OB
+      summary: 'Kirim permintaan gabung (OB)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Permintaan gabung terkirim
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/GabungResponse'
+        '400':
+          description: Validation Failed
+        '401':
+          description: Unauthorized
+
+  /api/ob/laporan/{laporan_id}/gabung/{kolaborasi_id}/setujui:
+    patch:
+      tags:
+        - OB
+      summary: 'Setujui permintaan gabung (OB pemilik laporan)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: kolaborasi_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Permintaan gabung disetujui
+        '400':
+          description: Validation Failed
+        '401':
+          description: Unauthorized
+
+  /api/ob/laporan/{laporan_id}/gabung/{kolaborasi_id}/tolak:
+    patch:
+      tags:
+        - OB
+      summary: 'Tolak permintaan gabung (OB pemilik laporan)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: kolaborasi_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Permintaan gabung ditolak
+        '400':
+          description: Validation Failed
+        '401':
+          description: Unauthorized
 
 # ADMIN
   /api/admin/user:
