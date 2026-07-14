@@ -46,6 +46,7 @@ export class ProfileService implements IProfileService {
           ...base,
           tasksCompleted: (userProfile as ObProfileResponse).laporanSelesai,
           rejected: (userProfile as ObProfileResponse).laporanDiterima - (userProfile as ObProfileResponse).laporanSelesai,
+          lokasi_aktif: (userProfile as ObProfileResponse).lokasiAktif || [],
         }
       : {
           ...base,
