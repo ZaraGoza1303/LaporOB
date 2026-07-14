@@ -4,14 +4,14 @@ import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js"
 import type { IUsersService } from "./users_service.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
 import type { ProfileReport } from "../repositories/laporan_repository.interface.js";
-import { handlePrismaError } from "../utils/error.js";
+import { AppError, handlePrismaError } from "../utils/error.js";
 import { resolveFileUrl } from "../utils/url.js";
 import type { IKaryawanService, RiwayatParams } from "./karyawan_service.interface.js";
 import type { IKategoriService } from "./kategori_service.interface.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { INotificationService } from "./notification_service.interface.js";
-import type { BulkNotificationData, NotificationData } from "../dto/notification.js";
-import { AppError } from '../utils/error';
+import type { BulkNotificationData } from "../dto/notification.js";
+import type { KaryawanPerformanceRes } from "../dto/karyawan.js";
 
 export class KaryawanService implements IKaryawanService {
     private usersService: IUsersService;
@@ -23,12 +23,23 @@ export class KaryawanService implements IKaryawanService {
         usersService: IUsersService,
         laporanService: ILaporanService,
         kategoriService: IKategoriService,
-        notificationService: INotificationService
+        notificationService: INotificationService,
         ) {
         this.usersService = usersService;
         this.laporanService = laporanService;
         this.kategoriService = kategoriService;
         this.notificationService = notificationService;
+    }
+
+    async getKaryawanPerformanceStats(userId: string): Promise<KaryawanPerformanceRes> {
+        try {
+            const laporan_count = await this.laporanService.getLaporanCountByUserId(userId);
+            return {
+                laporan_terkirim: laporan_count
+            };
+        } catch (err) {
+            handlePrismaError(err)
+        }
     }
 
     async getHomeStats(userId: string): Promise<UserHomeRes> {
@@ -90,7 +101,15 @@ export class KaryawanService implements IKaryawanService {
             };
 
             await this.laporanService.insertReport(laporanReq);
+            
             const allOB = await this.usersService.getByRole('ob');
+            
+            console.log("OB users found:", allOB?.length || 0);
+            
+            if (!allOB || allOB.length === 0) {
+                console.warn("No OB users found for notification");
+                return;
+            }
 
             const notifReq: BulkNotificationData = {
                 penerima_ids: allOB.map(ob => ob.id),
@@ -99,8 +118,13 @@ export class KaryawanService implements IKaryawanService {
                 judul: NOTIFICATION_TITLE.LAPORAN_BARU,
             }
 
+            console.log("Sending bulk notification with penerima_ids:", notifReq.penerima_ids);
+            
             await this.notificationService.sendBulkNotification(notifReq)
+            
+            console.log("Bulk notification sent successfully");
         } catch (err) {
+            console.error("Error in createReport:", err);
             handlePrismaError(err);
         }
     }

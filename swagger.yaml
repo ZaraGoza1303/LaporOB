@@ -1348,6 +1348,118 @@ paths:
         '200':
           description: User berhasil dihapus
 
+  /api/admin/user/{user_id}/performance/ob:
+    get:
+      tags:
+        - Admin
+      summary: 'Statistik performa OB (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID OB yang ingin dilihat performanya
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - mingguan
+              - bulanan
+              - tahunan
+            default: mingguan
+          description: Periode statistik performa
+      responses:
+        '200':
+          description: Statistik performa OB berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil mendapatkan statistik performa OB
+                  data:
+                    type: object
+                    description: Data statistik performa OB
+        '400':
+          description: Validation Failed (format user_id tidak valid atau period tidak valid)
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (bukan admin)
+        '404':
+          description: OB tidak ditemukan
+        '500':
+          description: Terjadi kesalahan pada server
+
+  /api/admin/user/{user_id}/performance/karyawan:
+    get:
+      tags:
+        - Admin
+      summary: 'Statistik performa Karyawan (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID Karyawan yang ingin dilihat performanya
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - mingguan
+              - bulanan
+              - tahunan
+            default: mingguan
+          description: Periode statistik performa
+      responses:
+        '200':
+          description: Statistik performa karyawan berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil mendapatkan statistik performa karyawan
+                  data:
+                    type: object
+                    properties:
+                      laporan_terkirim:
+                        type: integer
+                        example: 15
+                    description: Data statistik performa karyawan
+        '400':
+          description: Validation Failed (format user_id tidak valid atau period tidak valid)
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (bukan admin)
+        '404':
+          description: Karyawan tidak ditemukan
+        '500':
+          description: Terjadi kesalahan pada server
+
 # LOKASI
   /api/lokasi:
     get:

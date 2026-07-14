@@ -71,5 +71,6 @@ export interface ILaporanRepository {
     getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>>;
     getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<RuanganTerpopulerPayload[]>;
     countLaporanAktif(query: AdminLaporanQuery): Promise<number>;
+    getLaporanCountByUserId(userId: string): Promise<number>;
 }
 

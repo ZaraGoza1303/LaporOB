@@ -1,5 +1,6 @@
 import type { CreateLaporanKaryawanInput, UserHomeRes, MappedProfileReport } from '../dto/users.js';
 import type { PaginatedResponse } from '../dto/response.js';
+import type { KaryawanPerformanceRes } from '../dto/karyawan.js';
 
 export interface RiwayatParams {
     cursor?: string | null;
@@ -9,6 +10,7 @@ export interface RiwayatParams {
 
 export interface IKaryawanService {
     getHomeStats(userId: string): Promise<UserHomeRes>
-    createReport(userId: string, req: CreateLaporanKaryawanInput): Promise<void>;
+    getKaryawanPerformanceStats(userId: string): Promise<KaryawanPerformanceRes>;
     getRiwayat(userId: string, limit: number, params: RiwayatParams): Promise<PaginatedResponse<MappedProfileReport>>;
+    createReport(userId: string, req: CreateLaporanKaryawanInput): Promise<void>;
 }

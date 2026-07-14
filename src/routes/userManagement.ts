@@ -14,7 +14,8 @@ adminUserManagementRouter.post("/user", (req, res) => usersController.create(req
 // ob
 adminUserManagementRouter.get("/user/all-ob", (req, res) => usersController.getAllOb(req, res));
 adminUserManagementRouter.get("/user/all-karyawan", (req, res) => usersController.getAllKaryawan(req, res));
-adminUserManagementRouter.get("/user/:user_id/performance", (req, res) => usersController.getObPerformanceStats(req, res));
+adminUserManagementRouter.get("/user/:user_id/performance/ob", (req, res) => usersController.getObPerformanceStats(req, res));
+adminUserManagementRouter.get("/user/:user_id/performance/karyawan", (req, res) => usersController.getKarywanPerformanceStats(req, res));
 
 adminUserManagementRouter.get("/user/:user_id", (req, res) => usersController.getByID(req, res));
 adminUserManagementRouter.patch("/user/:user_id", (req, res) => usersController.update(req, res));

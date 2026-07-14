@@ -4,12 +4,11 @@ import type { PaginatedResponse } from "../dto/response.js";
 import type { User } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
 import type { IUsersRepository } from "../repositories/users_repository.interface.js";
-import { handlePrismaError } from "../utils/error.js";
+import { AppError, handlePrismaError } from "../utils/error.js";
 import { generateActivationToken } from "../utils/token.js";
 import { buildActivationUrl, resolveFileUrl } from "../utils/url.js";
 import type { IUsersService } from "./users_service.interface.js";
 import bcrypt from 'bcrypt';
-import { AppError } from '../utils/error';
 
 export class UsersService implements IUsersService {
     private usersRepo: IUsersRepository;
@@ -56,7 +55,6 @@ export class UsersService implements IUsersService {
             if (!user) {
                 throw new AppError("User tidak ditemukan", 404);
             }
-
 
             const totalLaporan = await this.usersRepo.countLaporanByUserId(userId);
 
