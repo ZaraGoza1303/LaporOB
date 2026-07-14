@@ -10,6 +10,7 @@ import { LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../uti
 import { resolveFileUrl } from "../utils/url.js";
 import type { IAdminService } from "./admin_service.interface.js";
 import type { Laporan_karyawan } from "../generated/prisma/client.js";
+import type { DailyChecklistObReport } from "../repositories/admin_repository.interface.js";
 
 export class AdminService implements IAdminService {
     private adminRepo: IAdminRepository;
@@ -111,7 +112,7 @@ export class AdminService implements IAdminService {
             })
         );
 
-        const daily_checklist_ob_mapped: DailyChecklistOBResponse[] = daily_checklist_ob.map((item: any) => ({
+        const daily_checklist_ob_mapped: DailyChecklistOBResponse[] = daily_checklist_ob.map((item: DailyChecklistObReport) => ({
             nama_ob: item.nama_ob,
             total_tugas: item.total,
             tugas_selesai: item.selesai,
@@ -313,7 +314,7 @@ export class AdminService implements IAdminService {
             }
 
             await this.laporanService.patchLaporan(laporanId, dto);
-        } catch (err) {
+        } catch (err: unknown) {
             throw handlePrismaError(err);
         }
     }

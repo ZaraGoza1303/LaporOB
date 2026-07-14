@@ -67,6 +67,16 @@ components:
           description: |
             UUID OB yang ditugaskan. Untuk un-assign OB, gunakan `status: BELUM_DIKERJAKAN`
             (otomatis reset ob_id) — mengirim `ob_id: null` saja akan gagal validasi.
+        lantai_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Pindahkan laporan ke lantai lain (nullable)
+        ruangan_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Pindahkan laporan ke ruangan lain (nullable)
         admin_catatan:
           type: string
           nullable: true
@@ -526,6 +536,12 @@ paths:
           description: Forbidden (bukan OB)
         '404':
           description: Laporan tidak ditemukan
+        '409':
+          description: Laporan sudah diambil oleh OB lain
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Terjadi kesalahan, tidak bisa mengambil laporan
 
@@ -568,6 +584,16 @@ paths:
       responses:
         '200':
           description: Histori berhasil ditambahkan
+        '403':
+          description: Anda tidak memiliki akses ke laporan ini (bukan OB pemilik)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Laporan tidak ditemukan
+        '500':
+          description: Terjadi kesalahan
 
   /api/ob/laporan/{laporan_id}/tolak:
     post:
@@ -610,6 +636,16 @@ paths:
       responses:
         '200':
           description: Laporan ditolak
+        '403':
+          description: Anda tidak memiliki akses ke laporan ini (bukan OB pemilik)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Laporan tidak ditemukan
+        '500':
+          description: Terjadi kesalahan
 
 # ADMIN
   /api/admin/user:
@@ -916,6 +952,12 @@ paths:
                 value:
                   status: "PENDING"
                   ob_id: "550e8400-e29b-41d4-a716-446655440000"
+              pindah_lokasi:
+                summary: Pindahkan laporan ke lantai/ruangan lain
+                value:
+                  lantai_id: "550e8400-e29b-41d4-a716-446655440001"
+                  ruangan_id: "550e8400-e29b-41d4-a716-446655440002"
+                  admin_catatan: "Dipindahkan karena kesalahan pencatatan awal"
       responses:
         '200':
           description: Laporan berhasil diperbarui

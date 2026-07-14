@@ -1,4 +1,4 @@
-import type { Laporan_karyawan, User, Prisma } from "../generated/prisma/client.js";
+import type { User, Prisma } from "../generated/prisma/client.js";
 import type { PeriodRange } from "../utils/date.js";
 
 export type ChecklistHarianWithDetails = Prisma.Checklist_harianGetPayload<{

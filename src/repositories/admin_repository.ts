@@ -1,6 +1,6 @@
 import type { UserStatsRes, AdminLaporanQuery } from "../dto/admin.js";
 import { PrismaClient, type Laporan_karyawan } from "../generated/prisma/client.js";
-import type { IAdminRepository } from "./admin_repository.interface.js";
+import type { IAdminRepository, DailyChecklistObReport, PenugasanObWithDetails } from "./admin_repository.interface.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
 import type { AssignObRepoArgs } from "../dto/admin.js";
 import type { AuthService } from "../services/auth_service.js";
@@ -42,7 +42,7 @@ export class AdminRepository implements IAdminRepository {
         return res;
     }
 
-    async getDailyChecklistOB(tanggal: Date): Promise<any[]> {
+    async getDailyChecklistOB(tanggal: Date): Promise<DailyChecklistObReport[]> {
         const startOfDay = new Date(tanggal);
         startOfDay.setHours(0, 0, 0, 0);
 
@@ -132,7 +132,7 @@ export class AdminRepository implements IAdminRepository {
         ]);
     }
 
-    async getPenugasanByPeriode(bulan: number, tahun: number): Promise<any[]> {
+    async getPenugasanByPeriode(bulan: number, tahun: number): Promise<PenugasanObWithDetails[]> {
         return this.db.penugasanOb.findMany({
             where: {
                 bulan,

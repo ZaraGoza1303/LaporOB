@@ -22,11 +22,11 @@ export class ObController {
 
             const response = await this.obService.getHomeStats(obId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data home OB", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(400).json(sendErrorResponse("Gagal mendapatkan data dashboard OB", err.message));
+            return res.status(400).json(sendErrorResponse("Gagal mendapatkan data dashboard OB", err instanceof Error ? err.message : "Unknown error"));
         }
     }
 
@@ -44,7 +44,7 @@ export class ObController {
             await this.obService.ambilLaporan(laporanId, obId);
 
             return res.status(200).json(sendSuccessfullResponse("Laporan berhasil diambil"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
@@ -86,8 +86,8 @@ export class ObController {
 
                 try {
                     await compressImageIfNeeded(file);
-                } catch (err: any) {
-                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar", err.message));
+                } catch (err: unknown) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar", err instanceof Error ? err.message : "Unknown error"));
                 }
 
                 const url = await this.storageService.uploadFile(file);
@@ -97,7 +97,7 @@ export class ObController {
             await this.obService.createHistoriPekerjaan(laporanId, fotoUrls, validate.data, obId);
 
             return res.status(200).json(sendSuccessfullResponse("Histori pekerjaan berhasil disimpan"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
@@ -139,8 +139,8 @@ export class ObController {
 
                 try {
                     await compressImageIfNeeded(file);
-                } catch (err: any) {
-                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar", err.message));
+                } catch (err: unknown) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar", err instanceof Error ? err.message : "Unknown error"));
                 }
 
                 const url = await this.storageService.uploadFile(file);
@@ -150,7 +150,7 @@ export class ObController {
             await this.obService.tolakLaporan(laporanId, fotoUrls, validate.data, obId);
 
             return res.status(200).json(sendSuccessfullResponse("Laporan berhasil ditolak dan bukti disimpan"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
@@ -172,7 +172,7 @@ export class ObController {
             await this.obService.ambilChecklist(checklistId, obId);
 
             return res.status(200).json(sendSuccessfullResponse("Checklist berhasil diklaim"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }

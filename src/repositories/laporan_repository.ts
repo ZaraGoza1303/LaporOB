@@ -66,6 +66,8 @@ export class LaporanRepository implements ILaporanRepository {
             data.ob_id = { set: dto.ob_id };
         }
         if (dto.admin_catatan !== undefined) data.admin_catatan = { set: dto.admin_catatan };
+        if (dto.lantai_id !== undefined) data.lantai_id = dto.lantai_id ?? undefined;
+        if (dto.ruangan_id !== undefined) data.ruangan_id = dto.ruangan_id ?? undefined;
 
         await this.db.laporan_karyawan.update({
             where: { id: laporanId },
