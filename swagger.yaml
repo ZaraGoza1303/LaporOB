@@ -574,6 +574,10 @@ paths:
       tags:
         - Karyawan
       summary: 'Buat laporan baru (Karyawan)'
+      description: |
+        Karyawan membuat laporan masalah/kendala baru.
+        
+        **WebSocket Notification**: Notifikasi real-time dikirim ke semua OB dan admin via WebSocket dengan tipe `ADMIN_MENUGASKAN_OB`
       security:
         - BearerAuth: []
       requestBody:
@@ -643,6 +647,8 @@ paths:
         - `status` → `PENDING`
         - `ob_id` → di-set ke OB yang login
         - `dikerjakan_at` → di-set ke waktu saat ini
+        
+        **WebSocket Notification**: Notifikasi real-time dikirim ke pelapor via WebSocket dengan tipe `LAPORAN_DIKERJAKAN` (terkoneksi ke `/ws` dengan JWT token)
       security:
         - BearerAuth: []
       parameters:
@@ -696,6 +702,8 @@ paths:
         OB submit bukti penyelesaian. Side effect otomatis:
         - `status` → `SELESAI`
         - `selesai_at` → di-set ke waktu saat ini
+        
+        **WebSocket Notification**: Notifikasi real-time dikirim ke pelapor via WebSocket dengan tipe `LAPORAN_BERES` dan pesan berisi catatan
       security:
         - BearerAuth: []
       parameters:
@@ -747,6 +755,8 @@ paths:
         - `status` → `DITOLAK`
         - `ditolak_at` → di-set ke waktu saat ini
         - `alasan_gagal` → diisi dari catatan penolakan
+        
+        **WebSocket Notification**: Notifikasi real-time dikirim ke pelapor via WebSocket dengan tipe `LAPORAN_DITOLAK` dan pesan berisi alasan penolakan
       security:
         - BearerAuth: []
       parameters:
@@ -829,6 +839,10 @@ paths:
       tags:
         - OB
       summary: 'Kirim permintaan gabung (OB)'
+      description: |
+        OB lain mengirim permintaan bergabung pada laporan existing.
+        
+        **WebSocket Notification**: Notifikasi real-time dikirim ke OB pemilik laporan via WebSocket dengan tipe `GABUNG_LAPORAN`
       security:
         - BearerAuth: []
       parameters:
@@ -863,6 +877,10 @@ paths:
       tags:
         - OB
       summary: 'Setujui permintaan gabung (OB pemilik laporan)'
+      description: |
+        OB pemilik laporan menerima permintaan bergabung dari OB lain.
+        
+        **WebSocket Notification**: Notifikasi real-time dikirim ke OB peminta via WebSocket dengan tipe `GABUNG_DISETUJUI`
       security:
         - BearerAuth: []
       parameters:
@@ -891,6 +909,10 @@ paths:
       tags:
         - OB
       summary: 'Tolak permintaan gabung (OB pemilik laporan)'
+      description: |
+        OB pemilik laporan menolak permintaan bergabung dari OB lain.
+        
+        **WebSocket Notification**: Notifikasi real-time dikirim ke OB peminta via WebSocket dengan tipe `GABUNG_DITOLAK`
       security:
         - BearerAuth: []
       parameters:
@@ -1928,6 +1950,10 @@ paths:
       tags:
         - Checklist Harian
       summary: 'Buat checklist harian (Admin)'
+      description: |
+        Admin membuat checklist harian yang akan di-assign ke OB.
+        
+        **WebSocket Notification**: Notifikasi real-time dikirim ke semua OB via WebSocket dengan tipe `PENUGASAN_CHECKLIST`
       security:
         - BearerAuth: []
       requestBody:
