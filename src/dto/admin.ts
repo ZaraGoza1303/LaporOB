@@ -34,7 +34,7 @@ export interface KpiResponse {
     total_laporan: StatDetail;
     laporan_selesai: StatDetail;
     laporan_berjalan: StatDetail;
-    laporan_ditolak: StatDetail;
+    laporan_dibatalkan: StatDetail;
 }
 
 export interface BarChartResponse {
@@ -101,7 +101,7 @@ export type AdminReportDetailResponse = {
     waktu_selesai: Date | null;
     dikerjakan_at: Date | null;
     selesai_at: Date | null;
-    ditolak_at: Date | null;
+    dibatalkan_at: Date | null;
     admin_catatan: string | null;
     deskripsi_kendala: string;
     bukti_foto: {

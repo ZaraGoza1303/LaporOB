@@ -95,7 +95,7 @@ const laporanStatusValues = [
   LAPORAN_STATUS.BELUM_DIKERJAKAN,
   LAPORAN_STATUS.PENDING,
   LAPORAN_STATUS.SELESAI,
-  LAPORAN_STATUS.DITOLAK,
+  LAPORAN_STATUS.DIBATALKAN,
 ] as const;
 
 export const ProfileLaporanQuerySchema = z.object({

@@ -9,7 +9,7 @@ export const LAPORAN_STATUS = {
     BELUM_DIKERJAKAN: "BELUM_DIKERJAKAN",
     PENDING: "PENDING",
     SELESAI: "SELESAI",
-    DITOLAK: "DITOLAK",
+    DIBATALKAN: "DIBATALKAN",
 } as const;
 
 export const LAPORAN_PRIORITY = {
@@ -39,7 +39,7 @@ export const NOTIFICATION_TITLE: Record<keyof typeof NOTIFICATION_TYPE, string> 
     LAPORAN_BARU: "Laporan baru",
     LAPORAN_DIKERJAKAN: "Laporan sedang dikerjakan",
     LAPORAN_BERES: "Laporan selesai",
-    LAPORAN_DITOLAK: "Laporan ditolak",
+    LAPORAN_DITOLAK: "Laporan dibatalkan",
     CHECKLIST_SELESAI: "Checklist harian selesai",
     PENUGASAN_CHECKLIST: "Penugasan checklist harian",
     GABUNG_LAPORAN: "Permintaan bergabung",

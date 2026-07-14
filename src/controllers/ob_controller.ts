@@ -149,7 +149,7 @@ export class ObController {
 
             await this.obService.tolakLaporan(laporanId, fotoUrls, validate.data, obId);
 
-            return res.status(200).json(sendSuccessfullResponse("Laporan berhasil ditolak dan bukti disimpan"));
+            return res.status(200).json(sendSuccessfullResponse("Laporan berhasil dibatalkan dan bukti disimpan"));
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))

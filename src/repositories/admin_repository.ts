@@ -1,7 +1,7 @@
 import type { UserStatsRes, AdminLaporanQuery } from "../dto/admin.js";
 import { PrismaClient, type Laporan_karyawan } from "../generated/prisma/client.js";
 import type { IAdminRepository, DailyChecklistObReport, PenugasanObWithDetails } from "./admin_repository.interface.js";
-import { CHECKLIST_STATUS } from "../utils/constants.js";
+import { CHECKLIST_STATUS, LAPORAN_STATUS } from "../utils/constants.js";
 import type { AssignObRepoArgs } from "../dto/admin.js";
 import type { AuthService } from "../services/auth_service.js";
 
@@ -163,12 +163,15 @@ export class AdminRepository implements IAdminRepository {
     }
 
     async rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan> {
+        const now = new Date();
         return this.db.laporan_karyawan.update({
             where: { id: laporanId },
             data: {
-                status: "PENDING",
+                status: LAPORAN_STATUS.DIBATALKAN,
+                ob_id: null,
                 is_approved: false,
                 admin_catatan: catatan,
+                dibatalkan_at: now,
             }
         });
     }
