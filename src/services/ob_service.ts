@@ -1,5 +1,5 @@
 import type { IObService } from "./ob_service.interface.js";
-import type { IObRepository } from "../repositories/ob_repository.interface.js";
+import type { IObRepository, ChecklistHarianWithDetails, LaporanKaryawanWithDetails } from "../repositories/ob_repository.interface.js";
 import type { ProfileReport } from "../repositories/laporan_repository.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
 import type { INotificationService } from "./notification_service.interface.js";
@@ -10,7 +10,7 @@ import type { PaginatedResponse } from "../dto/response.js";
 import type { PeriodRange } from "../utils/date.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
-import { CHECKLIST_STATUS, LAPORAN_PRIORITY, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
+import { CHECKLIST_STATUS, LAPORAN_PRIORITY, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 
 export class ObService implements IObService {
     private obRepo: IObRepository;
@@ -40,7 +40,7 @@ export class ObService implements IObService {
             let resolvedCount = 0;
             let pendingCount = 0;
 
-            const tugasHarianMapped = checklists.map((item: any) => {
+            const tugasHarianMapped = checklists.map((item: ChecklistHarianWithDetails) => {
                 const statusLower = (item.status || "").toLowerCase();
                 const isResolved = statusLower === "resolved" || statusLower === CHECKLIST_STATUS.SELESAI.toLowerCase() || statusLower === "complete" || statusLower === "sukses";
 
@@ -57,11 +57,11 @@ export class ObService implements IObService {
                     lokasi: item.lantai?.lokasi?.nama_lokasi || "",
                     nomor_lantai: item.lantai?.nomor_lantai || 0,
                     status: item.status,
-                    tanggal: item.tanggal instanceof Date ? item.tanggal.toISOString().split('T')[0] : String(item.tanggal)
+                    tanggal: item.tanggal instanceof Date ? item.tanggal.toISOString().split('T').at(0) ?? "" : String(item.tanggal ?? "")
                 };
             });
 
-            const laporanMapped = reports.map((item: any) => {
+            const laporanMapped = reports.map((item: LaporanKaryawanWithDetails) => {
                 const kategoriName = item.kategori?.nama_kategori || "";
                 const deskripsi = item.deskripsi_kendala || "";
                 const priority = item.prioritas === LAPORAN_PRIORITY.URGENT ? LAPORAN_PRIORITY.URGENT : LAPORAN_PRIORITY.STANDARD;
@@ -94,7 +94,7 @@ export class ObService implements IObService {
 
             return response;
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             handlePrismaError(err);
         }
     }
@@ -102,6 +102,10 @@ export class ObService implements IObService {
         try {
             const laporan = await this.laporanService.getReportDetailById(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+
+            if (laporan.ob_id && laporan.ob_id !== obId) {
+                throw new AppError("Laporan sudah diambil oleh OB lain", 409);
+            }
 
             await this.obRepo.ambilLaporan(laporanId, obId);
 
@@ -113,7 +117,7 @@ export class ObService implements IObService {
                 pesan: NOTIFICATION_MESSAGE.LAPORAN_DIKERJAKAN,
             };
             await this.notificationService.sendNotification(notifData);
-        } catch (err: any) {
+        } catch (err: unknown) {
             throw handlePrismaError(err);
         }
     }
@@ -121,7 +125,7 @@ export class ObService implements IObService {
     async ambilChecklist(checklistId: string, obId: string): Promise<void> {
         try {
             await this.obRepo.ambilChecklist(checklistId, obId);
-        } catch (err: any) {
+        } catch (err: unknown) {
             throw handlePrismaError(err);
         }
     }
@@ -130,6 +134,7 @@ export class ObService implements IObService {
         try {
             const laporan = await this.laporanService.getReportDetailById(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+            if (laporan.ob_id !== obId) throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
 
             await this.obRepo.createHistoriPekerjaan(laporanId, fotoUrls, dto.catatan);
 
@@ -141,7 +146,7 @@ export class ObService implements IObService {
                 pesan: dto.catatan,
             };
             await this.notificationService.sendNotification(notifData);
-        } catch (err: any) {
+        } catch (err: unknown) {
             throw handlePrismaError(err);
         }
     }
@@ -150,6 +155,7 @@ export class ObService implements IObService {
         try {
             const laporan = await this.laporanService.getReportDetailById(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+            if (laporan.ob_id !== obId) throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
 
             await this.obRepo.tolakLaporan(laporanId, fotoUrls, dto.catatan);
 
@@ -161,7 +167,7 @@ export class ObService implements IObService {
                 pesan: dto.catatan,
             };
             await this.notificationService.sendNotification(notifData);
-        } catch (err: any) {
+        } catch (err: unknown) {
             throw handlePrismaError(err);
         }
     }
@@ -195,7 +201,7 @@ export class ObService implements IObService {
                 laporanDiterima: obStats.laporanDiterima || 0,
                 laporanSelesai: obStats.laporanSelesai || 0,
             };
-        } catch (err: any) {
+        } catch (err: unknown) {
             handlePrismaError(err);
         }
     }

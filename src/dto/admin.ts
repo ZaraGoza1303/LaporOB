@@ -197,6 +197,14 @@ export const PatchLaporanReqSchema = z.object({
         emptyToNull,
         z.string().max(1000).nullable().optional()
     ),
+    lantai_id: z.preprocess(
+        emptyToNull,
+        z.string().uuid({ message: "Format lantai_id harus UUID yang valid" }).optional()
+    ),
+    ruangan_id: z.preprocess(
+        emptyToNull,
+        z.string().uuid({ message: "Format ruangan_id harus UUID yang valid" }).optional()
+    ),
 }).refine(data => Object.values(data).some(v => v !== undefined && v !== null), {
     message: "Setidaknya satu field harus diisi"
 });

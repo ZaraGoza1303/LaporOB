@@ -164,6 +164,7 @@ export class ObRepository implements IObRepository {
                 lokasi_id: true
             }
         });
+        
         const lokasiIds = activeAssignments.map(a => a.lokasi_id);
 
         const ownReports = await this.db.laporan_karyawan.findMany({
