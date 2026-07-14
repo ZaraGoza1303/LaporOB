@@ -81,7 +81,12 @@ export class LaporanRepository implements ILaporanRepository {
     }
 
     async getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>> {
-        const whereCondition = this.buildWhereClause({ ob_id: obId }, search, status);
+        const whereCondition = this.buildWhereClause({
+            OR: [
+                { ob_id: obId },
+                { kolaborasi: { some: { ob_id: obId, status: "APPROVED" } } }
+            ]
+        }, search, status);
         return this.executePaginatedReports(whereCondition, limit, cursor);
     }
 
@@ -143,20 +148,22 @@ export class LaporanRepository implements ILaporanRepository {
     }
 
     private buildWhereClause(baseFilter: Prisma.Laporan_karyawanWhereInput, search?: string | null, status?: string | null): Prisma.Laporan_karyawanWhereInput {
-        const where: Prisma.Laporan_karyawanWhereInput = { ...baseFilter };
+        const filters: Prisma.Laporan_karyawanWhereInput[] = [baseFilter];
 
         if (search) {
-            where.OR = [
-                { deskripsi_kendala: { contains: search, mode: "insensitive" as const } },
-                { lantai: { lokasi: { nama_lokasi: { contains: search, mode: "insensitive" as const } } } }
-            ];
+            filters.push({
+                OR: [
+                    { deskripsi_kendala: { contains: search, mode: "insensitive" as const } },
+                    { lantai: { lokasi: { nama_lokasi: { contains: search, mode: "insensitive" as const } } } }
+                ]
+            });
         }
 
         if (status) {
-            where.status = { equals: status, mode: "insensitive" as const };
+            filters.push({ status: { equals: status, mode: "insensitive" as const } });
         }
 
-        return where;
+        return filters.length === 1 ? filters[0] : { AND: filters };
     }
 
     // ───── Laporan methods (admin) ─────

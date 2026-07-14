@@ -134,9 +134,9 @@ export class ObService implements IObService {
         try {
             const laporan = await this.laporanService.getReportDetailById(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
-            if (laporan.ob_id !== obId) throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
+            if (laporan.ob_id !== obId) throw new AppError("Hanya OB utama yang bisa menyelesaikan laporan", 403);
 
-            await this.obRepo.createHistoriPekerjaan(laporanId, fotoUrls, dto.catatan);
+            await this.obRepo.createHistoriPekerjaan(laporanId, obId, fotoUrls, dto.catatan);
 
             const notifData: NotificationData = {
                 penerima_id: laporan.pelapor_id,
@@ -155,9 +155,9 @@ export class ObService implements IObService {
         try {
             const laporan = await this.laporanService.getReportDetailById(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
-            if (laporan.ob_id !== obId) throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
+            if (laporan.ob_id !== obId) throw new AppError("Hanya OB utama yang bisa menolak laporan", 403);
 
-            await this.obRepo.tolakLaporan(laporanId, fotoUrls, dto.catatan);
+            await this.obRepo.tolakLaporan(laporanId, obId, fotoUrls, dto.catatan);
 
             const notifData: NotificationData = {
                 penerima_id: laporan.pelapor_id,

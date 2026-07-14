@@ -19,6 +19,13 @@ export type DetailReportPayload = Prisma.Laporan_karyawanGetPayload<{
         ob: true;
         pelapor: true;
         histori_pekerjaan: true;
+        kolaborasi: {
+            include: {
+                ob: {
+                    select: { id: true; nama_lengkap: true };
+                };
+            };
+        };
     };
 }>;
 

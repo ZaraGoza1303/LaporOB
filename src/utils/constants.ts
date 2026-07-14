@@ -24,6 +24,9 @@ export const NOTIFICATION_TYPE = {
     LAPORAN_DITOLAK: "LAPORAN_DITOLAK",
     CHECKLIST_SELESAI: "CHECKLIST_SELESAI",
     PENUGASAN_CHECKLIST: "PENUGASAN_CHECKLIST",
+    GABUNG_LAPORAN: "GABUNG_LAPORAN",
+    GABUNG_DISETUJUI: "GABUNG_DISETUJUI",
+    GABUNG_DITOLAK: "GABUNG_DITOLAK",
 } as const;
 
 export const NOTIFICATION_TITLE: Record<keyof typeof NOTIFICATION_TYPE, string> = {
@@ -33,6 +36,9 @@ export const NOTIFICATION_TITLE: Record<keyof typeof NOTIFICATION_TYPE, string> 
     LAPORAN_DITOLAK: "Laporan ditolak",
     CHECKLIST_SELESAI: "Checklist harian selesai",
     PENUGASAN_CHECKLIST: "Penugasan checklist harian",
+    GABUNG_LAPORAN: "Permintaan bergabung",
+    GABUNG_DISETUJUI: "Bergabung disetujui",
+    GABUNG_DITOLAK: "Bergabung ditolak",
 } as const;
 
 export const NOTIFICATION_MESSAGE = {

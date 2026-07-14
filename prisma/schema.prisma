@@ -33,6 +33,8 @@ model User {
   notifikasi_diterima Notifikasi[] @relation("NotifikasiDiterima")
   notifikasi_dikirim  Notifikasi[] @relation("NotifikasiDikirim")
   penugasan_ob        PenugasanOb[]
+  kolaborasi_laporan   KolaborasiLaporan[]
+  histori_pekerjaan    Histori_pekerjaan[]
   
   @@map("user")
 }
@@ -197,19 +199,37 @@ model Laporan_karyawan {
   ruangan  Ruangan  @relation(fields: [ruangan_id], references: [id])
   kategori Kategori @relation(fields: [kategori_id], references: [id])
 
+  kolaborasi       KolaborasiLaporan[]
   histori_pekerjaan Histori_pekerjaan[]
 
   @@map("laporan_karyawan")
 }
 
+model KolaborasiLaporan {
+  id         String   @id @default(uuid()) @db.Uuid
+  laporan_id String   @db.Uuid
+  ob_id      String   @db.Uuid
+  status     String   @db.VarChar(20)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt @db.Timestamp(6)
+
+  laporan Laporan_karyawan @relation(fields: [laporan_id], references: [id], onDelete: Cascade)
+  ob      User             @relation(fields: [ob_id], references: [id])
+
+  @@unique([laporan_id, ob_id])
+  @@map("kolaborasi_laporan")
+}
+
 model Histori_pekerjaan {
   id                  String   @id @default(uuid()) @db.Uuid
   laporan_karyawan_id String   @db.Uuid
+  ob_id               String?  @db.Uuid
   foto_selesai        String[]  @db.VarChar(255)
   catatan             String   @db.Text
   created_at          DateTime @default(now()) @db.Timestamp(6)
 
   laporan Laporan_karyawan @relation(fields: [laporan_karyawan_id], references: [id], onDelete: Cascade)
+  ob      User?            @relation(fields: [ob_id], references: [id])
 
   @@map("histori_pekerjaan")
 }
