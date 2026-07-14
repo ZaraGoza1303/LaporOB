@@ -2,10 +2,11 @@ import { Router } from "express";
 import { verifyJWTToken } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/role.js";
 import { tugasController } from "../container.js";
+import { USER_ROLE } from "../utils/constants.js";
 
 const tugasRouter = Router();
 tugasRouter.use(verifyJWTToken);
-tugasRouter.use(requireRole("admin"));
+tugasRouter.use(requireRole(USER_ROLE.ADMIN));
 
 tugasRouter.get('/', (req, res) => tugasController.getAll(req, res));
 tugasRouter.get('/:tugas_id', (req, res) => tugasController.getByID(req, res));

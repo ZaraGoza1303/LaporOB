@@ -30,9 +30,6 @@ export class ObController {
         }
     }
 
-    
-
-
     async takeLapor(req: Request, res: Response) {
         try {
             const validateParams = LaporanIdParamSchema.safeParse(req.params);

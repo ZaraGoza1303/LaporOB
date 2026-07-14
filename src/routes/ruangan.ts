@@ -2,10 +2,11 @@ import { Router } from "express";
 import { verifyJWTToken } from "../middleware/jwt.js";
 import { requireRole } from "../middleware/role.js";
 import { ruanganController } from "../container.js";
+import { USER_ROLE } from "../utils/constants.js";
 
 const ruanganRouter = Router();
 ruanganRouter.use(verifyJWTToken);
-ruanganRouter.use(requireRole("admin"));
+ruanganRouter.use(requireRole(USER_ROLE.ADMIN));
 
 ruanganRouter.get('/', (req, res) => ruanganController.getAll(req, res));
 ruanganRouter.get('/:ruangan_id', (req, res) => ruanganController.getByID(req, res));

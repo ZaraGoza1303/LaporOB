@@ -93,6 +93,26 @@ export class NotificationRepository implements INotificationRepository {
         };
     }
 
+    async getAllByDateRange(startDate: Date, endDate: Date): Promise<NotifikasiWithPengirim[]> {
+        return this.db.notifikasi.findMany({
+            where: {
+                created_at: {
+                    gte: startDate,
+                    lt: endDate,
+                }
+            },
+            include: {
+                pengirim: {
+                    select: { id: true, nama_lengkap: true }
+                }
+            },
+            orderBy: [
+                { created_at: 'desc' },
+                { id: 'desc' }
+            ]
+        });
+    }
+
     async getByUserAndDateRange(userId: string, startDate: Date, endDate: Date): Promise<NotifikasiWithPengirim[]> {
         return this.db.notifikasi.findMany({
             where: {
@@ -113,4 +133,5 @@ export class NotificationRepository implements INotificationRepository {
             ]
         });
     }
+
 }

@@ -25,5 +25,6 @@ export interface INotificationRepository {
     markAllAsRead(userId: string): Promise<void>
     countUnread(userId: string): Promise<number>
     getAllByUserId(userId: string, limit: number, cursor?: string | null): Promise<PaginatedResponse<NotifikasiWithPengirim>>
+    getAllByDateRange(startDate: Date, endDate: Date): Promise<NotifikasiWithPengirim[]>;
     getByUserAndDateRange(userId: string, startDate: Date, endDate: Date): Promise<NotifikasiWithPengirim[]>
 }

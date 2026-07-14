@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express"
 import { sendErrorResponse } from "../utils/response.js";
 import jwt from 'jsonwebtoken'
-import { AppError } from '../utils/error';
+import { AppError } from "../utils/error.js";
 
 export const verifyJWTToken = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
@@ -19,13 +19,3 @@ export const verifyJWTToken = (req: Request, res: Response, next: NextFunction) 
         return res.status(403).json(sendErrorResponse("token not valid"))
     }
 }
-
-export const authorizeRole = (allowedRoles: string) => {
-    return(req: Request, res: Response, next: NextFunction) => {
-        if(!req.user || !allowedRoles.includes(req.user.role)){
-            return res.status(403).json(sendErrorResponse("Forbidden"));
-        }
-        
-        next();
-    }
-}   

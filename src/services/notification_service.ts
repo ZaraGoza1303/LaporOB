@@ -1,6 +1,7 @@
 import type { NotificationData, BulkNotificationData, NotifikasiGroupedResponse } from "../dto/notification.js";
 import type { NotifikasiCreateInput } from "../generated/prisma/models.js";
 import type { INotificationRepository } from "../repositories/notification_repository.interface.js";
+import { USER_ROLE } from "../utils/constants.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { INotificationService } from "./notification_service.interface.js";
 import { sendToUser } from "./websocket_service.js";
@@ -71,7 +72,7 @@ export class NotificationService implements INotificationService {
         }
     }
 
-    async getAllNotifications(userId: string): Promise<NotifikasiGroupedResponse> {
+    async getAllNotifications(userId: string, role: string): Promise<NotifikasiGroupedResponse> {
         try {
             const now = new Date();
 
@@ -81,10 +82,15 @@ export class NotificationService implements INotificationService {
             const startOfYesterday = new Date(startOfToday);
             startOfYesterday.setDate(startOfYesterday.getDate() - 1);
 
-            const [hariIni, kemarin] = await Promise.all([
-                this.notifRepo.getByUserAndDateRange(userId, startOfToday, now),
-                this.notifRepo.getByUserAndDateRange(userId, startOfYesterday, startOfToday),
-            ]);
+            const fetchToday = role === USER_ROLE.ADMIN
+            ? this.notifRepo.getAllByDateRange(startOfToday, startOfYesterday)
+            : this.notifRepo.getByUserAndDateRange(userId, startOfToday, now)
+
+            const fetchYesterday = role === USER_ROLE.ADMIN
+            ? this.notifRepo.getAllByDateRange(startOfToday, startOfYesterday)
+            : this.notifRepo.getByUserAndDateRange(userId, startOfToday, now)
+
+            const [hariIni, kemarin] = await Promise.all([fetchToday, fetchYesterday]);
 
             return { hari_ini: hariIni, kemarin };
         } catch (err) {

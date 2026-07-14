@@ -693,7 +693,7 @@ paths:
         '500':
           description: Terjadi kesalahan, tidak bisa mengambil laporan
 
-  /api/ob/laporan/{laporan_id}/histori:
+  /api/ob/laporan/{laporan_id}:
     post:
       tags:
         - OB
