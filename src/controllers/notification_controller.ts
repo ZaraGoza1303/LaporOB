@@ -22,7 +22,7 @@ export class NotificationController {
             await this.notificationService.markAsRead(notifId);
 
             return res.status(200).json(sendSuccessfullResponse("Notifikasi berhasil dibaca"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
@@ -36,7 +36,7 @@ export class NotificationController {
             await this.notificationService.markAllAsRead(userId);
 
             return res.status(200).json(sendSuccessfullResponse("Semua notifikasi berhasil dibaca"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
@@ -50,7 +50,7 @@ export class NotificationController {
             const data = await this.notificationService.countUnread(userId);
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan total pesan yang belum diibaca", data));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
@@ -66,7 +66,7 @@ export class NotificationController {
             const data = await this.notificationService.getAllNotifications(userId, userRole);
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan notifikasi", data));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }

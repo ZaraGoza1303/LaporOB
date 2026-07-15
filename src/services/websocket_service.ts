@@ -1,4 +1,4 @@
-import type { Server } from "http";
+import type { Server, IncomingMessage } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import jwt from 'jsonwebtoken';
 
@@ -9,8 +9,9 @@ export function initWebSocket(server: Server) {
   wss.on('connection', handleConnection);
 }
 
-function handleConnection(ws: WebSocket, req: any) {
-  const token = new URL(req.url, `http://${req.headers.host}`).searchParams.get('token');
+function handleConnection(ws: WebSocket, req: IncomingMessage) {
+  const host = Array.isArray(req.headers.host) ? req.headers.host[0] : req.headers.host ?? "localhost";
+  const token = new URL(req.url ?? "/", `http://${host}`).searchParams.get('token');
   const userId = verifyToken(token);
 
   if (!userId) return ws.close(4001, 'Token invalid/kosong');

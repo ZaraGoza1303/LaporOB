@@ -2,7 +2,7 @@ import type { UserSearchQuery } from "../dto/admin.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import { Prisma, type PrismaClient, type User } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
-import type { IUsersRepository, ProfileUser } from "./users_repository.interface.js";
+import type { IUsersRepository, ProfileUser, UserWithRoleAndToken } from "./users_repository.interface.js";
 
 export class UsersRepository implements IUsersRepository {
     private db: PrismaClient;
@@ -54,7 +54,7 @@ export class UsersRepository implements IUsersRepository {
         }
     }
 
-    async getByID(userId: string): Promise<any | null> {
+    async getByID(userId: string): Promise<UserWithRoleAndToken | null> {
         return this.db.user.findFirst({
             where: { id: userId },
             include: {

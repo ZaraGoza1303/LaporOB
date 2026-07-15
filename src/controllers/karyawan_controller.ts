@@ -21,11 +21,11 @@ export class KaryawanController {
 
             const response = await this.karyawanService.getHomeStats(userId)
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data home karyawan", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data home karyawan", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data home karyawan"))
         }
     }
 
@@ -60,8 +60,8 @@ export class KaryawanController {
 
                 try {
                     await compressImageIfNeeded(file);
-                } catch (err: any) {
-                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar", err.message));
+                } catch (err: unknown) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar"));
                 }
 
                 const url = await this.storageService.uploadFile(file);
@@ -74,11 +74,11 @@ export class KaryawanController {
             })
 
             return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data laporan", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal menambahkan data laporan", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal menambahkan data laporan"))
         }
     }
 }

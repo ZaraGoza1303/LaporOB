@@ -51,11 +51,11 @@ export class UsersController {
 
             const response = await this.usersService.getAll(page, limit, validate.data)
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data user", response))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data user", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data user"))
         }
     }
 
@@ -63,11 +63,11 @@ export class UsersController {
         try {
             const response = await this.usersService.getByRole(USER_ROLE.OB)
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data ob", response))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data user", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data user"))
         }
     }
 
@@ -75,11 +75,11 @@ export class UsersController {
         try {
             const response = await this.usersService.getByRole(USER_ROLE.KARYAWAN)
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data karyawan", response))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data user", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data user"))
         }
     }
 
@@ -98,11 +98,11 @@ export class UsersController {
             }
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data user", response))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data user", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data user"))
         }
     }
 
@@ -120,11 +120,11 @@ export class UsersController {
 
             const response = await this.usersService.create(validate.data)
             return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data user", response.activationUrl));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal menambahkan data user", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal menambahkan data user"))
         }
     }
 
@@ -161,8 +161,8 @@ export class UsersController {
 
                 try {
                     await compressImageIfNeeded(profilePictureFile);
-                } catch (err: any) {
-                    return res.status(500).json(sendErrorResponse("Gagal memproses/kompres gambar", err.message));
+                } catch (err: unknown) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses/kompres gambar"));
                 }
 
                 const oldFileUrlOrKey = existsUser.profile_picture;
@@ -180,11 +180,11 @@ export class UsersController {
 
             await this.usersService.update(userId, updateData)
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengubah data user"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengubah data user", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mengubah data user"))
         }
     }
 
@@ -219,8 +219,8 @@ export class UsersController {
 
                 try {
                     await compressImageIfNeeded(profilePictureFile);
-                } catch (err: any) {
-                    return res.status(500).json(sendErrorResponse("Gagal memproses/kompres gambar", err.message));
+                } catch (err: unknown) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses/kompres gambar"));
                 }
 
                 const oldFileUrlOrKey = existsUser.profile_picture;
@@ -238,11 +238,11 @@ export class UsersController {
 
             await this.usersService.update(userId, updateData)
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengubah profile"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengubah profile", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mengubah profile"))
         }
     }
 
@@ -257,11 +257,11 @@ export class UsersController {
             const userId = validate.data.user_id;
             await this.usersService.delete(userId)
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data user"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal menghapus data user", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal menghapus data user"))
         }
     }
 
@@ -282,11 +282,11 @@ export class UsersController {
 
             const responseData = await this.profileService.getProfile(userId, role, validate.data);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data profile", responseData));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server", err.message));
+            return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server"));
         }
     }
 
@@ -303,11 +303,11 @@ export class UsersController {
             
             const response = await this.laporanService.getReportDetail(laporanId, userId, role);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan detail laporan", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server", err.message));
+            return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server"));
         }
     }
     
@@ -330,11 +330,11 @@ export class UsersController {
             const response = await this.obService.getObPerformanceStats(obId, dateRange);
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan statistik performa OB", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
-            return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server", err.message));
+            return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server"));
         }
     }
 
@@ -357,11 +357,11 @@ export class UsersController {
             const response = await this.karyawanService.getKaryawanPerformanceStats(karyawanId);
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan statistik performa karyawan", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
-            return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server", err.message));
+            return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server"));
         }
     }
 }

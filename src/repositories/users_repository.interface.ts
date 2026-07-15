@@ -9,9 +9,16 @@ export type ProfileUser = User & {
     };
 };
 
+export type UserWithRoleAndToken = User & {
+    role: { nama_role: string };
+    tokens: { id: string; token_hash: string; type: string; expired_at: Date; created_at: Date; used_at: Date | null }[];
+};
+
+
+
 export interface IUsersRepository {
     getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>>
-    getByID(userId: string): Promise<any | null>
+    getByID(userId: string): Promise<UserWithRoleAndToken | null>
     insert(req: UserCreateInput): Promise<User>;
     update(userId: string, req: UserUpdateInput): Promise<void>;
     delete(userId: string): Promise<void>;

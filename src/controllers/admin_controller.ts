@@ -27,7 +27,7 @@ export class AdminController {
             return res.status(200).json(
                 sendSuccessfullResponse("Berhasil mengambil data dashboard admin", dashboardData)
             );
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
@@ -48,11 +48,11 @@ export class AdminController {
 
             const response = await this.adminService.getAllLaporan(page, limit, validate.data);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data laporan pengguna", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
-            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data laporan pengguna", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data laporan pengguna"));
         }
     }
 
@@ -67,11 +67,11 @@ export class AdminController {
 
             const response = await this.adminService.getReportDetail(laporanId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan detail laporan", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
-            return res.status(500).json(sendErrorResponse("Gagal mendapatkan detail laporan", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan detail laporan"));
         }
     }
 
@@ -79,11 +79,11 @@ export class AdminController {
         try {
             const response = await this.adminService.getUserStats()
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data"))
         }
     }
 
@@ -106,11 +106,11 @@ export class AdminController {
             await this.adminService.patchLaporan(laporanId, validateBody.data);
 
             return res.status(200).json(sendSuccessfullResponse("Laporan berhasil diperbarui"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
-            return res.status(500).json(sendErrorResponse("Gagal memperbarui laporan", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal memperbarui laporan"));
         }
     }
 
@@ -126,11 +126,11 @@ export class AdminController {
             await this.adminService.assignObToLocations(obId, lokasiIds, bulan, tahun);
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil memperbarui penugasan OB", null));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
-            return res.status(500).json(sendErrorResponse("Gagal memperbarui penugasan OB", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal memperbarui penugasan OB"));
         }
     }
 
@@ -150,11 +150,11 @@ export class AdminController {
             const assignments = await this.adminService.getPenugasanByPeriode(bulan, tahun);
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan penugasan OB", assignments));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
-            return res.status(500).json(sendErrorResponse("Gagal mendapatkan penugasan OB", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan penugasan OB"));
         }
     }
 
@@ -179,11 +179,11 @@ export class AdminController {
             const response = await this.adminService.approveLaporan(laporanId, validateBody.data.catatan);
 
             return res.status(200).json(sendSuccessfullResponse("Pekerjaan berhasil disetujui", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
-            return res.status(500).json(sendErrorResponse("Gagal menyetujui pekerjaan", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal menyetujui pekerjaan"));
         }
     }
 
@@ -208,11 +208,11 @@ export class AdminController {
             const response = await this.adminService.rejectLaporan(laporanId, validateBody.data.catatan);
 
             return res.status(200).json(sendSuccessfullResponse("Pekerjaan berhasil dibatalkan dan dikembalikan ke antrean", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
-            return res.status(500).json(sendErrorResponse("Gagal membatalkan pekerjaan", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal membatalkan pekerjaan"));
         }
     }
 }

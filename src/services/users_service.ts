@@ -3,7 +3,7 @@ import type { CreateUserReq, CreateUserRes, UpdateProfileReq, UpdateUserReq, Use
 import type { PaginatedResponse } from "../dto/response.js";
 import type { User } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
-import type { IUsersRepository } from "../repositories/users_repository.interface.js";
+import type { IUsersRepository, UserWithRoleAndToken } from "../repositories/users_repository.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { generateActivationToken } from "../utils/token.js";
 import { buildActivationUrl, resolveFileUrl } from "../utils/url.js";
@@ -34,7 +34,7 @@ export class UsersService implements IUsersService {
         }
     }
 
-    async getByID(userId: string): Promise<any | null> {
+    async getByID(userId: string): Promise<UserWithRoleAndToken | null> {
         try {
             const user = await this.usersRepo.getByID(userId);
             if (!user) return null;
@@ -132,7 +132,7 @@ export class UsersService implements IUsersService {
                 };
             }
 
-            await this.usersRepo.update(userId, userReq as any);
+            await this.usersRepo.update(userId, userReq);
         } catch (err) {
             handlePrismaError(err)
         }

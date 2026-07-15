@@ -22,11 +22,11 @@ export class RuanganController {
 
             const response = await this.ruanganService.getAll(lantaiId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data ruangan", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengambil data ruangan", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data ruangan"));
         }
     }
 
@@ -53,11 +53,11 @@ export class RuanganController {
             }
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data ruangan", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengambil data ruangan", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data ruangan"));
         }
     }
 
@@ -75,11 +75,11 @@ export class RuanganController {
 
             await this.ruanganService.create(validate.data);
             return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data ruangan"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal menambahkan ruangan", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal menambahkan ruangan"));
         }
     }
 
@@ -111,11 +111,11 @@ export class RuanganController {
 
             await this.ruanganService.update(lantaiId, ruanganId, validate.data);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengupdate data ruangan"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengupdate data ruangan", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mengupdate data ruangan"));
         }
     }
 
@@ -137,11 +137,11 @@ export class RuanganController {
 
             await this.ruanganService.delete(lantaiId, ruanganId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data ruangan"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal menghapus ruangan", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal menghapus ruangan"));
         }
     }
 }
