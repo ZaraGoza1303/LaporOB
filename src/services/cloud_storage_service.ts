@@ -1,4 +1,6 @@
+import type { CloudUploadResponse } from './cloud_storage_service.interface.js';
 import type { IStorageService } from './storage_service.interface.js';
+import {AppError } from '../utils/error.js'
 
 export class CloudStorageService implements IStorageService {
     async uploadFile(file: Express.Multer.File): Promise<string> {
@@ -24,10 +26,14 @@ export class CloudStorageService implements IStorageService {
                 if (!response.ok) {
                     throw new AppError(`Cloud server upload failed with status ${response.status}`, 500);
                 }
-
-                const data: any = await response.json();
+        
+                const data = await response.json() as CloudUploadResponse;
                 // Anda tinggal sesuaikan path response JSON dari server PM Anda
-                return data.url || data.secure_url || data.filePath;
+                const fileUrl = data.url || data.secure_url || data.filePath;
+            if (!fileUrl) {
+                    throw new AppError("Cloud server returned no URL", 500);
+                }
+                    return fileUrl;
             }
 
             // 2. OPSI B: Jika menggunakan SDK Cloudinary (Nanti perlu: npm install cloudinary)
@@ -64,9 +70,11 @@ import { AppError } from '../utils/error';
             // Fallback fallback / mock url jika env belum diset lengkap
             console.warn("CLOUD_UPLOAD_URL tidak di-set di .env, mengembalikan mock URL.");
             return `https://cloud-storage.mock/uploads/${Date.now()}-${file.originalname}`;
-        } catch (err: any) {
-            console.error("Cloud storage upload error:", err.message);
-            throw new AppError(`Cloud storage upload failed: ${err.message}`, 500);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Unknown error";
+            console.error("Cloud storage upload error:", message);
+            throw new AppError(`Cloud storage upload failed: ${message}`, 500);
+
         }
     }
 
@@ -93,8 +101,8 @@ import { AppError } from '../utils/error';
               });
             }
             */
-        } catch (err: any) {
-            console.error(`Gagal menghapus file dari cloud: ${fileUrlOrKey}`, err.message);
+        } catch (err: unknown) {
+            console.error(`Gagal menghapus file dari cloud: ${fileUrlOrKey}`);
         }
     }
 }

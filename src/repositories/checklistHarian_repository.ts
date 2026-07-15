@@ -95,7 +95,7 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
         ]);
 
         const response: PaginatedResponse<ChecklistHarianWithRelations> = {
-            items: items as any,
+            items: items as ChecklistHarianWithRelations[],
             next_cursor: null,
             meta: {
                 total_items: total,
@@ -121,7 +121,7 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
             },
         })
 
-        return data as any
+        return data as ChecklistHarianWithRelations | null
     }
 
     async insert(req: Checklist_harianUncheckedCreateInput): Promise<void> {

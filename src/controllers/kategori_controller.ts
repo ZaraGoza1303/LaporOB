@@ -16,11 +16,11 @@ export class KategoriController {
         try {
             const response = await this.kategoriService.getAll();
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data kategori", response))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengambil data kategori", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data kategori"))
         }
     }
 
@@ -38,11 +38,11 @@ export class KategoriController {
                 return res.status(404).json(sendErrorResponse("Data kategori tidak ditemukan"));
             }
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data kategori", response))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengambil data kategori", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data kategori"))
         }
     }
 
@@ -60,11 +60,11 @@ export class KategoriController {
 
             await this.kategoriService.create(validate.data);
             return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data kategori"))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal menambahkan kategori", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal menambahkan kategori"))
         }
     }
 
@@ -89,11 +89,11 @@ export class KategoriController {
 
             await this.kategoriService.update(kategoriId, validate.data);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengupdate data kategori"))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengupdate data kategori", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mengupdate data kategori"))
         }
     }
 
@@ -108,11 +108,11 @@ export class KategoriController {
 
             await this.kategoriService.delete(kategoriId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data kategori"))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal menghapus kategori", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal menghapus kategori"))
         }
     }
 }

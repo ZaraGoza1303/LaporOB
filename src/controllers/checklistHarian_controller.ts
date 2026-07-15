@@ -24,11 +24,11 @@ export class ChecklistHarianController {
 
             const response = await this.checklistService.getAll(page, limit, validate.data);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data checklist harian", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengambil data checklist harian", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data checklist harian"));
         }
     }
 
@@ -47,11 +47,11 @@ export class ChecklistHarianController {
             }
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data checklist harian", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengambil data checklist harian", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data checklist harian"));
         }
     }
 
@@ -71,11 +71,11 @@ export class ChecklistHarianController {
 
             await this.checklistService.create(userId, validate.data);
             return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data checklist harian"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal menambahkan checklist harian", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal menambahkan checklist harian"));
         }
     }
 
@@ -100,11 +100,11 @@ export class ChecklistHarianController {
 
             await this.checklistService.update(checklistId, validate.data);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengupdate data checklist harian"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengupdate data checklist harian", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mengupdate data checklist harian"));
         }
     }
 
@@ -119,11 +119,11 @@ export class ChecklistHarianController {
 
             await this.checklistService.delete(checklistId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data checklist harian"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal menghapus checklist harian", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal menghapus checklist harian"));
         }
     }
 }

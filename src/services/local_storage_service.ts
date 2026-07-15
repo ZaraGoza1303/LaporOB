@@ -52,8 +52,8 @@ export class LocalStorageService implements IStorageService {
                 const filePath = path.join(this.uploadDir, filename);
                 await fs.unlink(filePath);
             }
-        } catch (err: any) {
-            console.error(`Failed to delete local file ${fileUrlOrKey}:`, err.message);
+        } catch (err: unknown) {
+            console.error(`Failed to delete local file ${fileUrlOrKey}:`);
         }
     }
 }

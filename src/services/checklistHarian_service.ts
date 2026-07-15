@@ -34,9 +34,9 @@ export class ChecklistHarianService implements IChecklistHarianService {
             ob_id: item.ob_id,
             status: item.status,
             catatan: item.catatan,
-            dikerjakan_at: (item as any).dikerjakan_at ?? null,
-            selesai_at: (item as any).selesai_at ?? null,
-            terlewat_at: (item as any).terlewat_at ?? null,
+            dikerjakan_at: item.dikerjakan_at ?? null,
+            selesai_at: item.selesai_at ?? null,
+            terlewat_at: item.terlewat_at ?? null,
             created_at: item.created_at,
             updated_at: item.updated_at,
             tugas: item.tugas,
@@ -150,11 +150,11 @@ export class ChecklistHarianService implements IChecklistHarianService {
                 dataToUpdate.status = req.status;
                 const now = new Date();
                 if (req.status === CHECKLIST_STATUS.SEDANG_DIKERJAKAN) {
-                    (dataToUpdate as any).dikerjakan_at = now;
+                    dataToUpdate.dikerjakan_at = now;
                 } else if (req.status === CHECKLIST_STATUS.SELESAI) {
-                    (dataToUpdate as any).selesai_at = now;
+                    dataToUpdate.selesai_at = now;
                 } else if (req.status === CHECKLIST_STATUS.TERLEWAT) {
-                    (dataToUpdate as any).terlewat_at = now;
+                    dataToUpdate.terlewat_at = now;
                 }
             }
 

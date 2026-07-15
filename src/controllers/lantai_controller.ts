@@ -22,11 +22,11 @@ export class LantaiController {
 
             const response = await this.lantaiService.getAll(lokasiId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data lantai", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengambil data lantai", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data lantai"));
         }
     }
 
@@ -53,11 +53,11 @@ export class LantaiController {
             }
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data lantai", response));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengambil data lantai", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data lantai"));
         }
     }
 
@@ -75,11 +75,11 @@ export class LantaiController {
 
             await this.lantaiService.create(validate.data);
             return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data lantai"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal menambahkan lantai", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal menambahkan lantai"));
         }
     }
 
@@ -111,11 +111,11 @@ export class LantaiController {
 
             await this.lantaiService.update(lokasiId, lantaiId, validate.data);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengupdate data lantai"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengupdate data lantai", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mengupdate data lantai"));
         }
     }
 
@@ -137,11 +137,11 @@ export class LantaiController {
 
             await this.lantaiService.delete(lokasiId, lantaiId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data lantai"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal menghapus lantai", err.message));
+            return res.status(500).json(sendErrorResponse("Gagal menghapus lantai"));
         }
     }
 }

@@ -22,11 +22,11 @@ export class TugasController {
 
             const response = await this.tugasService.getAll(validate.data.kategori_id);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data tugas", response))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengambil data tugas", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data tugas"))
         }
     }
 
@@ -44,11 +44,11 @@ export class TugasController {
                 return res.status(404).json(sendErrorResponse("Data tugas tidak ditemukan"));
             }
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data tugas", response))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengambil data tugas", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data tugas"))
         }
     }
 
@@ -66,11 +66,11 @@ export class TugasController {
 
             await this.tugasService.create(validate.data);
             return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data tugas"))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal menambahkan tugas", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal menambahkan tugas"))
         }
     }
 
@@ -95,11 +95,11 @@ export class TugasController {
 
             await this.tugasService.update(tugasId, validate.data);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengupdate data tugas"))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal mengupdate data tugas", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal mengupdate data tugas"))
         }
     }
 
@@ -114,11 +114,11 @@ export class TugasController {
 
             await this.tugasService.delete(tugasId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data tugas"))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Gagal menghapus tugas", err.message))
+            return res.status(500).json(sendErrorResponse("Gagal menghapus tugas"))
         }
     }
 }

@@ -25,11 +25,11 @@ export class AuthController {
 
             const response = await this.authService.login(validate.data);
             return res.status(200).json(sendSuccessfullResponse("Login Berhasil", response))
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Login Gagal", err.message))
+            return res.status(500).json(sendErrorResponse("Login Gagal"))
         }
     }
 
@@ -43,11 +43,11 @@ export class AuthController {
             const token = validateQuery.data.token;
             await this.authService.validateActivationToken(token);
             return res.status(200).json(sendSuccessfullResponse("Token valid"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
-            return res.status(400).json(sendErrorResponse("Token tidak valid atau expired", err.message));
+            return res.status(400).json(sendErrorResponse("Token tidak valid atau expired"));
         }
     }
 
@@ -72,11 +72,11 @@ export class AuthController {
 
             await this.authService.activateAccount(token, validate.data.password);
             return res.status(200).json(sendSuccessfullResponse("Akun berhasil diaktivasi, silahkan login"));
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
-            return res.status(400).json(sendErrorResponse("Aktivasi gagal", err.message));
+            return res.status(400).json(sendErrorResponse("Aktivasi gagal"));
         }
     }
 
