@@ -64,6 +64,12 @@ export const NOTIFICATION_MESSAGE = {
     KOLABORASI_DIBUKA: "Laporan telah dibuka untuk kolaborasi",
 } as const;
 
+export const REF_TIPE = {
+    LAPORAN: "LAPORAN",
+    KOLABORASI: "KOLABORASI",
+    CHECKLIST: "CHECKLIST",
+} as const;
+
 export const USER_ROLE = {
     OB: "ob",
     HR: "hr",

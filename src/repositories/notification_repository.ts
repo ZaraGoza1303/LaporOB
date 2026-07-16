@@ -1,5 +1,5 @@
 import type { PaginatedResponse } from "../dto/response.js";
-import type { Notifikasi, PrismaClient } from "../generated/prisma/client.js";
+import { Prisma, type Notifikasi, type PrismaClient } from "../generated/prisma/client.js";
 import type { NotifikasiCreateInput } from "../generated/prisma/models.js";
 import type { INotificationRepository, NotifikasiWithPengirim } from "./notification_repository.interface.js";
 
@@ -94,55 +94,28 @@ export class NotificationRepository implements INotificationRepository {
     }
 
     async getAllByDateRange(startDate: Date, endDate: Date): Promise<NotifikasiWithPengirim[]> {
-        return this.db.notifikasi.findMany({
-            where: {
-                created_at: {
-                    gte: startDate,
-                    lt: endDate,
-                }
-            },
-            include: {
-                pengirim: {
-                    select: { id: true, nama_lengkap: true }
-                }
-            },
-            orderBy: [
-                { created_at: 'desc' },
-                { id: 'desc' }
-            ]
+        return this.findNotifikasi({
+            created_at: { gte: startDate, lt: endDate }
         });
     }
 
     async getByTypesAndDateRange(types: string[], startDate: Date, endDate: Date): Promise<NotifikasiWithPengirim[]> {
-        return this.db.notifikasi.findMany({
-            where: {
-                tipe: { in: types },
-                created_at: {
-                    gte: startDate,
-                    lt: endDate,
-                }
-            },
-            include: {
-                pengirim: {
-                    select: { id: true, nama_lengkap: true }
-                }
-            },
-            orderBy: [
-                { created_at: 'desc' },
-                { id: 'desc' }
-            ]
+        return this.findNotifikasi({
+            tipe: { in: types },
+            created_at: { gte: startDate, lt: endDate }
         });
     }
 
     async getByUserAndDateRange(userId: string, startDate: Date, endDate: Date): Promise<NotifikasiWithPengirim[]> {
+        return this.findNotifikasi({
+            penerima_id: userId,
+            created_at: { gte: startDate, lt: endDate }
+        });
+    }
+
+    private findNotifikasi(where: Prisma.NotifikasiWhereInput): Promise<NotifikasiWithPengirim[]> {
         return this.db.notifikasi.findMany({
-            where: {
-                penerima_id: userId,
-                created_at: {
-                    gte: startDate,
-                    lt: endDate,
-                }
-            },
+            where,
             include: {
                 pengirim: {
                     select: { id: true, nama_lengkap: true }
@@ -154,5 +127,4 @@ export class NotificationRepository implements INotificationRepository {
             ]
         });
     }
-
 }

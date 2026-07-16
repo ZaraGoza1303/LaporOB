@@ -126,10 +126,6 @@ export class ObController {
                 (file) => file.fieldname === "foto_selesai"
             );
 
-            if (fotoFiles.length === 0) {
-                return res.status(400).json(sendErrorResponse("Foto bukti pembatalan wajib diupload"));
-            }
-
             const fotoUrls: string[] = [];
             for (const file of fotoFiles) {
                 const validation = await validateImageFile(file);

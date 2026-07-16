@@ -61,8 +61,8 @@ export interface RuanganTerpopulerPayload {
 
 export interface ILaporanRepository {
     getActivity(userId: string): Promise<UserActivityRes[]>;
-    insertReport(req: Laporan_karyawanCreateInput): Promise<void>;
-    patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void>;
+    insertReport(req: Laporan_karyawanCreateInput): Promise<string>;
+    patchLaporan(laporanId: string, data: Prisma.Laporan_karyawanUncheckedUpdateInput): Promise<void>;
     updateKolaborasiOpen(laporanId: string, isOpen: boolean): Promise<void>;
     getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
@@ -70,7 +70,7 @@ export interface ILaporanRepository {
     getRecentActivities(limit: number): Promise<RecentActivityPayload[]>;
     getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]>;
     getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>>;
-    getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<RuanganTerpopulerPayload[]>;
+    getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<any[]>;
     countLaporanAktif(query: AdminLaporanQuery): Promise<number>;
     getLaporanCountByUserId(userId: string): Promise<number>;
     deleteLaporan(laporanId: string): Promise<void>;

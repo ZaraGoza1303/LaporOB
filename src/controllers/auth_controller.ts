@@ -91,8 +91,7 @@ export class AuthController {
                 return res.status(400).json(sendErrorResponse("Token tidak ditemukan"));
             }
 
-            const { container } = await import("../container.js");
-            await container.sessionService.revokeSession(token);
+            await this.authService.logout(token);
 
             return res.status(200).json(sendSuccessfullResponse("Logout berhasil"));
         } catch (err: unknown) {

@@ -11,10 +11,6 @@ export function generateActivationToken(expiresInHours: number): GeneratedToken 
   return { token, tokenHash, expiredAt };
 }
 
-export function hashActivationToken(token: string): string {
-  return crypto.createHash("sha256").update(token).digest("hex");
-}
-
 export function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }

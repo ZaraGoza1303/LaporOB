@@ -32,17 +32,7 @@ export class ObRepository implements IObRepository {
         const endOfDay = new Date(tanggal);
         endOfDay.setHours(23, 59, 59, 999);
 
-        const activeAssignments = await this.db.penugasanOb.findMany({
-            where: {
-                ob_id: obId,
-                bulan: startOfDay.getMonth() + 1,
-                tahun: startOfDay.getFullYear(),
-            },
-            select: {
-                lokasi_id: true
-            }
-        });
-        const lokasiIds = activeAssignments.map(a => a.lokasi_id);
+        const lokasiIds = await this.getActiveLokasiIds(obId, tanggal);
 
         const ownChecklists = await this.db.checklist_harian.findMany({
             where: {
@@ -119,17 +109,7 @@ export class ObRepository implements IObRepository {
         const endOfDay = new Date(tanggal);
         endOfDay.setHours(23, 59, 59, 999);
 
-        const activeAssignments = await this.db.penugasanOb.findMany({
-            where: {
-                ob_id: obId,
-                bulan: startOfDay.getMonth() + 1,
-                tahun: startOfDay.getFullYear(),
-            },
-            select: {
-                lokasi_id: true
-            }
-        });
-        const lokasiIds = activeAssignments.map(a => a.lokasi_id);
+        const lokasiIds = await this.getActiveLokasiIds(obId, tanggal);
 
         return this.db.checklist_harian.count({
             where: {
@@ -154,18 +134,7 @@ export class ObRepository implements IObRepository {
 
     async getReports(obId: string): Promise<LaporanKaryawanWithDetails[]> {
         const now = new Date();
-        const activeAssignments = await this.db.penugasanOb.findMany({
-            where: {
-                ob_id: obId,
-                bulan: now.getMonth() + 1,
-                tahun: now.getFullYear(),
-            },
-            select: {
-                lokasi_id: true
-            }
-        });
-        
-        const lokasiIds = activeAssignments.map(a => a.lokasi_id);
+        const lokasiIds = await this.getActiveLokasiIds(obId, now);
 
         const ownReports = await this.db.laporan_karyawan.findMany({
             where: {
@@ -335,5 +304,20 @@ export class ObRepository implements IObRepository {
             laporanDiterima,
             laporanSelesai
         };
+    }
+
+    private async getActiveLokasiIds(obId: string, date: Date): Promise<string[]> {
+        const assignments = await this.db.penugasanOb.findMany({
+            where: {
+                ob_id: obId,
+                bulan: date.getMonth() + 1,
+                tahun: date.getFullYear(),
+            },
+            select: {
+                lokasi_id: true
+            }
+        });
+
+        return assignments.map(a => a.lokasi_id);
     }
 }

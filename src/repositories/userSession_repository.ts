@@ -9,13 +9,7 @@ export class UserSessionRepository implements IUserSessionRepository {
         this.prisma = prisma;
     }
 
-    async create(data: {
-        user_id: string;
-        token_hash: string;
-        device_info?: string | null;
-        ip_address?: string | null;
-        expired_at: Date;
-    }): Promise<UserSession> {
+    async create(data: {user_id: string, token_hash: string, device_info?: string | null, ip_address?: string | null, expired_at: Date}): Promise<UserSession> {
         return this.prisma.userSession.create({ data });
     }
 

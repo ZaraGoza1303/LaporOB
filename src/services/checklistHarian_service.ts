@@ -4,7 +4,7 @@ import { handlePrismaError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { ChecklistHarianWithRelations } from "../repositories/checklistHarian_repository.interface.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
-import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE, USER_ROLE } from "../utils/constants.js";
+import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE, REF_TIPE, USER_ROLE } from "../utils/constants.js";
 import type { BulkNotificationData } from "../dto/notification.js";
 import type { INotificationService } from "./notification_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
@@ -128,7 +128,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
                 tipe: NOTIFICATION_TYPE.PENUGASAN_CHECKLIST,
                 judul: NOTIFICATION_TITLE.PENUGASAN_CHECKLIST,
                 pesan: NOTIFICATION_MESSAGE.ADMIN_MENUGASKAN_OB,
-                ref_tipe: "CHECKLIST",
+                ref_tipe: REF_TIPE.CHECKLIST,
             };
 
             await this.notificationService.sendBulkNotification(notifData);
@@ -146,7 +146,6 @@ export class ChecklistHarianService implements IChecklistHarianService {
             if (req.ob_id !== undefined) dataToUpdate.ob_id = req.ob_id ?? null;
             if (req.catatan !== undefined) dataToUpdate.catatan = req.catatan ?? null;
 
-            // Set timestamp otomatis sesuai transisi status
             if (req.status !== undefined) {
                 dataToUpdate.status = req.status;
                 const now = new Date();
