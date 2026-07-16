@@ -7,6 +7,8 @@ export interface NotificationData {
     tipe: string;
     judul: string;
     pesan?: string;
+    ref_id?: string | null;
+    ref_tipe?: string | null;
 }
 
 export interface BulkNotificationData {
@@ -15,6 +17,8 @@ export interface BulkNotificationData {
     tipe: string;
     judul: string;
     pesan?: string;
+    ref_id?: string | null;
+    ref_tipe?: string | null;
 }
 
 export interface NotifikasiGroupedResponse {

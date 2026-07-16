@@ -24,7 +24,7 @@ export class LaporanService implements ILaporanService {
                 throw new AppError("Laporan tidak ditemukan", 404);
             }
 
-        if (role !== USER_ROLE.OB || item.ob_id !== userId) {
+            if (role !== USER_ROLE.OB || item.ob_id !== userId) {
                 throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
             }
 
@@ -94,8 +94,19 @@ export class LaporanService implements ILaporanService {
         await this.laporanRepo.patchLaporan(laporanId, dto);
     }
 
+    async toggleKolaborasiOpen(laporanId: string, isOpen: boolean): Promise<void> {
+        await this.laporanRepo.updateKolaborasiOpen(laporanId, isOpen);
+    }
+
     async getLaporanCountByUserId(userId: string): Promise<number> {
         return this.laporanRepo.getLaporanCountByUserId(userId);
     }
 
+    async deleteLaporan(laporanId: string): Promise<void> {
+        try {
+            await this.laporanRepo.deleteLaporan(laporanId);
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
 }

@@ -340,4 +340,15 @@ export class AdminService implements IAdminService {
             throw handlePrismaError(err);
         }
     }
+
+    async deleteLaporan(laporanId: string): Promise<void> {
+        try {
+            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+
+            await this.laporanService.deleteLaporan(laporanId);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
 }

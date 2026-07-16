@@ -128,6 +128,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
                 tipe: NOTIFICATION_TYPE.PENUGASAN_CHECKLIST,
                 judul: NOTIFICATION_TITLE.PENUGASAN_CHECKLIST,
                 pesan: NOTIFICATION_MESSAGE.ADMIN_MENUGASKAN_OB,
+                ref_tipe: "CHECKLIST",
             };
 
             await this.notificationService.sendBulkNotification(notifData);

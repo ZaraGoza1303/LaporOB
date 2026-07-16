@@ -27,24 +27,30 @@ export const NOTIFICATION_TYPE = {
     LAPORAN_BARU: "LAPORAN_BARU",
     LAPORAN_DIKERJAKAN: "LAPORAN_DIKERJAKAN",
     LAPORAN_BERES: "LAPORAN_BERES",
-    LAPORAN_DITOLAK: "LAPORAN_DITOLAK",
+    LAPORAN_DIBATALKAN: "LAPORAN_DIBATALKAN",
     CHECKLIST_SELESAI: "CHECKLIST_SELESAI",
     PENUGASAN_CHECKLIST: "PENUGASAN_CHECKLIST",
     GABUNG_LAPORAN: "GABUNG_LAPORAN",
     GABUNG_DISETUJUI: "GABUNG_DISETUJUI",
     GABUNG_DITOLAK: "GABUNG_DITOLAK",
+    KELUAR_KOLABORASI: "KELUAR_KOLABORASI",
+    DIKELUARKAN_KOLABORASI: "DIKELUARKAN_KOLABORASI",
+    KOLABORASI_DIBUKA: "KOLABORASI_DIBUKA",
 } as const;
 
-export const NOTIFICATION_TITLE: Record<keyof typeof NOTIFICATION_TYPE, string> = {
+export const NOTIFICATION_TITLE = {
     LAPORAN_BARU: "Laporan baru",
     LAPORAN_DIKERJAKAN: "Laporan sedang dikerjakan",
     LAPORAN_BERES: "Laporan selesai",
-    LAPORAN_DITOLAK: "Laporan dibatalkan",
+    LAPORAN_DIBATALKAN: "Laporan dibatalkan",
     CHECKLIST_SELESAI: "Checklist harian selesai",
     PENUGASAN_CHECKLIST: "Penugasan checklist harian",
     GABUNG_LAPORAN: "Permintaan bergabung",
     GABUNG_DISETUJUI: "Bergabung disetujui",
     GABUNG_DITOLAK: "Bergabung ditolak",
+    KELUAR_KOLABORASI: "OB keluar dari kolaborasi",
+    DIKELUARKAN_KOLABORASI: "Dikeluarkan dari kolaborasi",
+    KOLABORASI_DIBUKA: "Kolaborasi dibuka",
 } as const;
 
 export const NOTIFICATION_MESSAGE = {
@@ -53,6 +59,9 @@ export const NOTIFICATION_MESSAGE = {
     GABUNG_LAPORAN: "OB meminta bergabung mengerjakan laporan",
     GABUNG_DISETUJUI: "Permintaan bergabung anda disetujui",
     GABUNG_DITOLAK: "Permintaan bergabung anda ditolak",
+    KELUAR_KOLABORASI: "OB telah keluar dari kolaborasi laporan",
+    DIKELUARKAN_KOLABORASI: "Anda telah dikeluarkan dari kolaborasi laporan oleh OB utama",
+    KOLABORASI_DIBUKA: "Laporan telah dibuka untuk kolaborasi",
 } as const;
 
 export const USER_ROLE = {
@@ -65,4 +74,5 @@ export const USER_ROLE = {
 export type LaporanStatus = typeof LAPORAN_STATUS[keyof typeof LAPORAN_STATUS];
 export type LaporanPriority = typeof LAPORAN_PRIORITY[keyof typeof LAPORAN_PRIORITY];
 export type NotificationType = typeof NOTIFICATION_TYPE[keyof typeof NOTIFICATION_TYPE];
+export type NotificationTitle = typeof NOTIFICATION_TITLE[keyof typeof NOTIFICATION_TITLE];
 export type UserRoleType = typeof USER_ROLE[keyof typeof USER_ROLE];

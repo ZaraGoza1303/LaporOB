@@ -22,5 +22,6 @@ adminRouter.get("/laporan/:laporan_id", (req, res) => adminController.getReportD
 adminRouter.patch("/laporan/:laporan_id", (req, res) => adminController.patchLaporan(req, res));
 adminRouter.post("/laporan/:laporan_id/approve", (req, res) => adminController.approveLaporan(req, res));
 adminRouter.post("/laporan/:laporan_id/reject", (req, res) => adminController.rejectLaporan(req, res));
+adminRouter.delete("/laporan/:laporan_id", (req, res) => adminController.deleteLaporan(req, res));
 
 export default adminRouter;

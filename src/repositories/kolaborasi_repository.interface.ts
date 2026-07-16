@@ -15,5 +15,7 @@ export interface IKolaborasiRepository {
     findApprovedByObId(obId: string): Promise<KolaborasiLaporan[]>;
     create(laporanId: string, obId: string): Promise<KolaborasiLaporan>;
     updateStatus(id: string, status: string): Promise<KolaborasiLaporan>;
+    delete(id: string): Promise<void>;
+    findApprovedByLaporanAndOb(laporanId: string, obId: string): Promise<KolaborasiLaporan | null>;
     countByLaporanAndStatus(laporanId: string, status: string): Promise<number>;
 }

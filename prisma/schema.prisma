@@ -35,7 +35,7 @@ model User {
   penugasan_ob        PenugasanOb[]
   kolaborasi_laporan   KolaborasiLaporan[]
   histori_pekerjaan    Histori_pekerjaan[]
-  
+  sessions            UserSession[]
   @@map("user")
 }
 
@@ -186,6 +186,7 @@ model Laporan_karyawan {
   alasan_gagal      String?   @db.Text
   admin_catatan     String?   @db.Text
   is_approved       Boolean   @default(false)
+  is_kolaborasi_open Boolean   @default(false)
   dikerjakan_at     DateTime? @db.Timestamp(6)
   selesai_at        DateTime? @db.Timestamp(6)
   dibatalkan_at     DateTime? @db.Timestamp(6)
@@ -234,6 +235,23 @@ model Histori_pekerjaan {
   @@map("histori_pekerjaan")
 }
 
+model UserSession {
+  id           String    @id @default(uuid()) @db.Uuid
+  user_id      String    @db.Uuid
+  token_hash   String    @unique @db.VarChar(255)
+  device_info  String?   @db.VarChar(255)
+  ip_address   String?   @db.VarChar(45)
+  last_activity DateTime? @db.Timestamp(6)
+  expired_at   DateTime  @db.Timestamp(6)
+  is_revoked   Boolean   @default(false)
+  revoked_at   DateTime? @db.Timestamp(6)
+  created_at   DateTime  @default(now()) @db.Timestamp(6)
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("user_session")
+}
+
 model Notifikasi {
   id          String    @id @default(uuid()) @db.Uuid
   penerima_id     String    @db.Uuid
@@ -243,6 +261,8 @@ model Notifikasi {
   pesan       String?   @db.Text
   is_read     Boolean   @default(false)
   read_at     DateTime? @db.Timestamp(6)
+  ref_id      String?   @db.Uuid
+  ref_tipe    String?   @db.VarChar(50)
   created_at  DateTime  @default(now()) @db.Timestamp(6)
 
   penerima     User @relation("NotifikasiDiterima", fields: [penerima_id], references: [id], onDelete: Cascade)

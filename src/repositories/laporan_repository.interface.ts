@@ -63,6 +63,7 @@ export interface ILaporanRepository {
     getActivity(userId: string): Promise<UserActivityRes[]>;
     insertReport(req: Laporan_karyawanCreateInput): Promise<void>;
     patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void>;
+    updateKolaborasiOpen(laporanId: string, isOpen: boolean): Promise<void>;
     getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     getReportDetailById(reportId: string): Promise<DetailReportPayload | null>;
@@ -72,5 +73,6 @@ export interface ILaporanRepository {
     getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<RuanganTerpopulerPayload[]>;
     countLaporanAktif(query: AdminLaporanQuery): Promise<number>;
     getLaporanCountByUserId(userId: string): Promise<number>;
+    deleteLaporan(laporanId: string): Promise<void>;
 }
 

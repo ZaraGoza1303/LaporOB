@@ -9,9 +9,10 @@ export interface IObService {
     ambilLaporan(laporanId: string, obId: string): Promise<void>;
     ambilChecklist(checklistId: string, obId: string): Promise<void>;
     createHistoriPekerjaan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq, obId: string): Promise<void>;
-    tolakLaporan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq, obId: string): Promise<void>;
+    batalkanLaporan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq, obId: string): Promise<void>;
     getRiwayat(obId: string, limit: number, params: RiwayatParams): Promise<PaginatedResponse<MappedProfileReport>>;
     getDetailRiwayat(obId: string, laporanId: string): Promise<MappedReportDetailRes>;
     getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }>;
     getProfile(obId: string): Promise<ObProfileResponse>;
+    toggleKolaborasi(laporanId: string, obId: string, isOpen: boolean): Promise<void>;
 }

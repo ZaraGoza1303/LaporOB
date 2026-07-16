@@ -283,7 +283,7 @@ export class ObRepository implements IObRepository {
         ]);
     }
 
-    async tolakLaporan(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void> {
+    async batalkanLaporan(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void> {
         const now = new Date();
         await this.db.$transaction([
             this.db.histori_pekerjaan.create({

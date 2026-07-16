@@ -10,6 +10,7 @@ import { ObRepository } from "./repositories/ob_repository.js";
 import { RuanganRepository } from "./repositories/ruangan_repository.js";
 import { TugasRepository } from "./repositories/tugas_repository.js";
 import { UsersRepository } from "./repositories/users_repository.js";
+import { UserSessionRepository } from "./repositories/userSession_repository.js";
 import { AdminService } from "./services/admin_service.js";
 import { AuthService } from "./services/auth_service.js";
 import { ChecklistHarianService } from "./services/checklistHarian_service.js";
@@ -24,6 +25,7 @@ import { TugasService } from "./services/tugas_service.js";
 import { UsersService } from "./services/users_service.js";
 import { ProfileService } from "./services/profile_service.js";
 import { StorageServiceFactory } from "./services/storage_service.factory.js";
+import { UserSessionService } from "./services/userSession_service.js";
 import { AdminController } from "./controllers/admin_controller.js";
 import { AuthController } from "./controllers/auth_controller.js";
 import { ChecklistHarianController } from "./controllers/checklistHarian_controller.js";
@@ -41,6 +43,8 @@ import { NotificationController } from "./controllers/notification_controller.js
 import { KolaborasiRepository } from "./repositories/kolaborasi_repository.js";
 import { KolaborasiService } from "./services/kolaborasi_service.js";
 import { KolaborasiController } from "./controllers/kolaborasi_controller.js";
+import redisClient from "./database/redis.js";
+import type { IRedisClient } from "./database/redis.interface.js";
 
 // PRISMA
 const prisma = new PrismaClient();
@@ -59,6 +63,7 @@ const tugasRepository = new TugasRepository(prisma);
 const usersRepository = new UsersRepository(prisma);
 const notificationRepository = new NotificationRepository(prisma);
 const kolaborasiRepository = new KolaborasiRepository(prisma);
+const userSessionRepository = new UserSessionRepository(prisma);
 
 //  STORAGE 
 const storageService = StorageServiceFactory.getProvider();
@@ -70,11 +75,12 @@ const laporanService = new LaporanService(laporanRepository);
 const lokasiService = new LokasiService(lokasiRepository);
 const ruanganService = new RuanganService(ruanganRepository);
 const tugasService = new TugasService(tugasRepository);
-const usersService = new UsersService(usersRepository);
+const usersService = new UsersService(usersRepository, redisClient as unknown as IRedisClient);
 const notificationService = new NotificationService(notificationRepository);
 const checklistHarianService = new ChecklistHarianService(checklistHarianRepository, notificationService, usersService);
-const authService = new AuthService(authRepository, usersService);
-const obService = new ObService(obRepository, laporanService, notificationService);
+const sessionService = new UserSessionService(userSessionRepository, redisClient as unknown as IRedisClient);
+const authService = new AuthService(authRepository, usersService, sessionService);
+const obService = new ObService(obRepository, laporanService, usersService, notificationService);
 const kolaborasiService = new KolaborasiService(kolaborasiRepository, laporanService, notificationService);
 const adminService = new AdminService(adminRepository, laporanService, usersService);
 const karyawanService = new KaryawanService(usersService, laporanService, kategoriService, notificationService);
@@ -101,3 +107,21 @@ export const usersController = new UsersController(
 );
 export const notificationController = new NotificationController(notificationService);
 export const kolaborasiController = new KolaborasiController(kolaborasiService);
+
+export const container = {
+    sessionService,
+    authService,
+    authController,
+    adminController,
+    checklistHarianController,
+    karyawanController,
+    kategoriController,
+    lantaiController,
+    lokasiController,
+    obController,
+    ruanganController,
+    tugasController,
+    usersController,
+    notificationController,
+    kolaborasiController,
+};

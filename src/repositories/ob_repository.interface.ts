@@ -36,7 +36,7 @@ export interface IObRepository {
     ambilLaporan(laporanId: string, obId: string): Promise<void>;
     ambilChecklist(checklistId: string, obId: string): Promise<void>;
     createHistoriPekerjaan(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void>;
-    tolakLaporan(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void>;
+    batalkanLaporan(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void>;
     getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }>;
     getActiveAssignments(obId: string, bulan: number, tahun: number): Promise<PenugasanWithLokasi[]>;
 }

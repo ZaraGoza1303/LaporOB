@@ -5,6 +5,7 @@ import type { IStorageService } from "../services/storage_service.interface.js";
 import { CreateHistoriSchema, ChecklistIdParamSchema } from "../dto/ob.js";
 import { LaporanIdParamSchema } from "../dto/users.js";
 import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
+import { z } from "zod";
 import { AppError } from "../utils/error.js";
 
 export class ObController {
@@ -104,7 +105,7 @@ export class ObController {
         }
     }
 
-    async rejectLapor(req: Request, res: Response) {
+    async batalkanLapor(req: Request, res: Response) {
         try {
             const validateParams = LaporanIdParamSchema.safeParse(req.params);
             if (!validateParams.success) {
@@ -126,7 +127,7 @@ export class ObController {
             );
 
             if (fotoFiles.length === 0) {
-                return res.status(400).json(sendErrorResponse("Foto bukti penolakan wajib diupload"));
+                return res.status(400).json(sendErrorResponse("Foto bukti pembatalan wajib diupload"));
             }
 
             const fotoUrls: string[] = [];
@@ -146,14 +147,14 @@ export class ObController {
                 fotoUrls.push(url);
             }
 
-            await this.obService.tolakLaporan(laporanId, fotoUrls, validate.data, obId);
+            await this.obService.batalkanLaporan(laporanId, fotoUrls, validate.data, obId);
 
             return res.status(200).json(sendSuccessfullResponse("Laporan berhasil dibatalkan dan bukti disimpan"));
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
-            return res.status(500).json(sendErrorResponse("Terjadi kesalahan, tidak bisa menolak laporan"))
+            return res.status(500).json(sendErrorResponse("Terjadi kesalahan, tidak bisa membatalkan laporan"))
         }
     }
 
@@ -176,6 +177,34 @@ export class ObController {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
             return res.status(500).json(sendErrorResponse("Terjadi kesalahan, tidak bisa mengklaim checklist"));
+        }
+    }
+
+    async toggleKolaborasi(req: Request, res: Response) {
+        try {
+            const validateParams = LaporanIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const laporanId = validateParams.data.laporan_id;
+            const obId = req.user?.id as string;
+
+            const validateBody = z.object({
+                is_open: z.boolean({ message: "is_open harus boolean" }),
+            }).safeParse(req.body);
+            if (!validateBody.success) {
+                const formattedErr = validateBody.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            await this.obService.toggleKolaborasi(laporanId, obId, validateBody.data.is_open);
+            return res.status(200).json(sendSuccessfullResponse("Status kolaborasi berhasil diubah"));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengubah status kolaborasi"));
         }
     }
 }

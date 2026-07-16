@@ -116,6 +116,7 @@ export class KaryawanService implements IKaryawanService {
                 pengirim_id: userId,
                 tipe: NOTIFICATION_TYPE.LAPORAN_BARU,
                 judul: NOTIFICATION_TITLE.LAPORAN_BARU,
+                ref_tipe: "LAPORAN",
             }
 
             console.log("Sending bulk notification with penerima_ids:", notifReq.penerima_ids);

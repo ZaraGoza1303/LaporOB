@@ -60,6 +60,22 @@ export class KolaborasiRepository implements IKolaborasiRepository {
         });
     }
 
+    async delete(id: string): Promise<void> {
+        await this.db.kolaborasiLaporan.delete({
+            where: { id }
+        });
+    }
+
+    async findApprovedByLaporanAndOb(laporanId: string, obId: string): Promise<KolaborasiLaporan | null> {
+        return this.db.kolaborasiLaporan.findFirst({
+            where: {
+                laporan_id: laporanId,
+                ob_id: obId,
+                status: "APPROVED",
+            }
+        });
+    }
+
     async countByLaporanAndStatus(laporanId: string, status: string): Promise<number> {
         return this.db.kolaborasiLaporan.count({
             where: { laporan_id: laporanId, status }

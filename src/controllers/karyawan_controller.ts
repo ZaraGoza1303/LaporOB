@@ -51,13 +51,16 @@ export class KaryawanController {
                 return res.status(400).json(sendErrorResponse("Foto masalah wajib diupload"));
             }
 
-            const fotoUrls: string[] = [];
+            // Validasi SEMUA file dulu, baru upload
             for (const file of fotoFiles) {
                 const validation = await validateImageFile(file);
                 if (!validation.ok) {
                     return res.status(400).json(sendErrorResponse(validation.message));
                 }
+            }
 
+            const fotoUrls: string[] = [];
+            for (const file of fotoFiles) {
                 try {
                     await compressImageIfNeeded(file);
                 } catch (err: unknown) {
