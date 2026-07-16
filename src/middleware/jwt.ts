@@ -3,7 +3,17 @@ import { sendErrorResponse } from "../utils/response.js";
 import jwt from 'jsonwebtoken'
 import { AppError } from "../utils/error.js";
 
-export const verifyJWTToken = (req: Request, res: Response, next: NextFunction) => {
+let sessionService: any = null;
+
+async function getSessionService() {
+    if (!sessionService) {
+        const { container } = await import("../container.js");
+        sessionService = container.sessionService;
+    }
+    return sessionService;
+}
+
+export const verifyJWTToken = async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader?.split(' ')[1];
     if(!token) return res.status(401).json(sendErrorResponse("Unauthorized"));
@@ -12,10 +22,22 @@ export const verifyJWTToken = (req: Request, res: Response, next: NextFunction) 
     if (!secret) throw new AppError("JWT_APP env is not defined", 500);
 
     try {
-        const decoded = jwt.verify(token, secret) as {id: string, username: string, role: string, password: string}
+        const decoded = jwt.verify(token, secret) as {id: string, username: string, role: string}
         req.user = decoded;
+
+        // Verify session masih valid (belum di-revoke / expired)
+        const svc = await getSessionService();
+        const isValid = await svc.validateSession(token);
+
+        if (!isValid) {
+            return res.status(401).json(sendErrorResponse("Session telah berakhir, silahkan login ulang"));
+        }
+
         next();
-    } catch (err) {
-        return res.status(403).json(sendErrorResponse("token not valid"))
+    } catch (err: unknown) {
+        if (err instanceof jwt.JsonWebTokenError || err instanceof jwt.TokenExpiredError) {
+            return res.status(401).json(sendErrorResponse("Token tidak valid atau expired"));
+        }
+        return res.status(500).json(sendErrorResponse("Internal server error"));
     }
 }

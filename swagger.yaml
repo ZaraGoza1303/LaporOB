@@ -367,6 +367,15 @@ components:
           type: string
           format: date-time
           nullable: true
+        ref_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID dari entitas terkait (laporan, kolaborasi, checklist, dll)
+        ref_tipe:
+          type: string
+          nullable: true
+          description: Tipe entitas terkait (LAPORAN, KOLABORASI, CHECKLIST, dll)
         created_at:
           type: string
           format: date-time
@@ -463,6 +472,31 @@ paths:
                     example: Akun berhasil diaktivasi, silahkan login
         '400':
           description: Token tidak valid / Validation Failed / Password tidak cocok
+
+  /api/auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Logout & revoke session (Terautentikasi)
+      description: Revoke session aktif, token gak bisa dipake lagi
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Logout berhasil
+        '401':
+          description: Session tidak valid / Token expired
 
 # USER / PROFILE
   /api/user/profile:
@@ -745,7 +779,7 @@ paths:
         '500':
           description: Terjadi kesalahan
 
-  /api/ob/laporan/{laporan_id}/tolak:
+  /api/ob/laporan/{laporan_id}/batalkan:
     post:
       tags:
         - OB
@@ -755,8 +789,8 @@ paths:
         - `status` → `DIBATALKAN`
         - `ob_id` → `null` (laporan bisa diambil OB lain)
         - `dibatalkan_at` → di-set ke waktu saat ini
-        - `alasan_gagal` → diisi dari catatan penolakan
-         **WebSocket Notification**: Notifikasi real-time dikirim ke pelapor via WebSocket dengan tipe `LAPORAN_DIBATALKAN` dan pesan berisi alasan penolakan
+        - `alasan_gagal` → diisi dari catatan pembatalan
+         **WebSocket Notification**: Notifikasi real-time dikirim ke pelapor via WebSocket dengan tipe `LAPORAN_DIBATALKAN` dan pesan berisi alasan pembatalan
       security:
         - BearerAuth: []
       parameters:
@@ -935,6 +969,109 @@ paths:
           description: Validation Failed
         '401':
           description: Unauthorized
+
+  /api/ob/laporan/{laporan_id}/gabung/keluar:
+    post:
+      tags:
+        - OB
+      summary: 'Keluar dari kolaborasi (OB anggota)'
+      description: |
+        OB yang sudah tergabung (APPROVED) keluar dari kolaborasi laporan.
+        Hanya OB anggota (bukan OB utama) yang bisa melakukan ini.
+
+        **WebSocket Notification**: Notifikasi real-time dikirim ke OB utama dengan tipe `KELUAR_KOLABORASI`
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Berhasil keluar dari kolaborasi
+        '400':
+          description: Validation Failed
+        '401':
+          description: Unauthorized
+
+  /api/ob/laporan/{laporan_id}/gabung/{kolaborasi_id}/keluarkan:
+    patch:
+      tags:
+        - OB
+      summary: 'Keluarkan anggota kolaborasi (OB pemilik laporan)'
+      description: |
+        OB pemilik laporan mengeluarkan OB anggota dari kolaborasi.
+
+        **WebSocket Notification**: Notifikasi real-time dikirim ke OB yang dikeluarkan dengan tipe `DIKELUARKAN_KOLABORASI`
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: kolaborasi_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Anggota berhasil dikeluarkan
+        '400':
+          description: Validation Failed
+        '401':
+          description: Unauthorized
+
+  /api/ob/laporan/{laporan_id}/kolaborasi:
+    patch:
+      tags:
+        - OB
+      summary: 'Buka/tutup kolaborasi laporan (OB pemilik)'
+      description: |
+        OB pemilik laporan bisa membuka atau menutup kolaborasi.
+        Jika kolaborasi terbuka, OB lain bisa mengirim permintaan gabung.
+        Jika ditutup, permintaan gabung akan ditolak.
+        
+        **WebSocket Notification**: Notifikasi real-time dikirim ke semua OB lain via WebSocket dengan tipe `KOLABORASI_DIBUKA`
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - is_open
+              properties:
+                is_open:
+                  type: boolean
+                  description: true = buka kolaborasi, false = tutup kolaborasi
+      responses:
+        '200':
+          description: Status kolaborasi berhasil diubah
+        '400':
+          description: Validation Failed
+        '401':
+          description: Unauthorized
+        '403':
+          description: Hanya OB pemilik laporan yang bisa mengatur kolaborasi
+        '404':
+          description: Laporan tidak ditemukan
 
 # ADMIN
   /api/admin/user:
@@ -1275,6 +1412,45 @@ paths:
           description: Laporan tidak ditemukan / OB tidak ditemukan
         '500':
           description: Gagal memperbarui laporan
+
+    delete:
+      tags:
+        - Admin
+      summary: 'Hapus laporan beserta histori & kolaborasi (Admin)'
+      description: |
+        Admin dapat menghapus laporan secara permanen.
+        Histori pekerjaan dan data kolaborasi yang terkait akan ikut terhapus (cascade).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Laporan berhasil dihapus
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Laporan berhasil dihapus
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (bukan admin)
+        '404':
+          description: Laporan tidak ditemukan
+        '500':
+          description: Gagal menghapus laporan
 
   /api/admin/user/{user_id}:
     get:

@@ -6,4 +6,6 @@ export interface IKolaborasiService {
     tolak(kolaborasiId: string, laporanId: string, primaryObId: string): Promise<void>;
     daftarRequest(laporanId: string, obId: string): Promise<DaftarGabungItem[]>;
     isKolaborator(laporanId: string, obId: string): Promise<boolean>;
+    keluar(laporanId: string, obId: string): Promise<void>;
+    keluarkan(kolaborasiId: string, laporanId: string, primaryObId: string): Promise<void>;
 }

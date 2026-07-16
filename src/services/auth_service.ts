@@ -7,17 +7,20 @@ import { hashActivationToken } from "../utils/token.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import type { UserToken } from "../generated/prisma/client.js";
 import type { IUsersService } from "./users_service.interface.js";
+import type { IUserSessionService } from "./userSession_service.interface.js";
 
 export class AuthService implements IAuthService {
     private authRepo: IAuthRepository;
     private usersService: IUsersService;
+    private sessionService: IUserSessionService;
 
-    constructor(authRepo: IAuthRepository, usersService: IUsersService) {
+    constructor(authRepo: IAuthRepository, usersService: IUsersService, sessionService: IUserSessionService) {
         this.authRepo = authRepo;
         this.usersService = usersService;
+        this.sessionService = sessionService;
     }
 
-    async login(req: LoginReq): Promise<LoginRes> {
+    async login(req: LoginReq, deviceInfo?: string | null, ipAddress?: string | null): Promise<LoginRes> {
         try {
             const existsUser = await this.authRepo.login(req);
 
@@ -39,6 +42,15 @@ export class AuthService implements IAuthService {
             }
 
             const jwtToken = await generateJWTToken({ id: existsUser?.id, username: existsUser.username, role: existsUser.role.nama_role });
+
+            // Simpan session ke DB + Redis
+            await this.sessionService.createSession(
+                existsUser.id,
+                jwtToken,
+                deviceInfo,
+                ipAddress
+            );
+
             const res: LoginRes = {
                 jwt_token: jwtToken
             }

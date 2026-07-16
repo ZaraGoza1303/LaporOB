@@ -2,8 +2,9 @@ import type { IObService } from "./ob_service.interface.js";
 import type { IObRepository, ChecklistHarianWithDetails, LaporanKaryawanWithDetails } from "../repositories/ob_repository.interface.js";
 import type { ProfileReport } from "../repositories/laporan_repository.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
+import type { IUsersService } from "./users_service.interface.js";
 import type { INotificationService } from "./notification_service.interface.js";
-import type { NotificationData } from "../dto/notification.js";
+import type { NotificationData, BulkNotificationData } from "../dto/notification.js";
 import type { ObHomeRes, CreateHistoriReq } from "../dto/ob.js";
 import type { MappedProfileReport, MappedReportDetailRes, ObProfileResponse } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
@@ -16,11 +17,13 @@ import { CHECKLIST_STATUS, LAPORAN_PRIORITY, LAPORAN_STATUS, NOTIFICATION_TYPE, 
 export class ObService implements IObService {
     private obRepo: IObRepository;
     private laporanService: ILaporanService;
+    private usersService: IUsersService;
     private notificationService: INotificationService;
 
-    constructor(obRepo: IObRepository, laporanService: ILaporanService, notificationService: INotificationService) {
+    constructor(obRepo: IObRepository, laporanService: ILaporanService, usersService: IUsersService, notificationService: INotificationService) {
         this.obRepo = obRepo;
         this.laporanService = laporanService;
+        this.usersService = usersService;
         this.notificationService = notificationService;
     }
 
@@ -76,6 +79,7 @@ export class ObService implements IObService {
                     lokasi: item.lantai?.lokasi?.nama_lokasi || "",
                     nomor_lantai: item.lantai?.nomor_lantai || 0,
                     priority,
+                    is_kolaborasi_open: item.is_kolaborasi_open,
                     created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at)
                 };
             });
@@ -116,6 +120,8 @@ export class ObService implements IObService {
                 tipe: NOTIFICATION_TYPE.LAPORAN_DIKERJAKAN,
                 judul: NOTIFICATION_TITLE.LAPORAN_DIKERJAKAN,
                 pesan: NOTIFICATION_MESSAGE.LAPORAN_DIKERJAKAN,
+                ref_id: laporanId,
+                ref_tipe: "LAPORAN",
             };
             await this.notificationService.sendNotification(notifData);
         } catch (err: unknown) {
@@ -145,6 +151,8 @@ export class ObService implements IObService {
                 tipe: NOTIFICATION_TYPE.LAPORAN_BERES,
                 judul: NOTIFICATION_TITLE.LAPORAN_BERES,
                 pesan: dto.catatan,
+                ref_id: laporanId,
+                ref_tipe: "LAPORAN",
             };
             await this.notificationService.sendNotification(notifData);
         } catch (err: unknown) {
@@ -152,20 +160,22 @@ export class ObService implements IObService {
         }
     }
 
-    async tolakLaporan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq, obId: string): Promise<void> {
+    async batalkanLaporan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq, obId: string): Promise<void> {
         try {
             const laporan = await this.laporanService.getReportDetailById(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
-            if (laporan.ob_id !== obId) throw new AppError("Hanya OB utama yang bisa menolak laporan", 403);
+            if (laporan.ob_id !== obId) throw new AppError("Hanya OB utama yang bisa membatalkan laporan", 403);
 
-            await this.obRepo.tolakLaporan(laporanId, obId, fotoUrls, dto.catatan);
+            await this.obRepo.batalkanLaporan(laporanId, obId, fotoUrls, dto.catatan);
 
             const notifData: NotificationData = {
                 penerima_id: laporan.pelapor_id,
                 pengirim_id: obId,
-                tipe: NOTIFICATION_TYPE.LAPORAN_DITOLAK,
-                judul: NOTIFICATION_TITLE.LAPORAN_DITOLAK,
+                tipe: NOTIFICATION_TYPE.LAPORAN_DIBATALKAN,
+                judul: NOTIFICATION_TITLE.LAPORAN_DIBATALKAN,
                 pesan: dto.catatan,
+                ref_id: laporanId,
+                ref_tipe: "LAPORAN",
             };
             await this.notificationService.sendNotification(notifData);
         } catch (err: unknown) {
@@ -206,6 +216,38 @@ export class ObService implements IObService {
                 laporanSelesai: obStats.laporanSelesai || 0,
                 lokasiAktif: lokasiAktif,
             };
+        } catch (err: unknown) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async toggleKolaborasi(laporanId: string, obId: string, isOpen: boolean): Promise<void> {
+        try {
+            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+            if (laporan.ob_id !== obId) throw new AppError("Hanya OB pemilik laporan yang bisa mengatur kolaborasi", 403);
+
+            await this.laporanService.toggleKolaborasiOpen(laporanId, isOpen);
+
+            if (isOpen) {
+                const obUsers = await this.usersService.getByRole(USER_ROLE.OB);
+                const otherObIds = obUsers
+                    .filter((u) => u.id !== obId)
+                    .map((u) => u.id);
+
+                if (otherObIds.length > 0) {
+                    const bulkNotif: BulkNotificationData = {
+                        penerima_ids: otherObIds,
+                        pengirim_id: obId,
+                        tipe: NOTIFICATION_TYPE.KOLABORASI_DIBUKA,
+                        judul: NOTIFICATION_TITLE.KOLABORASI_DIBUKA,
+                        pesan: NOTIFICATION_MESSAGE.KOLABORASI_DIBUKA,
+                        ref_id: laporanId,
+                        ref_tipe: "KOLABORASI",
+                    };
+                    await this.notificationService.sendBulkNotification(bulkNotif);
+                }
+            }
         } catch (err: unknown) {
             throw handlePrismaError(err);
         }
@@ -279,7 +321,8 @@ export class ObService implements IObService {
             handlePrismaError(err);
         }
     }
- async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }> {
+
+    async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }> {
         try {
             return await this.obRepo.getObPerformanceStats(obId, dateRange);
         } catch (err) {

@@ -1,7 +1,7 @@
 import type { NotificationData, BulkNotificationData, NotifikasiGroupedResponse } from "../dto/notification.js";
 import type { NotifikasiCreateInput } from "../generated/prisma/models.js";
 import type { INotificationRepository } from "../repositories/notification_repository.interface.js";
-import { USER_ROLE } from "../utils/constants.js";
+import { USER_ROLE, NOTIFICATION_TYPE } from "../utils/constants.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { INotificationService } from "./notification_service.interface.js";
 import { sendToUser } from "./websocket_service.js";
@@ -26,6 +26,8 @@ export class NotificationService implements INotificationService {
         }
 
         if (data.pesan !== undefined) notifReq.pesan = data.pesan;
+        if (data.ref_id !== undefined && data.ref_id !== null) notifReq.ref_id = data.ref_id;
+        if (data.ref_tipe !== undefined && data.ref_tipe !== null) notifReq.ref_tipe = data.ref_tipe;
 
         const notification = await this.notifRepo.insert(notifReq);
         sendToUser(data.penerima_id, notification);
@@ -42,6 +44,8 @@ export class NotificationService implements INotificationService {
             tipe: data.tipe,
             judul: data.judul,
             ...(data.pesan !== undefined && { pesan: data.pesan }),
+            ...(data.ref_id !== undefined && data.ref_id !== null && { ref_id: data.ref_id }),
+            ...(data.ref_tipe !== undefined && data.ref_tipe !== null && { ref_tipe: data.ref_tipe }),
         }));
 
         const notifications = await this.notifRepo.insertMany(notifReqs);
@@ -82,15 +86,19 @@ export class NotificationService implements INotificationService {
             const startOfYesterday = new Date(startOfToday);
             startOfYesterday.setDate(startOfYesterday.getDate() - 1);
 
-            const fetchToday = role === USER_ROLE.ADMIN
-            ? this.notifRepo.getAllByDateRange(startOfToday, startOfYesterday)
-            : this.notifRepo.getByUserAndDateRange(userId, startOfToday, now)
+            if (role === USER_ROLE.ADMIN) {
+                const adminTypes = [NOTIFICATION_TYPE.LAPORAN_BARU, NOTIFICATION_TYPE.PENUGASAN_CHECKLIST];
+                const [hariIni, kemarin] = await Promise.all([
+                    this.notifRepo.getByTypesAndDateRange(adminTypes, startOfToday, now),
+                    this.notifRepo.getByTypesAndDateRange(adminTypes, startOfYesterday, startOfToday),
+                ]);
+                return { hari_ini: hariIni, kemarin };
+            }
 
-            const fetchYesterday = role === USER_ROLE.ADMIN
-            ? this.notifRepo.getAllByDateRange(startOfToday, startOfYesterday)
-            : this.notifRepo.getByUserAndDateRange(userId, startOfToday, now)
-
-            const [hariIni, kemarin] = await Promise.all([fetchToday, fetchYesterday]);
+            const [hariIni, kemarin] = await Promise.all([
+                this.notifRepo.getByUserAndDateRange(userId, startOfToday, now),
+                this.notifRepo.getByUserAndDateRange(userId, startOfYesterday, startOfToday),
+            ]);
 
             return { hari_ini: hariIni, kemarin };
         } catch (err) {

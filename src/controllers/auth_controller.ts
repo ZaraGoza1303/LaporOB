@@ -23,7 +23,10 @@ export class AuthController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr))
             }
 
-            const response = await this.authService.login(validate.data);
+            const deviceInfo = req.headers['user-agent'] || null;
+            const ipAddress = req.ip || req.socket.remoteAddress || null;
+
+            const response = await this.authService.login(validate.data, deviceInfo, ipAddress);
             return res.status(200).json(sendSuccessfullResponse("Login Berhasil", response))
         } catch (err: unknown) {
             if (err instanceof AppError) {
@@ -80,4 +83,23 @@ export class AuthController {
         }
     }
 
+    async logout(req: Request, res: Response) {
+        try {
+            const authHeader = req.headers['authorization'];
+            const token = authHeader?.split(' ')[1];
+            if (!token) {
+                return res.status(400).json(sendErrorResponse("Token tidak ditemukan"));
+            }
+
+            const { container } = await import("../container.js");
+            await container.sessionService.revokeSession(token);
+
+            return res.status(200).json(sendSuccessfullResponse("Logout berhasil"));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Logout gagal"));
+        }
+    }
 }

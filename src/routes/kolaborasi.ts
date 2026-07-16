@@ -12,5 +12,7 @@ kolaborasiRouter.get("/laporan/:laporan_id/gabung", (req, res) => kolaborasiCont
 kolaborasiRouter.post("/laporan/:laporan_id/gabung", (req, res) => kolaborasiController.gabung(req, res));
 kolaborasiRouter.patch("/laporan/:laporan_id/gabung/:kolaborasi_id/setujui", (req, res) => kolaborasiController.setujui(req, res));
 kolaborasiRouter.patch("/laporan/:laporan_id/gabung/:kolaborasi_id/tolak", (req, res) => kolaborasiController.tolak(req, res));
+kolaborasiRouter.post("/laporan/:laporan_id/gabung/keluar", (req, res) => kolaborasiController.keluar(req, res));
+kolaborasiRouter.patch("/laporan/:laporan_id/gabung/:kolaborasi_id/keluarkan", (req, res) => kolaborasiController.keluarkan(req, res));
 
 export default kolaborasiRouter;

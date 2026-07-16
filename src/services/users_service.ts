@@ -9,16 +9,26 @@ import { generateActivationToken } from "../utils/token.js";
 import { buildActivationUrl, resolveFileUrl } from "../utils/url.js";
 import type { IUsersService } from "./users_service.interface.js";
 import bcrypt from 'bcrypt';
+import type { IRedisClient } from "../database/redis.interface.js";
 
 export class UsersService implements IUsersService {
     private usersRepo: IUsersRepository;
+    private redis: IRedisClient;
 
-    constructor(usersRepo: IUsersRepository) {
+    constructor(usersRepo: IUsersRepository, redis: IRedisClient) {
         this.usersRepo = usersRepo;
+        this.redis = redis;
     }
 
     async getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>> {
         try {
+            const cacheKey = `users:all:page=${page}:limit=${limit}:query=${JSON.stringify(query)}`;
+
+            const cachedData = await this.redis.get(cacheKey);
+            if (cachedData) {
+                return JSON.parse(cachedData);
+            }
+
             const users = await this.usersRepo.getAll(page, limit, query);
             if (users && users.items) {
                 users.items = users.items.map(user => {
@@ -28,6 +38,11 @@ export class UsersService implements IUsersService {
                     return user;
                 });
             }
+
+            if(users) {
+                await this.redis.setEx(cacheKey, 300, JSON.stringify(users))
+            }
+
             return users;
         } catch (err) {
             handlePrismaError(err)

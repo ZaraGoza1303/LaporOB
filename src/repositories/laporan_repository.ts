@@ -76,6 +76,13 @@ export class LaporanRepository implements ILaporanRepository {
         });
     }
 
+    async updateKolaborasiOpen(laporanId: string, isOpen: boolean): Promise<void> {
+        await this.db.laporan_karyawan.update({
+            where: { id: laporanId },
+            data: { is_kolaborasi_open: isOpen },
+        });
+    }
+
     async getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>> {
         const whereCondition = this.buildWhereClause({ pelapor_id: userId }, search, status);
         return this.executePaginatedReports(whereCondition, limit, cursor);
@@ -364,6 +371,12 @@ export class LaporanRepository implements ILaporanRepository {
             where: {
                 pelapor_id: userId
             }
+        });
+    }
+
+    async deleteLaporan(laporanId: string): Promise<void> {
+        await this.db.laporan_karyawan.delete({
+            where: { id: laporanId }
         });
     }
 }

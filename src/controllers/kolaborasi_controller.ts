@@ -90,4 +90,44 @@ export class KolaborasiController {
             return res.status(500).json(sendErrorResponse("Gagal mendapatkan daftar permintaan"));
         }
     }
+
+    async keluar(req: Request, res: Response) {
+        try {
+            const validateParams = LaporanIdParams.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const laporanId = validateParams.data.laporan_id;
+            const obId = req.user?.id as string;
+
+            await this.kolaborasiService.keluar(laporanId, obId);
+            return res.status(200).json(sendSuccessfullResponse("Berhasil keluar dari kolaborasi"));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal keluar dari kolaborasi"));
+        }
+    }
+
+    async keluarkan(req: Request, res: Response) {
+        try {
+            const validateParams = KolaborasiIdParams.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const { kolaborasi_id, laporan_id } = validateParams.data;
+            const obId = req.user?.id as string;
+
+            await this.kolaborasiService.keluarkan(kolaborasi_id, laporan_id, obId);
+            return res.status(200).json(sendSuccessfullResponse("Anggota berhasil dikeluarkan dari kolaborasi"));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengeluarkan anggota"));
+        }
+    }
 }

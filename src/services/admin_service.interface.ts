@@ -13,5 +13,6 @@ export interface IAdminService {
     getPenugasanByPeriode(bulan: number, tahun: number): Promise<PenugasanObWithDetails[]>;
     approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan>;
     rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan>;
+    deleteLaporan(laporanId: string): Promise<void>;
 }
 

@@ -27,6 +27,7 @@ export interface ObHomeRes {
         lokasi: string;
         nomor_lantai: number;
         priority: string;
+        is_kolaborasi_open: boolean;
         created_at: string;
     }>;
 

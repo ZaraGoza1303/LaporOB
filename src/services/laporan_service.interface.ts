@@ -18,5 +18,7 @@ export interface ILaporanService {
     getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void>;
+    toggleKolaborasiOpen(laporanId: string, isOpen: boolean): Promise<void>;
     getLaporanCountByUserId(userId: string): Promise<number>;
+    deleteLaporan(laporanId: string): Promise<void>;
 }
