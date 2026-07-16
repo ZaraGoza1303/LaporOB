@@ -1,6 +1,6 @@
 import type { PaginatedResponse } from "../dto/response.js";
 import type { UserActivityRes } from "../dto/users.js";
-import type { AdminLaporanQuery, PatchLaporanReq } from "../dto/admin.js";
+import type { AdminLaporanQuery } from "../dto/admin.js";
 import type { PrismaClient } from "../generated/prisma/client.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { ILaporanRepository, ProfileReport, DetailReportPayload, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload } from "./laporan_repository.interface.js";
@@ -36,40 +36,15 @@ export class LaporanRepository implements ILaporanRepository {
         return data as unknown as UserActivityRes[];
     }
 
-    async insertReport(req: Laporan_karyawanCreateInput): Promise<void> {
-        await this.db.laporan_karyawan.create({
-            data: req
+    async insertReport(req: Laporan_karyawanCreateInput): Promise<string> {
+        const result = await this.db.laporan_karyawan.create({
+            data: req,
+            select: { id: true }
         })
+        return result.id;
     }
 
-    async patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void> {
-        const now = new Date();
-        const data: Prisma.Laporan_karyawanUncheckedUpdateInput = {};
-
-        if (dto.status != null) {
-            data.status = dto.status;
-
-            if (dto.status === LAPORAN_STATUS.PENDING) {
-                data.dikerjakan_at = now;
-            } else if (dto.status === LAPORAN_STATUS.SELESAI) {
-                data.selesai_at = now;
-            } else if (dto.status === LAPORAN_STATUS.DIBATALKAN) {
-                data.dibatalkan_at = now;
-                data.ob_id = { set: null };
-            } else if (dto.status === LAPORAN_STATUS.BELUM_DIKERJAKAN) {
-                data.ob_id = { set: null };
-                data.dikerjakan_at = { set: null };
-            }
-        }
-
-        if (dto.prioritas != null) data.prioritas = dto.prioritas;
-        if (dto.ob_id !== undefined && dto.status !== LAPORAN_STATUS.BELUM_DIKERJAKAN && dto.status !== LAPORAN_STATUS.DIBATALKAN) {
-            data.ob_id = { set: dto.ob_id };
-        }
-        if (dto.admin_catatan !== undefined) data.admin_catatan = { set: dto.admin_catatan };
-        if (dto.lantai_id !== undefined) data.lantai_id = dto.lantai_id ?? undefined;
-        if (dto.ruangan_id !== undefined) data.ruangan_id = dto.ruangan_id ?? undefined;
-
+    async patchLaporan(laporanId: string, data: Prisma.Laporan_karyawanUncheckedUpdateInput): Promise<void> {
         await this.db.laporan_karyawan.update({
             where: { id: laporanId },
             data,
@@ -115,63 +90,6 @@ export class LaporanRepository implements ILaporanRepository {
                 histori_pekerjaan: true
             }
         }) as Promise<DetailReportPayload | null>;
-    }
-
-    private async executePaginatedReports(whereCondition: Prisma.Laporan_karyawanWhereInput, limit: number, cursor?: string | null): Promise<PaginatedResponse<ProfileReport>> {
-        const [reports, total] = await Promise.all([
-            this.db.laporan_karyawan.findMany({
-                where: whereCondition,
-                take: limit + 1,
-                ...((cursor) && {
-                    skip: 1,
-                    cursor: { id: cursor }
-                }),
-                include: {
-                    kategori: true,
-                    lantai: { include: { lokasi: true } },
-                    ob: true
-                },
-                orderBy: [
-                    { created_at: "desc" },
-                    { id: "desc" }
-                ]
-            }),
-            this.db.laporan_karyawan.count({ where: whereCondition })
-        ]);
-
-        const hasNextPage = reports.length > limit;
-        const items = hasNextPage ? reports.slice(0, limit) : reports;
-        const nextCursor = hasNextPage ? (items[items.length - 1]?.id ?? null) : null;
-
-        return {
-            items: items as unknown as ProfileReport[],
-            next_cursor: nextCursor,
-            meta: {
-                total_items: total,
-                current_page: 1,
-                limit,
-                total_pages: Math.ceil(total / limit)
-            }
-        };
-    }
-
-    private buildWhereClause(baseFilter: Prisma.Laporan_karyawanWhereInput, search?: string | null, status?: string | null): Prisma.Laporan_karyawanWhereInput {
-        const filters: Prisma.Laporan_karyawanWhereInput[] = [baseFilter];
-
-        if (search) {
-            filters.push({
-                OR: [
-                    { deskripsi_kendala: { contains: search, mode: "insensitive" as const } },
-                    { lantai: { lokasi: { nama_lokasi: { contains: search, mode: "insensitive" as const } } } }
-                ]
-            });
-        }
-
-        if (status) {
-            filters.push({ status: { equals: status, mode: "insensitive" as const } });
-        }
-
-        return filters.length === 1 ? filters[0]! : { AND: filters };
     }
 
     async getRecentActivities(limit: number): Promise<RecentActivityPayload[]> {
@@ -242,7 +160,7 @@ export class LaporanRepository implements ILaporanRepository {
         }
     }
 
-    async getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<RuanganTerpopulerPayload[]> {
+    async getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<any[]> {
         const where = this.buildAdminLaporanWhereClause(query);
 
         const laporan = await this.db.laporan_karyawan.findMany({
@@ -260,29 +178,7 @@ export class LaporanRepository implements ILaporanRepository {
             }
         });
 
-        const ruanganMap = new Map<string, RuanganTerpopulerPayload>();
-
-        laporan.forEach((item) => {
-            const ruanganId = item.ruangan?.id ?? null;
-            const namaRuangan = item.ruangan?.nama ?? "Ruangan tidak diketahui";
-            const nomorLantai = item.ruangan?.lantai?.nomor_lantai;
-            const namaLantai = nomorLantai !== undefined ? `Lantai ${nomorLantai}` : "Lantai tidak diketahui";
-            const namaLokasi = item.ruangan?.lantai?.lokasi?.nama_lokasi ?? "Lokasi tidak diketahui";
-            const key = ruanganId ?? namaRuangan;
-            const current = ruanganMap.get(key);
-
-            ruanganMap.set(key, {
-                ruangan_id: ruanganId,
-                nama_ruangan: namaRuangan,
-                nama_lantai: namaLantai,
-                nama_lokasi: namaLokasi,
-                total_laporan: (current?.total_laporan ?? 0) + 1
-            });
-        });
-
-        return Array.from(ruanganMap.values())
-            .sort((a, b) => b.total_laporan - a.total_laporan)
-            .slice(0, limit);
+        return laporan;
     }
 
     async countLaporanAktif(query: AdminLaporanQuery): Promise<number> {
@@ -294,7 +190,76 @@ export class LaporanRepository implements ILaporanRepository {
         return this.db.laporan_karyawan.count({ where });
     }
 
-    // ───── Private helpers (admin) ─────
+    async getLaporanCountByUserId(userId: string): Promise<number> {
+        return this.db.laporan_karyawan.count({
+            where: {
+                pelapor_id: userId
+            }
+        });
+    }
+
+    async deleteLaporan(laporanId: string): Promise<void> {
+        await this.db.laporan_karyawan.delete({
+            where: { id: laporanId }
+        });
+    }
+
+    private async executePaginatedReports(whereCondition: Prisma.Laporan_karyawanWhereInput, limit: number, cursor?: string | null): Promise<PaginatedResponse<ProfileReport>> {
+        const [reports, total] = await Promise.all([
+            this.db.laporan_karyawan.findMany({
+                where: whereCondition,
+                take: limit + 1,
+                ...((cursor) && {
+                    skip: 1,
+                    cursor: { id: cursor }
+                }),
+                include: {
+                    kategori: true,
+                    lantai: { include: { lokasi: true } },
+                    ob: true
+                },
+                orderBy: [
+                    { created_at: "desc" },
+                    { id: "desc" }
+                ]
+            }),
+            this.db.laporan_karyawan.count({ where: whereCondition })
+        ]);
+
+        const hasNextPage = reports.length > limit;
+        const items = hasNextPage ? reports.slice(0, limit) : reports;
+        const nextCursor = hasNextPage ? (items[items.length - 1]?.id ?? null) : null;
+
+        return {
+            items: items as unknown as ProfileReport[],
+            next_cursor: nextCursor,
+            meta: {
+                total_items: total,
+                current_page: 1,
+                limit,
+                total_pages: Math.ceil(total / limit)
+            }
+        };
+    }
+
+    private buildWhereClause(baseFilter: Prisma.Laporan_karyawanWhereInput, search?: string | null, status?: string | null): Prisma.Laporan_karyawanWhereInput {
+        const filters: Prisma.Laporan_karyawanWhereInput[] = [baseFilter];
+
+        if (search) {
+            filters.push({
+                OR: [
+                    { deskripsi_kendala: { contains: search, mode: "insensitive" as const } },
+                    { lantai: { lokasi: { nama_lokasi: { contains: search, mode: "insensitive" as const } } } }
+                ]
+            });
+        }
+
+        if (status) {
+            filters.push({ status: { equals: status, mode: "insensitive" as const } });
+        }
+
+        return filters.length === 1 ? filters[0]! : { AND: filters };
+    }
 
     private buildAdminLaporanWhereClause(query: AdminLaporanQuery): Prisma.Laporan_karyawanWhereInput {
         const where: Prisma.Laporan_karyawanWhereInput = {};
@@ -364,19 +329,5 @@ export class LaporanRepository implements ILaporanRepository {
             { [query.sort_by]: sortOrder } as Prisma.Laporan_karyawanOrderByWithRelationInput,
             { created_at: "desc" }
         ];
-    }
-
-    async getLaporanCountByUserId(userId: string): Promise<number> {
-        return this.db.laporan_karyawan.count({
-            where: {
-                pelapor_id: userId
-            }
-        });
-    }
-
-    async deleteLaporan(laporanId: string): Promise<void> {
-        await this.db.laporan_karyawan.delete({
-            where: { id: laporanId }
-        });
     }
 }

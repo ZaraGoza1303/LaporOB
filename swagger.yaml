@@ -808,7 +808,6 @@ paths:
               type: object
               required:
                 - catatan
-                - foto_selesai
               properties:
                 catatan:
                   type: string
@@ -818,7 +817,7 @@ paths:
                   items:
                     type: string
                     format: binary
-                  description: Foto bukti pembatalan laporan
+                  description: Foto bukti pembatalan laporan (opsional)
       responses:
         '200':
           description: Laporan dibatalkan

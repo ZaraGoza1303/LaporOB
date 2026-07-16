@@ -12,7 +12,7 @@ import type { PeriodRange } from "../utils/date.js";
 import type { RiwayatParams } from "./karyawan_service.interface.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
-import { CHECKLIST_STATUS, LAPORAN_PRIORITY, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, type LaporanPriority, type LaporanStatus, USER_ROLE } from "../utils/constants.js";
+import { CHECKLIST_STATUS, LAPORAN_PRIORITY, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, REF_TIPE, type LaporanPriority, type LaporanStatus, USER_ROLE } from "../utils/constants.js";
 
 export class ObService implements IObService {
     private obRepo: IObRepository;
@@ -121,7 +121,7 @@ export class ObService implements IObService {
                 judul: NOTIFICATION_TITLE.LAPORAN_DIKERJAKAN,
                 pesan: NOTIFICATION_MESSAGE.LAPORAN_DIKERJAKAN,
                 ref_id: laporanId,
-                ref_tipe: "LAPORAN",
+                ref_tipe: REF_TIPE.LAPORAN,
             };
             await this.notificationService.sendNotification(notifData);
         } catch (err: unknown) {
@@ -152,7 +152,7 @@ export class ObService implements IObService {
                 judul: NOTIFICATION_TITLE.LAPORAN_BERES,
                 pesan: dto.catatan,
                 ref_id: laporanId,
-                ref_tipe: "LAPORAN",
+                ref_tipe: REF_TIPE.LAPORAN,
             };
             await this.notificationService.sendNotification(notifData);
         } catch (err: unknown) {
@@ -175,7 +175,7 @@ export class ObService implements IObService {
                 judul: NOTIFICATION_TITLE.LAPORAN_DIBATALKAN,
                 pesan: dto.catatan,
                 ref_id: laporanId,
-                ref_tipe: "LAPORAN",
+                ref_tipe: REF_TIPE.LAPORAN,
             };
             await this.notificationService.sendNotification(notifData);
         } catch (err: unknown) {
@@ -243,7 +243,7 @@ export class ObService implements IObService {
                         judul: NOTIFICATION_TITLE.KOLABORASI_DIBUKA,
                         pesan: NOTIFICATION_MESSAGE.KOLABORASI_DIBUKA,
                         ref_id: laporanId,
-                        ref_tipe: "KOLABORASI",
+                        ref_tipe: REF_TIPE.KOLABORASI,
                     };
                     await this.notificationService.sendBulkNotification(bulkNotif);
                 }

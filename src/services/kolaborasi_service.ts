@@ -5,7 +5,7 @@ import type { INotificationService } from "./notification_service.interface.js";
 import type { GabungResponse, DaftarGabungItem } from "../dto/kolaborasi.js";
 import type { NotificationData } from "../dto/notification.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
-import { NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, KOLABORASI_STATUS } from "../utils/constants.js";
+import { NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, REF_TIPE, KOLABORASI_STATUS } from "../utils/constants.js";
 
 export class KolaborasiService implements IKolaborasiService {
     private kolaborasiRepo: IKolaborasiRepository;
@@ -46,7 +46,7 @@ export class KolaborasiService implements IKolaborasiService {
                 judul: NOTIFICATION_TITLE.GABUNG_LAPORAN,
                 pesan: NOTIFICATION_MESSAGE.GABUNG_LAPORAN,
                 ref_id: laporanId,
-                ref_tipe: "KOLABORASI",
+                ref_tipe: REF_TIPE.KOLABORASI,
             };
             await this.notificationService.sendNotification(notifData);
 
@@ -82,7 +82,7 @@ export class KolaborasiService implements IKolaborasiService {
                 judul: NOTIFICATION_TITLE.GABUNG_DISETUJUI,
                 pesan: NOTIFICATION_MESSAGE.GABUNG_DISETUJUI,
                 ref_id: laporanId,
-                ref_tipe: "KOLABORASI",
+                ref_tipe: REF_TIPE.KOLABORASI,
             };
             await this.notificationService.sendNotification(notifData);
         } catch (err) {
@@ -110,7 +110,7 @@ export class KolaborasiService implements IKolaborasiService {
                 judul: NOTIFICATION_TITLE.GABUNG_DITOLAK,
                 pesan: NOTIFICATION_MESSAGE.GABUNG_DITOLAK,
                 ref_id: laporanId,
-                ref_tipe: "KOLABORASI",
+                ref_tipe: REF_TIPE.KOLABORASI,
             };
             await this.notificationService.sendNotification(notifData);
         } catch (err) {
@@ -160,7 +160,7 @@ export class KolaborasiService implements IKolaborasiService {
                 judul: NOTIFICATION_TITLE.KELUAR_KOLABORASI,
                 pesan: NOTIFICATION_MESSAGE.KELUAR_KOLABORASI,
                 ref_id: laporanId,
-                ref_tipe: "KOLABORASI",
+                ref_tipe: REF_TIPE.KOLABORASI,
             };
             await this.notificationService.sendNotification(notifData);
         } catch (err) {
@@ -188,7 +188,7 @@ export class KolaborasiService implements IKolaborasiService {
                 judul: NOTIFICATION_TITLE.DIKELUARKAN_KOLABORASI,
                 pesan: NOTIFICATION_MESSAGE.DIKELUARKAN_KOLABORASI,
                 ref_id: laporanId,
-                ref_tipe: "KOLABORASI",
+                ref_tipe: REF_TIPE.KOLABORASI,
             };
             await this.notificationService.sendNotification(notifData);
         } catch (err) {

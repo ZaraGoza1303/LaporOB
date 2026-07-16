@@ -3,7 +3,7 @@ import type { IAuthRepository } from "../repositories/auth_repository.interface.
 import { generateJWTToken } from "../utils/jwt.js";
 import bcrypt from 'bcrypt';
 import type { IAuthService } from "./auth_service.interface.js";
-import { hashActivationToken } from "../utils/token.js";
+import { hashToken } from "../utils/token.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import type { UserToken } from "../generated/prisma/client.js";
 import type { IUsersService } from "./users_service.interface.js";
@@ -43,7 +43,6 @@ export class AuthService implements IAuthService {
 
             const jwtToken = await generateJWTToken({ id: existsUser?.id, username: existsUser.username, role: existsUser.role.nama_role });
 
-            // Simpan session ke DB + Redis
             await this.sessionService.createSession(
                 existsUser.id,
                 jwtToken,
@@ -63,7 +62,7 @@ export class AuthService implements IAuthService {
 
     async validateActivationToken(token: string): Promise<UserToken> {
         try {
-            const tokenHash = hashActivationToken(token);
+            const tokenHash = hashToken(token);
             const record = await this.authRepo.checkUserToken(tokenHash);
 
             if (!record) throw new AppError("Token tidak valid", 401);
@@ -84,5 +83,9 @@ export class AuthService implements IAuthService {
         } catch (err) {
             handlePrismaError(err)
         }
+    }
+
+    async logout(token: string): Promise<void> {
+        await this.sessionService.revokeSession(token);
     }
 }

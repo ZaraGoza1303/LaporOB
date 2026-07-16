@@ -2,16 +2,7 @@ import type { Request, Response, NextFunction } from "express"
 import { sendErrorResponse } from "../utils/response.js";
 import jwt from 'jsonwebtoken'
 import { AppError } from "../utils/error.js";
-
-let sessionService: any = null;
-
-async function getSessionService() {
-    if (!sessionService) {
-        const { container } = await import("../container.js");
-        sessionService = container.sessionService;
-    }
-    return sessionService;
-}
+import { container } from "../container.js";
 
 export const verifyJWTToken = async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
@@ -25,9 +16,7 @@ export const verifyJWTToken = async (req: Request, res: Response, next: NextFunc
         const decoded = jwt.verify(token, secret) as {id: string, username: string, role: string}
         req.user = decoded;
 
-        // Verify session masih valid (belum di-revoke / expired)
-        const svc = await getSessionService();
-        const isValid = await svc.validateSession(token);
+        const isValid = await container.sessionService.validateSession(token);
 
         if (!isValid) {
             return res.status(401).json(sendErrorResponse("Session telah berakhir, silahkan login ulang"));

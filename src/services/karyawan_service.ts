@@ -1,5 +1,5 @@
 import type { CreateLaporanKaryawanInput, UserHomeRes, MappedProfileReport, ProfileRes } from "../dto/users.js";
-import { LAPORAN_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, USER_ROLE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
+import { LAPORAN_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, REF_TIPE, USER_ROLE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { IUsersService } from "./users_service.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
@@ -100,32 +100,21 @@ export class KaryawanService implements IKaryawanService {
                 status: LAPORAN_STATUS.BELUM_DIKERJAKAN,
             };
 
-            await this.laporanService.insertReport(laporanReq);
-            
+            const laporanId = await this.laporanService.insertReport(laporanReq);
             const allOB = await this.usersService.getByRole(USER_ROLE.OB);
             
-            console.log("OB users found:", allOB?.length || 0);
-            
-            if (!allOB || allOB.length === 0) {
-                console.warn("No OB users found for notification");
-                return;
-            }
-
             const notifReq: BulkNotificationData = {
                 penerima_ids: allOB.map(ob => ob.id),
                 pengirim_id: userId,
                 tipe: NOTIFICATION_TYPE.LAPORAN_BARU,
                 judul: NOTIFICATION_TITLE.LAPORAN_BARU,
-                ref_tipe: "LAPORAN",
+                ref_id: laporanId,
+                ref_tipe: REF_TIPE.LAPORAN,
             }
 
-            console.log("Sending bulk notification with penerima_ids:", notifReq.penerima_ids);
-            
             await this.notificationService.sendBulkNotification(notifReq)
             
-            console.log("Bulk notification sent successfully");
         } catch (err) {
-            console.error("Error in createReport:", err);
             handlePrismaError(err);
         }
     }

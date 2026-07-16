@@ -14,7 +14,7 @@ export interface ILaporanService {
     getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<RuanganTerpopulerPayload[]>;
     countLaporanAktif(query: AdminLaporanQuery): Promise<number>;
     getActivity(userId: string): Promise<UserActivityRes[]>;
-    insertReport(req: Laporan_karyawanCreateInput): Promise<void>;
+    insertReport(req: Laporan_karyawanCreateInput): Promise<string>;
     getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void>;
