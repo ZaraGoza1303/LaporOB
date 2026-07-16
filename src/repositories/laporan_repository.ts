@@ -5,7 +5,7 @@ import type { PrismaClient } from "../generated/prisma/client.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { ILaporanRepository, ProfileReport, DetailReportPayload, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload } from "./laporan_repository.interface.js";
 import { Prisma } from "../generated/prisma/client.js";
-import { LAPORAN_STATUS } from "../utils/constants.js";
+import { LAPORAN_STATUS, KOLABORASI_STATUS } from "../utils/constants.js";
 
 export class LaporanRepository implements ILaporanRepository {
     private db: PrismaClient;
@@ -33,7 +33,8 @@ export class LaporanRepository implements ILaporanRepository {
             take: 2
         });
 
-        return data as unknown as UserActivityRes[];
+        const result = data as unknown as UserActivityRes[];
+        return result;
     }
 
     async insertReport(req: Laporan_karyawanCreateInput): Promise<string> {
@@ -60,21 +61,23 @@ export class LaporanRepository implements ILaporanRepository {
 
     async getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>> {
         const whereCondition = this.buildWhereClause({ pelapor_id: userId }, search, status);
-        return this.executePaginatedReports(whereCondition, limit, cursor);
+        const reports = await this.executePaginatedReports(whereCondition, limit, cursor);
+        return reports;
     }
 
     async getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>> {
         const whereCondition = this.buildWhereClause({
             OR: [
                 { ob_id: obId },
-                { kolaborasi: { some: { ob_id: obId, status: "APPROVED" } } }
+                { kolaborasi: { some: { ob_id: obId, status: KOLABORASI_STATUS.APPROVED } } }
             ]
         }, search, status);
-        return this.executePaginatedReports(whereCondition, limit, cursor);
+        const reports = await this.executePaginatedReports(whereCondition, limit, cursor);
+        return reports;
     }
 
     async getReportDetailById(reportId: string): Promise<DetailReportPayload | null> {
-        return this.db.laporan_karyawan.findUnique({
+        const report = await this.db.laporan_karyawan.findUnique({
             where: {
                 id: reportId
             },
@@ -89,11 +92,12 @@ export class LaporanRepository implements ILaporanRepository {
                 pelapor: true,
                 histori_pekerjaan: true
             }
-        }) as Promise<DetailReportPayload | null>;
+        }) as unknown as DetailReportPayload | null;
+        return report;
     }
 
     async getRecentActivities(limit: number): Promise<RecentActivityPayload[]> {
-        return this.db.laporan_karyawan.findMany({
+        const activities = await this.db.laporan_karyawan.findMany({
             include: {
                 lantai: {
                     include: { lokasi: true }
@@ -104,11 +108,12 @@ export class LaporanRepository implements ILaporanRepository {
                 updated_at: 'desc'
             },
             take: limit
-        }) as Promise<RecentActivityPayload[]>;
+        }) as unknown as RecentActivityPayload[];
+        return activities;
     }
 
     async getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]> {
-        return this.db.laporan_karyawan.findMany({
+        const reports = await this.db.laporan_karyawan.findMany({
             where: {
                 created_at: {
                     gte: startDate,
@@ -120,7 +125,8 @@ export class LaporanRepository implements ILaporanRepository {
                 status: true,
                 created_at: true
             }
-        }) as Promise<ReportSummaryPayload[]>;
+        }) as unknown as ReportSummaryPayload[];
+        return reports;
     }
 
     async getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>> {
@@ -148,7 +154,7 @@ export class LaporanRepository implements ILaporanRepository {
             this.db.laporan_karyawan.count({ where })
         ]);
 
-        return {
+        const result: PaginatedResponse<AdminLaporanPayload> = {
             items: laporan as unknown as AdminLaporanPayload[],
             next_cursor: null,
             meta: {
@@ -157,7 +163,8 @@ export class LaporanRepository implements ILaporanRepository {
                 limit,
                 total_pages: Math.ceil(total_laporan / limit)
             }
-        }
+        };
+        return result
     }
 
     async getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<any[]> {
@@ -187,15 +194,17 @@ export class LaporanRepository implements ILaporanRepository {
             in: [LAPORAN_STATUS.BELUM_DIKERJAKAN, LAPORAN_STATUS.PENDING]
         };
 
-        return this.db.laporan_karyawan.count({ where });
+        const count = await this.db.laporan_karyawan.count({ where });
+        return count;
     }
 
     async getLaporanCountByUserId(userId: string): Promise<number> {
-        return this.db.laporan_karyawan.count({
+        const count = await this.db.laporan_karyawan.count({
             where: {
                 pelapor_id: userId
             }
         });
+        return count;
     }
 
     async deleteLaporan(laporanId: string): Promise<void> {
@@ -230,7 +239,7 @@ export class LaporanRepository implements ILaporanRepository {
         const items = hasNextPage ? reports.slice(0, limit) : reports;
         const nextCursor = hasNextPage ? (items[items.length - 1]?.id ?? null) : null;
 
-        return {
+        const result: PaginatedResponse<ProfileReport> = {
             items: items as unknown as ProfileReport[],
             next_cursor: nextCursor,
             meta: {
@@ -240,6 +249,7 @@ export class LaporanRepository implements ILaporanRepository {
                 total_pages: Math.ceil(total / limit)
             }
         };
+        return result;
     }
 
     private buildWhereClause(baseFilter: Prisma.Laporan_karyawanWhereInput, search?: string | null, status?: string | null): Prisma.Laporan_karyawanWhereInput {
@@ -258,7 +268,8 @@ export class LaporanRepository implements ILaporanRepository {
             filters.push({ status: { equals: status, mode: "insensitive" as const } });
         }
 
-        return filters.length === 1 ? filters[0]! : { AND: filters };
+        const whereClause = filters.length === 1 ? filters[0]! : { AND: filters };
+        return whereClause;
     }
 
     private buildAdminLaporanWhereClause(query: AdminLaporanQuery): Prisma.Laporan_karyawanWhereInput {
@@ -312,22 +323,25 @@ export class LaporanRepository implements ILaporanRepository {
         const sortOrder = query.sort_order;
 
         if (query.sort_by === "nama_karyawan") {
-            return [
+            const orderBy: Prisma.Laporan_karyawanOrderByWithRelationInput[] = [
                 { pelapor: { nama_lengkap: sortOrder } },
                 { created_at: "desc" }
             ];
+            return orderBy;
         }
 
         if (query.sort_by === "lokasi") {
-            return [
+            const orderBy: Prisma.Laporan_karyawanOrderByWithRelationInput[] = [
                 { lantai: { lokasi: { nama_lokasi: sortOrder } } },
                 { created_at: "desc" }
             ];
+            return orderBy;
         }
 
-        return [
+        const defaultOrderBy: Prisma.Laporan_karyawanOrderByWithRelationInput[] = [
             { [query.sort_by]: sortOrder } as Prisma.Laporan_karyawanOrderByWithRelationInput,
             { created_at: "desc" }
         ];
+        return defaultOrderBy;
     }
 }

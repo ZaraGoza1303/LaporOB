@@ -43,7 +43,7 @@ export class AdminService implements IAdminService {
             const laporanMapped: AdminLaporanItemResponse[] = laporanData.items.map((item: AdminLaporanPayload, index: number) => {
                 const nomorLaporan = ((page - 1) * limit) + index + 1;
 
-                return {
+                const mapped = {
                     id: item.id,
                     id_laporan: `LPR - ${String(nomorLaporan).padStart(3, "0")}`,
                     nama_karyawan: item.pelapor?.nama_lengkap ?? "Anonim",
@@ -60,9 +60,10 @@ export class AdminService implements IAdminService {
                     created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
                     updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : String(item.updated_at),
                 };
+                return mapped;
             });
 
-            return {
+            const result: AdminLaporanPageResponse = {
                 laporan: {
                     items: laporanMapped,
                     next_cursor: null,
@@ -78,6 +79,8 @@ export class AdminService implements IAdminService {
                     total_laporan: totalLaporanAktif
                 }
             };
+
+            return result;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -119,21 +122,25 @@ export class AdminService implements IAdminService {
             persentase: item.persentase
         }));
 
-        return { kpi, bar_chart, pie_chart, recent_activities, daily_checklist_ob: daily_checklist_ob_mapped };
+        const dashboard: DashboardMainResponse = { kpi, bar_chart, pie_chart, recent_activities, daily_checklist_ob: daily_checklist_ob_mapped };
+
+        return dashboard;
     }
 
     private calculateKpi(current: ReportSummaryPayload[], previous: ReportSummaryPayload[]): DashboardMainResponse['kpi'] {
         const calculateTrend = (currCount: number, prevCount: number): StatDetail => {
             if (prevCount === 0) {
-                return { count: currCount, trend_value: currCount > 0 ? 100 : 0, is_positive: currCount > 0 };
+                const trendDetail = { count: currCount, trend_value: currCount > 0 ? 100 : 0, is_positive: currCount > 0 };
+                return trendDetail;
             }
             const diff = currCount - prevCount;
             const percentage = Math.round((diff / prevCount) * 100);
-            return {
+            const trendDetail = {
                 count: currCount,
                 trend_value: Math.abs(percentage),
                 is_positive: percentage >= 0
             };
+            return trendDetail;
         };
 
         const currTotal = current.length;
@@ -148,12 +155,14 @@ export class AdminService implements IAdminService {
         const currDibatalkan = current.filter(r => r.status === LAPORAN_STATUS.DIBATALKAN).length;
         const prevDibatalkan = previous.filter(r => r.status === LAPORAN_STATUS.DIBATALKAN).length;
 
-        return {
+        const kpi: DashboardMainResponse['kpi'] = {
             total_laporan: calculateTrend(currTotal, prevTotal),
             laporan_selesai: calculateTrend(currDone, prevDone),
             laporan_berjalan: calculateTrend(currOngoing, prevOngoing),
             laporan_dibatalkan: calculateTrend(currDibatalkan, prevDibatalkan)
         };
+
+        return kpi;
     }
 
     private calculatePieChart(reports: ReportSummaryPayload[]): PieChartResponse[] {
@@ -180,15 +189,17 @@ export class AdminService implements IAdminService {
             }
         });
 
-        return Object.keys(counts).map(key => {
+        const result = Object.keys(counts).map(key => {
             const status = key as LaporanStatus;
-            return {
+            const mapped = {
                 status,
                 label: STATUS_LABEL_MAP[status],
                 count: counts[status],
                 percentage: total > 0 ? Math.round((counts[status] / total) * 100) : 0
             };
+            return mapped;
         });
+        return result;
     }
 
     private calculateBarChart(reports: ReportSummaryPayload[], period: string): BarChartResponse[] {
@@ -218,15 +229,17 @@ export class AdminService implements IAdminService {
 
         if (period === 'mingguan') {
             const orderedLabels = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
-            return orderedLabels
+            const result = orderedLabels
                 .filter(label => label in groups || true)
                 .map(label => ({ label, count: groups[label] || 0 }));
+            return result;
         }
 
-        return Object.keys(groups).map(label => ({
+        const result = Object.keys(groups).map(label => ({
             label,
             count: groups[label] || 0
         }));
+        return result;
     }
 
     public async getReportDetail(id: string): Promise<AdminReportDetailResponse> {
@@ -243,7 +256,7 @@ export class AdminService implements IAdminService {
             ? historiTerakhir.created_at.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
             : null;
 
-        return {
+        const detail: AdminReportDetailResponse = {
             id: laporan.id,
             status: laporan.status as LaporanStatus,
             prioritas: laporan.prioritas as LaporanPriority,
@@ -268,6 +281,8 @@ export class AdminService implements IAdminService {
                 jam_upload: jamUpload
             }
         };
+
+        return detail;
     }
 
     async assignObToLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number): Promise<void> {
@@ -288,7 +303,8 @@ export class AdminService implements IAdminService {
 
     async getPenugasanByPeriode(bulan: number, tahun: number): Promise<PenugasanObWithDetails[]> {
         try {
-            return await this.adminRepo.getPenugasanByPeriode(bulan, tahun);
+            const penugasan = await this.adminRepo.getPenugasanByPeriode(bulan, tahun);
+            return penugasan;
         } catch (err) {
             throw handlePrismaError(err);
         }
@@ -324,7 +340,8 @@ export class AdminService implements IAdminService {
             const laporan = await this.laporanService.getReportDetailById(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
 
-            return await this.adminRepo.approveLaporan(laporanId, catatan);
+            const result = await this.adminRepo.approveLaporan(laporanId, catatan);
+            return result;
         } catch (err) {
             throw handlePrismaError(err);
         }
@@ -335,7 +352,8 @@ export class AdminService implements IAdminService {
             const laporan = await this.laporanService.getReportDetailById(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
 
-            return await this.adminRepo.rejectLaporan(laporanId, catatan);
+            const result = await this.adminRepo.rejectLaporan(laporanId, catatan);
+            return result;
         } catch (err) {
             throw handlePrismaError(err);
         }

@@ -50,13 +50,14 @@ export class KolaborasiService implements IKolaborasiService {
             };
             await this.notificationService.sendNotification(notifData);
 
-            return {
+            const result: GabungResponse = {
                 id: kolaborasi.id,
                 laporan_id: kolaborasi.laporan_id,
                 ob_id: kolaborasi.ob_id,
                 status: kolaborasi.status,
                 created_at: kolaborasi.created_at.toISOString(),
             };
+            return result;
         } catch (err) {
             throw handlePrismaError(err);
         }

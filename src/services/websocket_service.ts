@@ -24,7 +24,8 @@ function handleConnection(ws: WebSocket, req: IncomingMessage) {
 function verifyToken(token: string | null): string | null {
   if (!token) return null;
   try {
-    return (jwt.verify(token, process.env.JWT_TOKEN!) as { id: string }).id;
+    const payload = jwt.verify(token, process.env.JWT_TOKEN!) as { id: string };
+    return payload.id;
   } catch {
     return null;
   }

@@ -10,7 +10,7 @@ export class LokasiRepository implements ILokasiRepository {
     }
 
     async getAll(): Promise<LokasiWithLantai[]> {
-        return this.db.lokasi.findMany({
+        const lokasi = await this.db.lokasi.findMany({
             include: {
                 lantai: {
                     orderBy: {
@@ -22,10 +22,11 @@ export class LokasiRepository implements ILokasiRepository {
                 created_at: 'desc'
             }
         });
+        return lokasi;
     }
 
     async getByID(lokasiId: string): Promise<LokasiWithLantai | null> {
-        return this.db.lokasi.findFirst({
+        const lokasi = await this.db.lokasi.findFirst({
             where: {
                 id: lokasiId
             },
@@ -37,6 +38,7 @@ export class LokasiRepository implements ILokasiRepository {
                 }
             }
         });
+        return lokasi;
     }
 
     async insert(req: CreateLokasiReq): Promise<void> {

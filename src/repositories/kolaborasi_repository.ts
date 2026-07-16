@@ -1,5 +1,6 @@
 import type { PrismaClient, KolaborasiLaporan } from "../generated/prisma/client.js";
 import type { IKolaborasiRepository, KolaborasiLaporanWithOb } from "./kolaborasi_repository.interface.js";
+import { KOLABORASI_STATUS } from "../utils/constants.js";
 
 export class KolaborasiRepository implements IKolaborasiRepository {
     private db: PrismaClient;
@@ -9,11 +10,12 @@ export class KolaborasiRepository implements IKolaborasiRepository {
     }
 
     async findById(id: string): Promise<KolaborasiLaporan | null> {
-        return this.db.kolaborasiLaporan.findUnique({ where: { id } });
+        const kolaborasi = await this.db.kolaborasiLaporan.findUnique({ where: { id } });
+        return kolaborasi;
     }
 
     async findByLaporanAndOb(laporanId: string, obId: string): Promise<KolaborasiLaporan | null> {
-        return this.db.kolaborasiLaporan.findUnique({
+        const kolaborasi = await this.db.kolaborasiLaporan.findUnique({
             where: {
                 laporan_id_ob_id: {
                     laporan_id: laporanId,
@@ -21,43 +23,49 @@ export class KolaborasiRepository implements IKolaborasiRepository {
                 }
             }
         });
+        return kolaborasi;
     }
 
     async findPendingByLaporanId(laporanId: string): Promise<KolaborasiLaporanWithOb[]> {
-        return this.db.kolaborasiLaporan.findMany({
-            where: { laporan_id: laporanId, status: "PENDING" },
+        const kolaborasi = await this.db.kolaborasiLaporan.findMany({
+            where: { laporan_id: laporanId, status: KOLABORASI_STATUS.PENDING },
             include: { ob: { select: { id: true, nama_lengkap: true } } }
-        }) as unknown as Promise<KolaborasiLaporanWithOb[]>;
+        }) as unknown as KolaborasiLaporanWithOb[];
+        return kolaborasi;
     }
 
     async findApprovedByLaporanId(laporanId: string): Promise<KolaborasiLaporanWithOb[]> {
-        return this.db.kolaborasiLaporan.findMany({
-            where: { laporan_id: laporanId, status: "APPROVED" },
+        const kolaborasi = await this.db.kolaborasiLaporan.findMany({
+            where: { laporan_id: laporanId, status: KOLABORASI_STATUS.APPROVED },
             include: { ob: { select: { id: true, nama_lengkap: true } } }
-        }) as unknown as Promise<KolaborasiLaporanWithOb[]>;
+        }) as unknown as KolaborasiLaporanWithOb[];
+        return kolaborasi;
     }
 
     async findApprovedByObId(obId: string): Promise<KolaborasiLaporan[]> {
-        return this.db.kolaborasiLaporan.findMany({
-            where: { ob_id: obId, status: "APPROVED" }
+        const kolaborasi = await this.db.kolaborasiLaporan.findMany({
+            where: { ob_id: obId, status: KOLABORASI_STATUS.APPROVED }
         });
+        return kolaborasi;
     }
 
     async create(laporanId: string, obId: string): Promise<KolaborasiLaporan> {
-        return this.db.kolaborasiLaporan.create({
+        const kolaborasi = await this.db.kolaborasiLaporan.create({
             data: {
                 laporan_id: laporanId,
                 ob_id: obId,
-                status: "PENDING",
+                status: KOLABORASI_STATUS.PENDING,
             }
         });
+        return kolaborasi;
     }
 
     async updateStatus(id: string, status: string): Promise<KolaborasiLaporan> {
-        return this.db.kolaborasiLaporan.update({
+        const kolaborasi = await this.db.kolaborasiLaporan.update({
             where: { id },
             data: { status }
         });
+        return kolaborasi;
     }
 
     async delete(id: string): Promise<void> {
@@ -67,18 +75,20 @@ export class KolaborasiRepository implements IKolaborasiRepository {
     }
 
     async findApprovedByLaporanAndOb(laporanId: string, obId: string): Promise<KolaborasiLaporan | null> {
-        return this.db.kolaborasiLaporan.findFirst({
+        const kolaborasi = await this.db.kolaborasiLaporan.findFirst({
             where: {
                 laporan_id: laporanId,
                 ob_id: obId,
-                status: "APPROVED",
+                status: KOLABORASI_STATUS.APPROVED,
             }
         });
+        return kolaborasi;
     }
 
     async countByLaporanAndStatus(laporanId: string, status: string): Promise<number> {
-        return this.db.kolaborasiLaporan.count({
+        const count = await this.db.kolaborasiLaporan.count({
             where: { laporan_id: laporanId, status }
         });
+        return count;
     }
 }

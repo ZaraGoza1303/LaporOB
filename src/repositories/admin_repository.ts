@@ -89,7 +89,7 @@ export class AdminRepository implements IAdminRepository {
             }
         });
 
-        return obs.map(ob => {
+        const result = obs.map(ob => {
             const obChecklists = checklists.filter(c => c.ob_id === ob.id);
             const total = obChecklists.length;
             const selesai = obChecklists.filter(c => c.status === CHECKLIST_STATUS.SELESAI).length;
@@ -100,14 +100,16 @@ export class AdminRepository implements IAdminRepository {
                 ? `${firstChecklist.lantai.lokasi.nama_lokasi} Lantai ${firstChecklist.lantai.nomor_lantai}`
                 : "Lokasi tidak ditentukan";
 
-            return {
+            const mapped = {
                 nama_ob: ob.nama_lengkap,
                 lokasi,
                 selesai,
                 total,
                 persentase
             };
+            return mapped;
         });
+        return result;
     }
 
     async assignObToLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number): Promise<void> {
@@ -133,7 +135,7 @@ export class AdminRepository implements IAdminRepository {
     }
 
     async getPenugasanByPeriode(bulan: number, tahun: number): Promise<PenugasanObWithDetails[]> {
-        return this.db.penugasanOb.findMany({
+        const penugasan = await this.db.penugasanOb.findMany({
             where: {
                 bulan,
                 tahun,
@@ -150,21 +152,23 @@ export class AdminRepository implements IAdminRepository {
                 lokasi: true,
             }
         });
+        return penugasan;
     }
 
     async approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan> {
-        return this.db.laporan_karyawan.update({
+        const laporan = await this.db.laporan_karyawan.update({
             where: { id: laporanId },
             data: {
                 is_approved: true,
                 admin_catatan: catatan ?? null,
             }
         });
+        return laporan;
     }
 
     async rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan> {
         const now = new Date();
-        return this.db.laporan_karyawan.update({
+        const laporan = await this.db.laporan_karyawan.update({
             where: { id: laporanId },
             data: {
                 status: LAPORAN_STATUS.DIBATALKAN,
@@ -174,5 +178,6 @@ export class AdminRepository implements IAdminRepository {
                 dibatalkan_at: now,
             }
         });
+        return laporan;
     }
 }
