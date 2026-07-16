@@ -54,7 +54,7 @@ export class ObService implements IObService {
                     pendingCount++;
                 }
 
-                return {
+                const mapped = {
                     id: item.id,
                     nama_tugas: item.tugas?.nama_tugas || "",
                     kategori: item.kategori?.nama_kategori || "",
@@ -63,6 +63,7 @@ export class ObService implements IObService {
                     status: item.status,
                     tanggal: item.tanggal instanceof Date ? item.tanggal.toISOString().split('T').at(0) ?? "" : String(item.tanggal ?? "")
                 };
+                return mapped;
             });
 
             const laporanMapped = reports.map((item: LaporanKaryawanWithDetails) => {
@@ -70,7 +71,7 @@ export class ObService implements IObService {
                 const deskripsi = item.deskripsi_kendala || "";
                 const priority = item.prioritas === LAPORAN_PRIORITY.URGENT ? LAPORAN_PRIORITY.URGENT : LAPORAN_PRIORITY.STANDARD;
 
-                return {
+                const mapped = {
                     id: item.id,
                     kategori: kategoriName,
                     deskripsi_kendala: deskripsi,
@@ -82,6 +83,7 @@ export class ObService implements IObService {
                     is_kolaborasi_open: item.is_kolaborasi_open,
                     created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at)
                 };
+                return mapped;
             });
 
             const response: ObHomeRes = {
@@ -205,7 +207,7 @@ export class ObService implements IObService {
                 status: "Aktif",
             }));
 
-            return {
+            const profile: ObProfileResponse = {
                 id: user.id,
                 nama_lengkap: user.nama_lengkap,
                 username: user.username,
@@ -216,6 +218,8 @@ export class ObService implements IObService {
                 laporanSelesai: obStats.laporanSelesai || 0,
                 lokasiAktif: lokasiAktif,
             };
+
+            return profile;
         } catch (err: unknown) {
             throw handlePrismaError(err);
         }
@@ -258,7 +262,7 @@ export class ObService implements IObService {
             const reportsData = await this.laporanService.getReportsByObId(obId, limit, params.cursor, params.search, params.status);
 
             const laporanMapped: MappedProfileReport[] = reportsData.items.map((item: ProfileReport) => {
-                return {
+                const mapped = {
                     id: item.id,
                     kategori: item.kategori?.nama_kategori || "",
                     deskripsi_kendala: item.deskripsi_kendala || "",
@@ -271,9 +275,10 @@ export class ObService implements IObService {
                     created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
                     updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : String(item.updated_at)
                 };
+                return mapped;
             });
 
-            return {
+            const result: PaginatedResponse<MappedProfileReport> = {
                 items: laporanMapped,
                 next_cursor: reportsData.next_cursor ?? null,
                 meta: reportsData.meta ?? {
@@ -283,6 +288,8 @@ export class ObService implements IObService {
                     total_pages: 0
                 }
             };
+
+            return result;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -302,7 +309,7 @@ export class ObService implements IObService {
 
             const history = item.histori_pekerjaan?.[0];
 
-            return {
+            const detail: MappedReportDetailRes = {
                 id: item.id,
                 kategori: item.kategori?.nama_kategori || "",
                 deskripsi_kendala: item.deskripsi_kendala || "",
@@ -317,6 +324,8 @@ export class ObService implements IObService {
                 nama_ob: item.ob?.nama_lengkap || null,
                 created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
             };
+
+            return detail;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -324,7 +333,8 @@ export class ObService implements IObService {
 
     async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }> {
         try {
-            return await this.obRepo.getObPerformanceStats(obId, dateRange);
+            const stats = await this.obRepo.getObPerformanceStats(obId, dateRange);
+            return stats;
         } catch (err) {
             throw handlePrismaError(err);
         }

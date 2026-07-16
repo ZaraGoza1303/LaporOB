@@ -34,9 +34,10 @@ export class KaryawanService implements IKaryawanService {
     async getKaryawanPerformanceStats(userId: string): Promise<KaryawanPerformanceRes> {
         try {
             const laporan_count = await this.laporanService.getLaporanCountByUserId(userId);
-            return {
+            const stats: KaryawanPerformanceRes = {
                 laporan_terkirim: laporan_count
             };
+            return stats;
         } catch (err) {
             handlePrismaError(err)
         }
@@ -51,7 +52,7 @@ export class KaryawanService implements IKaryawanService {
 
             const activity = await this.laporanService.getActivity(userId);
             const activityMapped = activity.map((item) => {
-                return {
+                const mapped = {
                     id: item.id,
                     deskripsi_kendala: item.deskripsi_kendala,
                     status: item.status as LaporanStatus,
@@ -60,6 +61,7 @@ export class KaryawanService implements IKaryawanService {
                     nomor_lantai: item.lantai?.nomor_lantai ?? 0,
                     created_at: item.created_at ? item.created_at.toISOString() : ""
                 };
+                return mapped;
             })
 
             const kategori = await this.kategoriService.getKategoriLimit(6);
@@ -124,7 +126,7 @@ export class KaryawanService implements IKaryawanService {
             const reportsData = await this.laporanService.getReportsByUserId(userId, limit, params.cursor, params.search, params.status);
 
             const laporanMapped: MappedProfileReport[] = reportsData.items.map((item: ProfileReport) => {
-                return {
+                const mapped = {
                     id: item.id,
                     kategori: item.kategori?.nama_kategori || "",
                     deskripsi_kendala: item.deskripsi_kendala || "",
@@ -137,9 +139,10 @@ export class KaryawanService implements IKaryawanService {
                     created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
                     updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : String(item.updated_at)
                 };
+                return mapped;
             });
 
-            return {
+            const result: PaginatedResponse<MappedProfileReport> = {
                 items: laporanMapped,
                 next_cursor: reportsData.next_cursor ?? null,
                 meta: reportsData.meta ?? {
@@ -149,6 +152,7 @@ export class KaryawanService implements IKaryawanService {
                     total_pages: 0
                 }
             };
+            return result;
         } catch (err) {
             handlePrismaError(err);
         }

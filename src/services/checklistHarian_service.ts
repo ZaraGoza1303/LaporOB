@@ -26,7 +26,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
     }
 
     private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {
-        return {
+        const response: ChecklistHarianRes = {
             id: item.id,
             tugas_id: item.tugas_id,
             kategori_id: item.kategori_id,
@@ -44,6 +44,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
             lantai: item.lantai,
             ob: item.ob,
         };
+        return response;
     }
 
     async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<ChecklistHarianPageResponse> {
@@ -81,7 +82,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
 
             const groupedItems = Array.from(groupedMap.values());
 
-            return {
+            const result: ChecklistHarianPageResponse = {
                 checklist: {
                     ...data,
                     items: groupedItems
@@ -93,6 +94,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
                     late
                 }
             };
+            return result;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -102,7 +104,8 @@ export class ChecklistHarianService implements IChecklistHarianService {
         try {
             const item = await this.checklistRepo.getByID(checklistId);
             if (!item) return null;
-            return this.mapToResponse(item);
+            const result = this.mapToResponse(item);
+            return result;
         } catch (err) {
             handlePrismaError(err);
         }

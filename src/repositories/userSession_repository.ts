@@ -10,13 +10,15 @@ export class UserSessionRepository implements IUserSessionRepository {
     }
 
     async create(data: {user_id: string, token_hash: string, device_info?: string | null, ip_address?: string | null, expired_at: Date}): Promise<UserSession> {
-        return this.prisma.userSession.create({ data });
+        const session = await this.prisma.userSession.create({ data });
+        return session;
     }
 
     async findByTokenHash(tokenHash: string): Promise<UserSession | null> {
-        return this.prisma.userSession.findUnique({
+        const session = await this.prisma.userSession.findUnique({
             where: { token_hash: tokenHash }
         });
+        return session;
     }
 
     async revoke(tokenHash: string): Promise<void> {

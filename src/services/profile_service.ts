@@ -25,7 +25,8 @@ export class ProfileService implements IProfileService {
       ? await this.obService.getRiwayat(userId, limit, { cursor, search, status })
       : await this.karyawanService.getRiwayat(userId, limit, { cursor, search, status });
 
-    return this.toProfileRes(userProfile as ObProfileResponse | UserProfileResponse, isOb, laporan as PaginatedResponse<MappedProfileReport>);
+    const profileRes = this.toProfileRes(userProfile as ObProfileResponse | UserProfileResponse, isOb, laporan as PaginatedResponse<MappedProfileReport>);
+    return profileRes;
   }
 
   private toProfileRes(
@@ -54,6 +55,7 @@ export class ProfileService implements IProfileService {
           total_laporan: (userProfile as UserProfileResponse).total_laporan,
         };
 
-    return { user, laporan };
+    const result: ProfileRes = { user, laporan };
+    return result;
   }
 }

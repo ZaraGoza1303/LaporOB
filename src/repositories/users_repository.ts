@@ -42,7 +42,7 @@ export class UsersRepository implements IUsersRepository {
             })
         ])
 
-        return {
+        const result: PaginatedResponse<User> = {
             items: users,
             next_cursor: null,
             meta: {
@@ -51,11 +51,12 @@ export class UsersRepository implements IUsersRepository {
                 limit,
                 total_pages: Math.ceil(total_users / limit)
             }
-        }
+        };
+        return result
     }
 
     async getByID(userId: string): Promise<UserWithRoleAndToken | null> {
-        return this.db.user.findFirst({
+        const user = await this.db.user.findFirst({
             where: { id: userId },
             include: {
                 role: true,
@@ -66,11 +67,13 @@ export class UsersRepository implements IUsersRepository {
                     take: 1
                 }
             }
-        })
+        });
+        return user;
     }
 
     async insert(req: UserCreateInput): Promise<User> {
-        return this.db.user.create({ data: req });
+        const user = await this.db.user.create({ data: req });
+        return user;
     }
 
     async update(userId: string, req: UserUpdateInput): Promise<void> {
@@ -99,17 +102,18 @@ export class UsersRepository implements IUsersRepository {
     }
 
     async getUserWithRoleById(userId: string): Promise<ProfileUser | null> {
-        return this.db.user.findFirst({
+        const user = await this.db.user.findFirst({
             where: {
                 id: userId,
                 is_deleted: false
             },
             include: { role: true }
         });
+        return user;
     }
 
     async getByRole(nama_role: string): Promise<User[]> {
-        return this.db.user.findMany({
+        const users = await this.db.user.findMany({
             where: {
                 is_deleted: false,
                 is_active: true,
@@ -121,11 +125,13 @@ export class UsersRepository implements IUsersRepository {
                 }
             }
         });
+        return users;
     }
 
    async countLaporanByUserId(userId: string): Promise<number> {
-    return this.db.laporan_karyawan.count({
+    const count = await this.db.laporan_karyawan.count({
         where: { pelapor_id: userId }
     });
+    return count;
 }
 }

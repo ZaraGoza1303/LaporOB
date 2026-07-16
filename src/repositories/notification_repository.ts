@@ -19,9 +19,10 @@ export class NotificationRepository implements INotificationRepository {
     }
 
     async insertMany(reqs: NotifikasiCreateInput[]): Promise<Notifikasi[]> {
-        return this.db.$transaction(
+        const result = await this.db.$transaction(
             reqs.map(req => this.db.notifikasi.create({ data: req }))
         );
+        return result;
     }
 
     async markAsRead(notifId: string): Promise<void> {
@@ -48,12 +49,13 @@ export class NotificationRepository implements INotificationRepository {
     }
 
     async countUnread(userId: string): Promise<number> {
-        return this.db.notifikasi.count({
+        const count = await this.db.notifikasi.count({
             where: {
                 penerima_id: userId,
                 is_read: false,
             }
         });
+        return count;
     }
 
     async getAllByUserId(userId: string, limit: number, cursor?: string | null): Promise<PaginatedResponse<NotifikasiWithPengirim>> {
@@ -81,7 +83,7 @@ export class NotificationRepository implements INotificationRepository {
         const items = hasNextPage ? raw.slice(0, limit) : raw;
         const nextCursor = hasNextPage ? items[items.length - 1]?.id ?? null : null;
 
-        return {
+        const result: PaginatedResponse<NotifikasiWithPengirim> = {
             items,
             next_cursor: nextCursor,
             meta: {
@@ -91,30 +93,34 @@ export class NotificationRepository implements INotificationRepository {
                 total_pages: 1
             }
         };
+        return result;
     }
 
     async getAllByDateRange(startDate: Date, endDate: Date): Promise<NotifikasiWithPengirim[]> {
-        return this.findNotifikasi({
+        const notifikasi = await this.findNotifikasi({
             created_at: { gte: startDate, lt: endDate }
         });
+        return notifikasi;
     }
 
     async getByTypesAndDateRange(types: string[], startDate: Date, endDate: Date): Promise<NotifikasiWithPengirim[]> {
-        return this.findNotifikasi({
+        const notifikasi = await this.findNotifikasi({
             tipe: { in: types },
             created_at: { gte: startDate, lt: endDate }
         });
+        return notifikasi;
     }
 
     async getByUserAndDateRange(userId: string, startDate: Date, endDate: Date): Promise<NotifikasiWithPengirim[]> {
-        return this.findNotifikasi({
+        const notifikasi = await this.findNotifikasi({
             penerima_id: userId,
             created_at: { gte: startDate, lt: endDate }
         });
+        return notifikasi;
     }
 
     private findNotifikasi(where: Prisma.NotifikasiWhereInput): Promise<NotifikasiWithPengirim[]> {
-        return this.db.notifikasi.findMany({
+        const notifikasi = this.db.notifikasi.findMany({
             where,
             include: {
                 pengirim: {
@@ -126,5 +132,6 @@ export class NotificationRepository implements INotificationRepository {
                 { id: 'desc' }
             ]
         });
+        return notifikasi;
     }
 }

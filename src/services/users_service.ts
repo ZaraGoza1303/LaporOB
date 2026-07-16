@@ -26,7 +26,8 @@ export class UsersService implements IUsersService {
 
             const cachedData = await this.redis.get(cacheKey);
             if (cachedData) {
-                return JSON.parse(cachedData);
+                const parsedData = JSON.parse(cachedData);
+                return parsedData;
             }
 
             const users = await this.usersRepo.getAll(page, limit, query);
@@ -73,7 +74,7 @@ export class UsersService implements IUsersService {
 
             const totalLaporan = await this.usersRepo.countLaporanByUserId(userId);
 
-            return {
+            const profile: UserProfileResponse = {
                 id: user.id,
                 nama_lengkap: user.nama_lengkap,
                 username: user.username,
@@ -82,6 +83,7 @@ export class UsersService implements IUsersService {
                 profile_picture: resolveFileUrl(user.profile_picture),
                 total_laporan: totalLaporan || 0
             };
+            return profile;
         } catch (err) {
             throw handlePrismaError(err);
         }
@@ -89,7 +91,8 @@ export class UsersService implements IUsersService {
 
     async getByRole(nama_role: string): Promise<User[]> {
         try {
-            return await this.usersRepo.getByRole(nama_role);
+            const users = await this.usersRepo.getByRole(nama_role);
+            return users;
         } catch (err) {
             handlePrismaError(err);
         }

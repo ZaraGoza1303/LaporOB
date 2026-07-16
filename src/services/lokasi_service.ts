@@ -12,7 +12,7 @@ export class LokasiService implements ILokasiService {
     }
 
     private toResponse(item: LokasiWithLantai): LokasiRes {
-        return {
+        const response: LokasiRes = {
             id: item.id,
             nama_lokasi: item.nama_lokasi,
             jumlah_lantai: item.lantai ? item.lantai.length : 0,
@@ -23,6 +23,7 @@ export class LokasiService implements ILokasiService {
             created_at: item.created_at,
             updated_at: item.updated_at
         };
+        return response;
     }
 
     async getAll(): Promise<LokasiRes[]> {

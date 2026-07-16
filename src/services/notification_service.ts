@@ -92,7 +92,8 @@ export class NotificationService implements INotificationService {
                     this.notifRepo.getByTypesAndDateRange(adminTypes, startOfToday, now),
                     this.notifRepo.getByTypesAndDateRange(adminTypes, startOfYesterday, startOfToday),
                 ]);
-                return { hari_ini: hariIni, kemarin };
+                const result: NotifikasiGroupedResponse = { hari_ini: hariIni, kemarin };
+                return result;
             }
 
             const [hariIni, kemarin] = await Promise.all([
@@ -100,7 +101,8 @@ export class NotificationService implements INotificationService {
                 this.notifRepo.getByUserAndDateRange(userId, startOfYesterday, startOfToday),
             ]);
 
-            return { hari_ini: hariIni, kemarin };
+            const result: NotifikasiGroupedResponse = { hari_ini: hariIni, kemarin };
+            return result;
         } catch (err) {
             handlePrismaError(err);
         }

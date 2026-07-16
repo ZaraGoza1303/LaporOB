@@ -69,7 +69,8 @@ import { AppError } from '../utils/error';
 
             // Fallback fallback / mock url jika env belum diset lengkap
             console.warn("CLOUD_UPLOAD_URL tidak di-set di .env, mengembalikan mock URL.");
-            return `https://cloud-storage.mock/uploads/${Date.now()}-${file.originalname}`;
+            const mockUrl = `https://cloud-storage.mock/uploads/${Date.now()}-${file.originalname}`;
+            return mockUrl;
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Unknown error";
             console.error("Cloud storage upload error:", message);

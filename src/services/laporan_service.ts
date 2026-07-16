@@ -31,7 +31,7 @@ export class LaporanService implements ILaporanService {
 
             const history = item.histori_pekerjaan?.[0];
 
-            return {
+            const detail: MappedReportDetailRes = {
                 id: item.id,
                 kategori: item.kategori?.nama_kategori || "",
                 deskripsi_kendala: item.deskripsi_kendala || "",
@@ -46,6 +46,7 @@ export class LaporanService implements ILaporanService {
                 nama_ob: item.ob?.nama_lengkap || null,
                 created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
             };
+            return detail;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -53,7 +54,8 @@ export class LaporanService implements ILaporanService {
 
     async getReportDetailById(reportId: string): Promise<DetailReportPayload | null> {
         try {
-            return await this.laporanRepo.getReportDetailById(reportId);
+            const detail = await this.laporanRepo.getReportDetailById(reportId);
+            return detail;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -61,7 +63,8 @@ export class LaporanService implements ILaporanService {
 
     async getRecentActivities(limit: number): Promise<RecentActivityPayload[]> {
         try {
-            return await this.laporanRepo.getRecentActivities(limit);
+            const activities = await this.laporanRepo.getRecentActivities(limit);
+            return activities;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -69,7 +72,8 @@ export class LaporanService implements ILaporanService {
 
     async getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]> {
         try {
-            return await this.laporanRepo.getReportsByDateRange(startDate, endDate);
+            const reports = await this.laporanRepo.getReportsByDateRange(startDate, endDate);
+            return reports;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -77,7 +81,8 @@ export class LaporanService implements ILaporanService {
 
     async getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>> {
         try {
-            return await this.laporanRepo.getAllLaporan(page, limit, query);
+            const laporan = await this.laporanRepo.getAllLaporan(page, limit, query);
+            return laporan;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -106,9 +111,10 @@ export class LaporanService implements ILaporanService {
                 });
             });
 
-            return Array.from(ruanganMap.values())
+            const result = Array.from(ruanganMap.values())
                 .sort((a, b) => b.total_laporan - a.total_laporan)
                 .slice(0, limit);
+            return result;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -116,7 +122,8 @@ export class LaporanService implements ILaporanService {
 
     async countLaporanAktif(query: AdminLaporanQuery): Promise<number> {
         try {
-            return await this.laporanRepo.countLaporanAktif(query);
+            const count = await this.laporanRepo.countLaporanAktif(query);
+            return count;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -124,7 +131,8 @@ export class LaporanService implements ILaporanService {
 
     async getActivity(userId: string): Promise<UserActivityRes[]> {
         try {
-            return await this.laporanRepo.getActivity(userId);
+            const activity = await this.laporanRepo.getActivity(userId);
+            return activity;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -132,7 +140,8 @@ export class LaporanService implements ILaporanService {
 
     async insertReport(req: Laporan_karyawanCreateInput): Promise<string> {
         try {
-            return await this.laporanRepo.insertReport(req);
+            const reportId = await this.laporanRepo.insertReport(req);
+            return reportId;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -140,7 +149,8 @@ export class LaporanService implements ILaporanService {
 
     async getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>> {
         try {
-            return await this.laporanRepo.getReportsByUserId(userId, limit, cursor, search, status);
+            const reports = await this.laporanRepo.getReportsByUserId(userId, limit, cursor, search, status);
+            return reports;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -148,7 +158,8 @@ export class LaporanService implements ILaporanService {
 
     async getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>> {
         try {
-            return await this.laporanRepo.getReportsByObId(obId, limit, cursor, search, status);
+            const reports = await this.laporanRepo.getReportsByObId(obId, limit, cursor, search, status);
+            return reports;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -199,7 +210,8 @@ export class LaporanService implements ILaporanService {
 
     async getLaporanCountByUserId(userId: string): Promise<number> {
         try {
-            return await this.laporanRepo.getLaporanCountByUserId(userId);
+            const count = await this.laporanRepo.getLaporanCountByUserId(userId);
+            return count;
         } catch (err) {
             handlePrismaError(err);
         }

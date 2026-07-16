@@ -23,7 +23,8 @@ export class LocalStorageService implements IStorageService {
         await fs.writeFile(filePath, file.buffer);
 
         // Return relative path
-        return `uploads/${filename}`;
+        const relativePath = `uploads/${filename}`;
+        return relativePath;
     }
 
     async updateFile(newFile: Express.Multer.File, oldFileUrlOrKey: string): Promise<string> {

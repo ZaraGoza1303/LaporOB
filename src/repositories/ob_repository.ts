@@ -11,7 +11,7 @@ export class ObRepository implements IObRepository {
     }
 
     async getObById(obId: string): Promise<User | null> {
-        return this.db.user.findFirst({
+        const user = await this.db.user.findFirst({
             where: { id: obId },
             include: {
                 role: true,
@@ -22,7 +22,8 @@ export class ObRepository implements IObRepository {
                     take: 1
                 }
             }
-        })
+        });
+        return user;
     }
 
     async getTodayChecklists(obId: string, tanggal: Date): Promise<ChecklistHarianWithDetails[]> {
@@ -68,7 +69,8 @@ export class ObRepository implements IObRepository {
         });
 
         if (ownChecklists.length >= 2) {
-            return ownChecklists as unknown as ChecklistHarianWithDetails[];
+            const result = ownChecklists as unknown as ChecklistHarianWithDetails[];
+            return result;
         }
 
         const backupChecklists = await this.db.checklist_harian.findMany({
@@ -99,7 +101,8 @@ export class ObRepository implements IObRepository {
             take: 2 - ownChecklists.length
         });
 
-        return [...ownChecklists, ...backupChecklists] as unknown as ChecklistHarianWithDetails[];
+        const mergedChecklists = [...ownChecklists, ...backupChecklists] as unknown as ChecklistHarianWithDetails[];
+        return mergedChecklists;
     }
 
     async countTodayChecklists(obId: string, tanggal: Date): Promise<number> {
@@ -111,7 +114,7 @@ export class ObRepository implements IObRepository {
 
         const lokasiIds = await this.getActiveLokasiIds(obId, tanggal);
 
-        return this.db.checklist_harian.count({
+        const count = await this.db.checklist_harian.count({
             where: {
                 OR: [
                     { ob_id: obId },
@@ -130,6 +133,7 @@ export class ObRepository implements IObRepository {
                 }
             }
         });
+        return count;
     }
 
     async getReports(obId: string): Promise<LaporanKaryawanWithDetails[]> {
@@ -162,7 +166,8 @@ export class ObRepository implements IObRepository {
         });
 
         if (ownReports.length >= 3) {
-            return ownReports as unknown as LaporanKaryawanWithDetails[];
+            const result = ownReports as unknown as LaporanKaryawanWithDetails[];
+            return result;
         }
 
         const backupReports = await this.db.laporan_karyawan.findMany({
@@ -188,12 +193,13 @@ export class ObRepository implements IObRepository {
             take: 3 - ownReports.length
         });
 
-        return [...ownReports, ...backupReports] as unknown as LaporanKaryawanWithDetails[];
+        const mergedReports = [...ownReports, ...backupReports] as unknown as LaporanKaryawanWithDetails[];
+        return mergedReports;
     }
 
 
     async getActiveAssignments(obId: string, bulan: number, tahun: number): Promise<PenugasanWithLokasi[]> {
-        return this.db.penugasanOb.findMany({
+        const assignments = await this.db.penugasanOb.findMany({
             where: {
                 ob_id: obId,
                 bulan: bulan,
@@ -203,6 +209,7 @@ export class ObRepository implements IObRepository {
                 lokasi: true
             }
         });
+        return assignments;
     }
 
     async ambilLaporan(laporanId: string, obId: string): Promise<void> {
@@ -300,10 +307,11 @@ export class ObRepository implements IObRepository {
             })
         ]);
 
-        return {
+        const stats = {
             laporanDiterima,
             laporanSelesai
         };
+        return stats;
     }
 
     private async getActiveLokasiIds(obId: string, date: Date): Promise<string[]> {
@@ -318,6 +326,7 @@ export class ObRepository implements IObRepository {
             }
         });
 
-        return assignments.map(a => a.lokasi_id);
+        const lokasiIds = assignments.map(a => a.lokasi_id);
+        return lokasiIds;
     }
 }
