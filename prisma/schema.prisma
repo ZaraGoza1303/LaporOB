@@ -187,6 +187,7 @@ model Laporan_karyawan {
   admin_catatan     String?   @db.Text
   is_approved       Boolean   @default(false)
   is_kolaborasi_open Boolean   @default(false)
+  catatan_kolaborasi String?   @db.Text
   dikerjakan_at     DateTime? @db.Timestamp(6)
   selesai_at        DateTime? @db.Timestamp(6)
   dibatalkan_at     DateTime? @db.Timestamp(6)

@@ -14,5 +14,5 @@ export interface IObService {
     getDetailRiwayat(obId: string, laporanId: string): Promise<MappedReportDetailRes>;
     getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }>;
     getProfile(obId: string): Promise<ObProfileResponse>;
-    toggleKolaborasi(laporanId: string, obId: string, isOpen: boolean): Promise<void>;
+    toggleKolaborasi(laporanId: string, obId: string, isOpen: boolean, catatan?: string): Promise<void>;
 }

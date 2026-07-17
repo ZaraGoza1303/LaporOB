@@ -188,13 +188,14 @@ export class ObController {
 
             const validateBody = z.object({
                 is_open: z.boolean({ message: "is_open harus boolean" }),
+                catatan: z.string().optional(),
             }).safeParse(req.body);
             if (!validateBody.success) {
                 const formattedErr = validateBody.error.flatten().fieldErrors;
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
 
-            await this.obService.toggleKolaborasi(laporanId, obId, validateBody.data.is_open);
+            await this.obService.toggleKolaborasi(laporanId, obId, validateBody.data.is_open, validateBody.data.catatan);
             return res.status(200).json(sendSuccessfullResponse("Status kolaborasi berhasil diubah"));
         } catch (err: unknown) {
             if (err instanceof AppError) {
