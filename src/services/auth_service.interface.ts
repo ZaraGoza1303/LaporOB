@@ -1,4 +1,4 @@
-import type { LoginReq, LoginRes } from "../dto/auth.js";
+import type { LoginReq, LoginRes, ChangePasswordReq } from "../dto/auth.js";
 import type { UserToken } from "../generated/prisma/client.js";
 
 export interface IAuthService {
@@ -6,4 +6,7 @@ export interface IAuthService {
     validateActivationToken(token: string): Promise<UserToken>;
     activateAccount(token: string, password: string): Promise<void>;
     logout(token: string): Promise<void>;
+    forgotPassword(email: string): Promise<void>;
+    resetPassword(token: string, password: string): Promise<void>;
+    changePassword(userId: string, req: ChangePasswordReq): Promise<void>;
 }

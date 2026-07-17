@@ -14,21 +14,18 @@ export const CreateUserSchema = z.object({
   role_id: z.string().trim().uuid({ message: 'Format role_id harus UUID yang valid' }),
 });
 
-export const UpdateUserSchema = z.object({
-  nama_lengkap: z.string().trim().min(1, { message: 'Nama lengkap wajib diisi' }).optional(),
-  username: z.string().trim().min(3, { message: 'Username minimal 3 karakter' }).max(50, { message: 'Username maksimal 50 karakter' }).optional(),
-  email: z.string().trim().email().optional(),
+export const UpdateUserSchema = CreateUserSchema.extend({
   password: z.string().trim().min(6, { message: 'Password minimal 6 karakter' }).optional(),
-  role_id: z.string().trim().uuid({ message: 'Format role_id harus UUID yang valid' }).optional(),
-});
+  is_active: z.boolean().optional(),
+}).partial();
 
 export const UpdateProfileSchema = CreateUserSchema.pick({
   nama_lengkap: true,
 }).partial();
 
-export interface CreateUserRes {
-  activationUrl: string,
-}
+// export interface CreateUserRes {
+//   activationUrl: string,
+// }
 
 export interface UserHomeRes {
   karyawan: {

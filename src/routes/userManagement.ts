@@ -11,6 +11,7 @@ adminUserManagementRouter.use(requireRole(USER_ROLE.ADMIN));
 // user crud
 adminUserManagementRouter.get("/user", (req, res) => usersController.getAll(req, res));
 adminUserManagementRouter.post("/user", (req, res) => usersController.create(req, res));
+adminUserManagementRouter.get("/role", (req, res) => usersController.getRoles(req, res));
 
 // ob
 adminUserManagementRouter.get("/user/all-ob", (req, res) => usersController.getAllOb(req, res));
@@ -20,6 +21,7 @@ adminUserManagementRouter.get("/user/:user_id/performance/karyawan", (req, res) 
 
 adminUserManagementRouter.get("/user/:user_id", (req, res) => usersController.getByID(req, res));
 adminUserManagementRouter.patch("/user/:user_id", (req, res) => usersController.update(req, res));
+adminUserManagementRouter.post("/user/:user_id/renew-token", (req, res) => usersController.renewActivationToken(req, res));
 adminUserManagementRouter.delete("/user/:user_id", (req, res) => usersController.delete(req, res));
 
 export default adminUserManagementRouter;

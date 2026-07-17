@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aktivasi Akun</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f5f7; font-family: Arial, Helvetica, sans-serif;">
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7; padding:40px 0;">
+    <tr>
+      <td align="center">
+
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:10px; overflow:hidden; border:1px solid #e5e7eb;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#ffffff; padding:28px 32px; text-align:center; border-bottom:1px solid #e5e7eb;">
+              <% if (typeof logoUrl !== 'undefined' && logoUrl) { %>
+                <img src="<%= logoUrl %>" alt="<%= appName %>" width="140" style="display:block; margin:0 auto;" />
+              <% } else { %>
+                <span style="color:#111827; font-size:22px; font-weight:bold; letter-spacing:0.5px;">
+                  <%= appName %>
+                </span>
+              <% } %>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px 32px; color:#374151;">
+              <h1 style="color:#111827; font-size:20px; margin:0 0 16px 0;">
+                Halo, <%= userName %>
+              </h1>
+
+              <p style="font-size:14px; line-height:22px; margin:0 0 16px 0; color:#4b5563;">
+                Terima kasih sudah mendaftar di <strong style="color:#111827;"><%= appName %></strong>.
+                Sebelum bisa mulai menggunakan akunmu, kamu perlu mengaktifkannya terlebih dahulu
+                dengan menekan tombol di bawah ini.
+              </p>
+
+              <!-- Button -->
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0;">
+                <tr>
+                  <td align="center" style="border-radius:6px; background-color:#1d4ed8;">
+                    <a href="<%= activationUrl %>"
+                       target="_blank"
+                       style="display:inline-block; padding:14px 32px; font-size:14px; font-weight:bold; color:#ffffff; text-decoration:none; border-radius:6px; background-color:#1d4ed8;">
+                      Aktifkan Akun Saya
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <% if (typeof expiresInHours !== 'undefined' && expiresInHours) { %>
+                <p style="font-size:13px; line-height:20px; color:#6b7280; margin:0 0 8px 0;">
+                  Link ini akan kedaluwarsa dalam <strong style="color:#4b5563;"><%= expiresInHours %> jam</strong>.
+                </p>
+              <% } %>
+
+              <p style="font-size:13px; line-height:20px; color:#6b7280; margin:24px 0 0 0;">
+                Kalau kamu tidak merasa mendaftar akun ini, abaikan saja email ini.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f9fafb; padding:20px 32px; text-align:center; border-top:1px solid #e5e7eb;">
+              <p style="font-size:11px; color:#9ca3af; margin:0 0 4px 0;">
+                &copy; <%= new Date().getFullYear() %> <%= appName %>. Semua hak dilindungi.
+              </p>
+              <% if (typeof companyName !== 'undefined' && companyName) { %>
+                <p style="font-size:11px; color:#b0b6bf; margin:0;">
+                  Produk dari <%= companyName %>
+                </p>
+              <% } %>
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

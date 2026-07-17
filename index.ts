@@ -49,6 +49,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '5mb' }));
 app.use(setBaseUrlMiddleware);
+app.set('trust proxy', 1);
 
 app.use('/uploads', express.static('uploads'));
 app.use(upload.any());
