@@ -4,17 +4,29 @@ import type { TugasCreateInput, TugasUpdateInput } from "../generated/prisma/mod
 import type { ITugasRepository } from "../repositories/tugas_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { ITugasService } from "./tugas_service.interface.js";
+import type { IRedisClient } from "../database/redis.interface.js"
 
 export class TugasService implements ITugasService {
     private tugasRepo: ITugasRepository;
+    private redis: IRedisClient
 
-    constructor(tugasRepo: ITugasRepository) {
+    constructor(tugasRepo: ITugasRepository, redis: IRedisClient) {
         this.tugasRepo = tugasRepo;
+        this.redis = redis
     }
 
     async getAll(kategoriId?: string): Promise<Tugas[]> {
         try {
+            const cacheKey = `tugas:all:${kategoriId ?? "all"}`
+
+            const cachedData = await this.redis.get(cacheKey)
+            if (cachedData) {
+                const parsedData = JSON.parse(cachedData)
+                return parsedData
+            }
+            
             const data = await this.tugasRepo.getAll(kategoriId);
+            await this.redis.setEx(cacheKey, 300, JSON.stringify(data))
             return data;
         } catch (err) {
             handlePrismaError(err)
@@ -41,6 +53,8 @@ export class TugasService implements ITugasService {
             }
 
             await this.tugasRepo.insert(tugasReq);
+            await this.redis.del(`tugas:all:${req.kategori_id}`);
+            await this.redis.del("tugas:all:all");
         } catch (err) {
             handlePrismaError(err)
         }
@@ -54,6 +68,9 @@ export class TugasService implements ITugasService {
             if (req.is_active !== undefined) tugasReq.is_active = req.is_active;
 
             await this.tugasRepo.update(tugasId, tugasReq);
+            if (req.kategori_id) await this.redis.del(`tugas:all:${req.kategori_id}`);
+            await this.redis.del("tugas:all:all");
+
         } catch (err) {
             handlePrismaError(err)
         }
@@ -62,6 +79,7 @@ export class TugasService implements ITugasService {
     async delete(tugasId: string): Promise<void> {
         try {
             await this.tugasRepo.delete(tugasId);
+            await this.redis.del("tugas:all:all");
         } catch (err) {
             handlePrismaError(err)
         }
