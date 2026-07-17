@@ -11,16 +11,20 @@ import { resolveFileUrl } from "../utils/url.js";
 import type { IAdminService } from "./admin_service.interface.js";
 import type { Laporan_karyawan } from "../generated/prisma/client.js";
 import type { DailyChecklistObReport } from "../repositories/admin_repository.interface.js";
+import type { IRedisClient } from "../database/redis.interface.js";
+
 
 export class AdminService implements IAdminService {
     private adminRepo: IAdminRepository;
     private laporanService: ILaporanService;
     private usersService: IUsersService;
+    private redis: IRedisClient;
 
-    constructor(adminRepo: IAdminRepository, laporanService: ILaporanService, usersService: IUsersService) {
+    constructor(adminRepo: IAdminRepository, laporanService: ILaporanService, usersService: IUsersService, redis: IRedisClient) {
         this.adminRepo = adminRepo;
         this.laporanService = laporanService;
         this.usersService = usersService;
+        this.redis = redis
     }
 
     async getUserStats(): Promise<UserStatsRes> {
@@ -88,6 +92,12 @@ export class AdminService implements IAdminService {
 
     public async getDashboardData(query: GetDashboardQuery): Promise<DashboardMainResponse> {
         const { period } = query;
+        const cacheKey = `admin:dashboard:${period}`
+        const cachedData = await this.redis.get(cacheKey)
+        if (cachedData) {
+            const parsedData = JSON.parse(cachedData)
+            return parsedData
+        }
 
         const { current_start, current_end, previous_start, previous_end } = calculateDateRanges(period);
 
@@ -123,7 +133,7 @@ export class AdminService implements IAdminService {
         }));
 
         const dashboard: DashboardMainResponse = { kpi, bar_chart, pie_chart, recent_activities, daily_checklist_ob: daily_checklist_ob_mapped };
-
+        await this.redis.setEx(cacheKey, 300, JSON.stringify(dashboard))
         return dashboard;
     }
 

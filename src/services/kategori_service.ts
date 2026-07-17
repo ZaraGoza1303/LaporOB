@@ -4,17 +4,30 @@ import type { KategoriCreateInput, KategoriUpdateInput } from "../generated/pris
 import type { IKategoriRepository } from "../repositories/kategori_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { IKategoriService } from "./kategori_service.interface.js";
+import type { IRedisClient } from "../database/redis.interface.js";
 
 export class KategoriService implements IKategoriService {
     private kategoriRepo: IKategoriRepository;
+    private redis: IRedisClient;
 
-    constructor(kategoriRepo: IKategoriRepository) {
+    constructor(kategoriRepo: IKategoriRepository, redis: IRedisClient) {
         this.kategoriRepo = kategoriRepo;
+        this.redis = redis;
     }
 
     async getAll(): Promise<Kategori[]> {
         try {
+            const cacheKey = "kategori:all"
+
+            const cachedData = await this.redis.get(cacheKey)
+            if (cachedData) {
+                const parsedData = JSON.parse(cachedData)
+                return parsedData
+            }
+
             const data = await this.kategoriRepo.getAll();
+
+            await this.redis.setEx(cacheKey, 300, JSON.stringify(data))
             return data;
         } catch (err) {
             handlePrismaError(err)
@@ -49,6 +62,7 @@ export class KategoriService implements IKategoriService {
             }
 
             await this.kategoriRepo.update(kategoriId, kategoriReq);
+            await this.redis.del("kategori:all");
         } catch (err) {
             handlePrismaError(err) 
         }
@@ -57,6 +71,7 @@ export class KategoriService implements IKategoriService {
     async delete(kategoriId: string): Promise<void> {
         try {
             await this.kategoriRepo.delete(kategoriId);
+            await this.redis.del("kategori:all");
         } catch (err) {
             handlePrismaError(err)
         }

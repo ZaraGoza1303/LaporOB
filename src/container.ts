@@ -69,12 +69,12 @@ const userSessionRepository = new UserSessionRepository(prisma);
 const storageService = StorageServiceFactory.getProvider();
 
 //  SERVICES 
-const kategoriService = new KategoriService(kategoriRepository);
-const lantaiService = new LantaiService(lantaiRepository);
+const kategoriService = new KategoriService(kategoriRepository, redisClient as unknown as IRedisClient);
+const lantaiService = new LantaiService(lantaiRepository, redisClient as unknown as IRedisClient);
 const laporanService = new LaporanService(laporanRepository);
-const lokasiService = new LokasiService(lokasiRepository);
-const ruanganService = new RuanganService(ruanganRepository);
-const tugasService = new TugasService(tugasRepository);
+const lokasiService = new LokasiService(lokasiRepository, redisClient as unknown as IRedisClient);
+const ruanganService = new RuanganService(ruanganRepository, redisClient as unknown as IRedisClient);
+const tugasService = new TugasService(tugasRepository, redisClient as unknown as IRedisClient);
 const usersService = new UsersService(usersRepository, redisClient as unknown as IRedisClient);
 const notificationService = new NotificationService(notificationRepository);
 const checklistHarianService = new ChecklistHarianService(checklistHarianRepository, notificationService, usersService);
@@ -82,7 +82,7 @@ const sessionService = new UserSessionService(userSessionRepository, redisClient
 const authService = new AuthService(authRepository, usersService, sessionService);
 const obService = new ObService(obRepository, laporanService, usersService, notificationService);
 const kolaborasiService = new KolaborasiService(kolaborasiRepository, laporanService, notificationService);
-const adminService = new AdminService(adminRepository, laporanService, usersService);
+const adminService = new AdminService(adminRepository, laporanService, usersService, redisClient as unknown as IRedisClient);
 const karyawanService = new KaryawanService(usersService, laporanService, kategoriService, notificationService);
 const profileService = new ProfileService(usersService, karyawanService, obService);
 

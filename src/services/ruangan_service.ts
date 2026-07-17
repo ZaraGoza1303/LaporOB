@@ -4,17 +4,28 @@ import type { RuanganCreateInput, RuanganUpdateInput } from "../generated/prisma
 import type { IRuanganRepository } from "../repositories/ruangan_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { IRuanganService } from "./ruangan_service.interface.js";
+import type { IRedisClient } from "../database/redis.interface.js";
 
 export class RuanganService implements IRuanganService {
     private ruanganRepo: IRuanganRepository;
-
-    constructor(ruanganRepo: IRuanganRepository) {
+    private redis: IRedisClient;
+    constructor(ruanganRepo: IRuanganRepository, redis: IRedisClient) {
         this.ruanganRepo = ruanganRepo
+        this.redis = redis
     }
 
     async getAll(lantaiId?: string): Promise<Ruangan[]> {
         try {
+            const cacheKey = `ruangan:all:${lantaiId ?? "all"}`
+
+            const cachedData = await this.redis.get(cacheKey)
+            if (cachedData) {
+                const parsedData = JSON.parse(cachedData)
+                return parsedData
+            }
+
             const data = await this.ruanganRepo.getAll(lantaiId);
+            await this.redis.setEx(cacheKey, 300, JSON.stringify(data))
             return data;
         } catch (err) {
             handlePrismaError(err)
@@ -40,6 +51,9 @@ export class RuanganService implements IRuanganService {
             }
 
             await this.ruanganRepo.insert(ruanganReq)
+            await this.redis.del(`ruangan:all:${req.lantai_id}`);
+            await this.redis.del("ruangan:all:all");
+
         } catch (err) {
             handlePrismaError(err)
         }
@@ -51,6 +65,8 @@ export class RuanganService implements IRuanganService {
             if (req.nama !== undefined) ruanganReq.nama = req.nama
 
             await this.ruanganRepo.update(lantaiId, ruanganId, ruanganReq)
+            if (lantaiId) await this.redis.del(`ruangan:all:${lantaiId}`);
+            await this.redis.del("ruangan:all:all");
         } catch (err) {
             handlePrismaError(err)
         }
@@ -59,6 +75,8 @@ export class RuanganService implements IRuanganService {
     async delete(lantaiId: string | undefined, ruanganId: string): Promise<void> {
         try {
             await this.ruanganRepo.delete(lantaiId, ruanganId);
+            if (lantaiId) await this.redis.del(`ruangan:all:${lantaiId}`);
+            await this.redis.del("ruangan:all:all");
         } catch (err) {
             handlePrismaError(err)
         }

@@ -3,12 +3,15 @@ import type { Lantai } from "../generated/prisma/client.js";
 import type { ILokasiRepository } from "../repositories/lokasi_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { ILokasiService } from "./lokasi_service.interface.js";
+import type { IRedisClient } from "../database/redis.interface.js"
 
 export class LokasiService implements ILokasiService {
     private lokasiRepo: ILokasiRepository;
+    private redis: IRedisClient;
 
-    constructor(lokasiRepo: ILokasiRepository) {
+    constructor(lokasiRepo: ILokasiRepository, redis: IRedisClient) {
         this.lokasiRepo = lokasiRepo;
+        this.redis = redis;
     }
 
     private toResponse(item: LokasiWithLantai): LokasiRes {
@@ -28,8 +31,20 @@ export class LokasiService implements ILokasiService {
 
     async getAll(): Promise<LokasiRes[]> {
         try {
+            const cacheKey = "lokasi:all"
+
+            const cachedData = await this.redis.get(cacheKey);
+        if (cachedData){
+            const parsedData = JSON.parse(cachedData)
+            return parsedData;
+        }
+
+
             const data = await this.lokasiRepo.getAll();
-            return data.map(this.toResponse);
+            const result = data.map(this.toResponse);
+
+            await this.redis.setEx(cacheKey, 300, JSON.stringify(result))
+            return result
         } catch (err) {
             handlePrismaError(err);
         }
@@ -63,6 +78,7 @@ export class LokasiService implements ILokasiService {
             if (req.jumlah_lantai !== undefined) updateParams.jumlah_lantai = req.jumlah_lantai;
             
             await this.lokasiRepo.update(lokasiId, updateParams);
+            await this.redis.del("lokasi:all");
         } catch (err) {
             handlePrismaError(err);
         }
@@ -71,6 +87,7 @@ export class LokasiService implements ILokasiService {
     async delete(lokasiId: string): Promise<void> {
         try {
             await this.lokasiRepo.delete(lokasiId);
+            await this.redis.del("lokasi:all");
         } catch (err) {
             handlePrismaError(err);
         }
