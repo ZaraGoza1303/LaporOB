@@ -63,7 +63,7 @@ export interface ILaporanRepository {
     getActivity(userId: string): Promise<UserActivityRes[]>;
     insertReport(req: Laporan_karyawanCreateInput): Promise<string>;
     patchLaporan(laporanId: string, data: Prisma.Laporan_karyawanUncheckedUpdateInput): Promise<void>;
-    updateKolaborasiOpen(laporanId: string, isOpen: boolean): Promise<void>;
+    updateKolaborasiOpen(laporanId: string, isOpen: boolean, catatan?: string): Promise<void>;
     getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     getReportDetailById(reportId: string): Promise<DetailReportPayload | null>;

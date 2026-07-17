@@ -44,6 +44,8 @@ export class LaporanService implements ILaporanService {
                 nomor_lantai: item.lantai?.nomor_lantai || 0,
                 nama_karyawan: item.pelapor?.nama_lengkap || "",
                 nama_ob: item.ob?.nama_lengkap || null,
+                is_kolaborasi_open: item.is_kolaborasi_open,
+                catatan_kolaborasi: item.catatan_kolaborasi,
                 created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
             };
             return detail;
@@ -200,9 +202,9 @@ export class LaporanService implements ILaporanService {
         }
     }
 
-    async toggleKolaborasiOpen(laporanId: string, isOpen: boolean): Promise<void> {
+    async toggleKolaborasiOpen(laporanId: string, isOpen: boolean, catatan?: string): Promise<void> {
         try {
-            await this.laporanRepo.updateKolaborasiOpen(laporanId, isOpen);
+            await this.laporanRepo.updateKolaborasiOpen(laporanId, isOpen, catatan);
         } catch (err) {
             handlePrismaError(err);
         }

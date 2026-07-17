@@ -159,6 +159,8 @@ export interface MappedReportDetailRes {
   nomor_lantai: number;
   nama_karyawan: string;
   nama_ob: string | null;
+  is_kolaborasi_open: boolean;
+  catatan_kolaborasi: string | null;
   created_at: string;
 }
 

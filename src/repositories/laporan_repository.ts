@@ -52,10 +52,13 @@ export class LaporanRepository implements ILaporanRepository {
         });
     }
 
-    async updateKolaborasiOpen(laporanId: string, isOpen: boolean): Promise<void> {
+    async updateKolaborasiOpen(laporanId: string, isOpen: boolean, catatan?: string): Promise<void> {
         await this.db.laporan_karyawan.update({
             where: { id: laporanId },
-            data: { is_kolaborasi_open: isOpen },
+            data: { 
+                is_kolaborasi_open: isOpen,
+                catatan_kolaborasi: isOpen ? (catatan || null) : null
+            },
         });
     }
 

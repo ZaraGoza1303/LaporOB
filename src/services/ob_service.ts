@@ -225,13 +225,13 @@ export class ObService implements IObService {
         }
     }
 
-    async toggleKolaborasi(laporanId: string, obId: string, isOpen: boolean): Promise<void> {
+    async toggleKolaborasi(laporanId: string, obId: string, isOpen: boolean, catatan?: string): Promise<void> {
         try {
             const laporan = await this.laporanService.getReportDetailById(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
             if (laporan.ob_id !== obId) throw new AppError("Hanya OB pemilik laporan yang bisa mengatur kolaborasi", 403);
 
-            await this.laporanService.toggleKolaborasiOpen(laporanId, isOpen);
+            await this.laporanService.toggleKolaborasiOpen(laporanId, isOpen, catatan);
 
             if (isOpen) {
                 const obUsers = await this.usersService.getByRole(USER_ROLE.OB);
@@ -322,6 +322,8 @@ export class ObService implements IObService {
                 nomor_lantai: item.lantai?.nomor_lantai || 0,
                 nama_karyawan: item.pelapor?.nama_lengkap || "",
                 nama_ob: item.ob?.nama_lengkap || null,
+                is_kolaborasi_open: item.is_kolaborasi_open,
+                catatan_kolaborasi: item.catatan_kolaborasi,
                 created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
             };
 
