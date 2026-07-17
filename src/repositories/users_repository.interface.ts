@@ -1,6 +1,6 @@
 import type { UserSearchQuery } from "../dto/admin.js";
 import type { PaginatedResponse } from "../dto/response.js";
-import type { User } from "../generated/prisma/client.js";
+import type { User, Role, Prisma } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
 
 export type ProfileUser = User & {
@@ -19,6 +19,7 @@ export type UserWithRoleAndToken = User & {
 export interface IUsersRepository {
     getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>>
     getByID(userId: string): Promise<UserWithRoleAndToken | null>
+    getByEmail(email: string): Promise<User | null>
     insert(req: UserCreateInput): Promise<User>;
     update(userId: string, req: UserUpdateInput): Promise<void>;
     delete(userId: string): Promise<void>;
@@ -27,4 +28,6 @@ export interface IUsersRepository {
     getUserWithRoleById(userId: string): Promise<ProfileUser | null>;
     getByRole(nama_role: string): Promise<User[]>;
     countLaporanByUserId(userId: string): Promise<number>;
+    getRoles(): Promise<Role[]>;
+    transaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

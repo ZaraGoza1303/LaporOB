@@ -118,8 +118,8 @@ export class UsersController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
             }
 
-            const response = await this.usersService.create(validate.data)
-            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data user", response.activationUrl));
+            await this.usersService.create(validate.data)
+            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data user, link aktivasi sudah dikirim ke email user."));
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
@@ -362,6 +362,38 @@ export class UsersController {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
             return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server"));
+        }
+    }
+
+    async getRoles(req: Request, res: Response) {
+        try {
+            const response = await this.usersService.getRoles();
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data role", response));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message))
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data role"))
+        }
+    }
+
+    async renewActivationToken(req: Request, res: Response) {
+        try {
+            const validateParams = UserIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formatedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
+            }
+
+            const userId = validateParams.data.user_id;
+            await this.usersService.renewActivationToken(userId);
+
+            return res.status(200).json(sendSuccessfullResponse("Berhasil memperbarui token aktivasi, link aktivasi baru sudah dikirim ke email user."));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal memperbarui token aktivasi"));
         }
     }
 }

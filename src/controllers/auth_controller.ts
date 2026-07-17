@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { ActivateAccountSchema, LoginSchema, TokenQuerySchema } from "../dto/auth.js";
+import { ActivateAccountSchema, LoginSchema, TokenQuerySchema, ForgotPasswordSchema, ResetPasswordSchema, ChangePasswordSchema } from "../dto/auth.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { IAuthService } from "../services/auth_service.interface.js";
 import { AppError } from "../utils/error.js";
@@ -44,6 +44,7 @@ export class AuthController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
             const token = validateQuery.data.token;
+            
             await this.authService.validateActivationToken(token);
             return res.status(200).json(sendSuccessfullResponse("Token valid"));
         } catch (err: unknown) {
@@ -99,6 +100,84 @@ export class AuthController {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
             return res.status(500).json(sendErrorResponse("Logout gagal"));
+        }
+    }
+
+    async forgotPassword(req: Request, res: Response) {
+        try {
+            if (!req.body) {
+                return res.status(400).json(sendErrorResponse("Request body empty"));
+            }
+
+            const validate = ForgotPasswordSchema.safeParse(req.body);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            await this.authService.forgotPassword(validate.data.email);
+            return res.status(200).json(sendSuccessfullResponse("Link reset password telah dikirim ke email Anda"));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal memproses permintaan reset password"));
+        }
+    }
+
+    async resetPassword(req: Request, res: Response) {
+        try {
+            const validateQuery = TokenQuerySchema.safeParse(req.query);
+            if (!validateQuery.success) {
+                const formattedErr = validateQuery.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const token = validateQuery.data.token;
+
+            if (!req.body) {
+                return res.status(400).json(sendErrorResponse("Request body empty"));
+            }
+
+            const validate = ResetPasswordSchema.safeParse(req.body);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            await this.authService.resetPassword(token, validate.data.password);
+            return res.status(200).json(sendSuccessfullResponse("Password berhasil diubah, silakan login"));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Reset password gagal"));
+        }
+    }
+
+    async changePassword(req: Request, res: Response) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json(sendErrorResponse("Unauthorized"));
+            }
+
+            if (!req.body) {
+                return res.status(400).json(sendErrorResponse("Request body empty"));
+            }
+
+            const validate = ChangePasswordSchema.safeParse(req.body);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            await this.authService.changePassword(userId, validate.data);
+            return res.status(200).json(sendSuccessfullResponse("Password berhasil diubah"));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengubah password"));
         }
     }
 }

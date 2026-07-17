@@ -45,6 +45,7 @@ import { KolaborasiService } from "./services/kolaborasi_service.js";
 import { KolaborasiController } from "./controllers/kolaborasi_controller.js";
 import redisClient from "./database/redis.js";
 import type { IRedisClient } from "./database/redis.interface.js";
+import { EmailServiceFactory } from "./services/email_service.factory.js";
 
 // PRISMA
 const prisma = new PrismaClient();
@@ -68,6 +69,9 @@ const userSessionRepository = new UserSessionRepository(prisma);
 //  STORAGE 
 const storageService = StorageServiceFactory.getProvider();
 
+// EMAIL
+const emailService = EmailServiceFactory.getProvider();
+
 //  SERVICES 
 const kategoriService = new KategoriService(kategoriRepository, redisClient as unknown as IRedisClient);
 const lantaiService = new LantaiService(lantaiRepository, redisClient as unknown as IRedisClient);
@@ -75,11 +79,11 @@ const laporanService = new LaporanService(laporanRepository);
 const lokasiService = new LokasiService(lokasiRepository, redisClient as unknown as IRedisClient);
 const ruanganService = new RuanganService(ruanganRepository, redisClient as unknown as IRedisClient);
 const tugasService = new TugasService(tugasRepository, redisClient as unknown as IRedisClient);
-const usersService = new UsersService(usersRepository, redisClient as unknown as IRedisClient);
+const usersService = new UsersService(usersRepository, redisClient as unknown as IRedisClient, emailService);
 const notificationService = new NotificationService(notificationRepository);
 const checklistHarianService = new ChecklistHarianService(checklistHarianRepository, notificationService, usersService);
 const sessionService = new UserSessionService(userSessionRepository, redisClient as unknown as IRedisClient);
-const authService = new AuthService(authRepository, usersService, sessionService);
+const authService = new AuthService(authRepository, usersService, sessionService, emailService);
 const obService = new ObService(obRepository, laporanService, usersService, notificationService);
 const kolaborasiService = new KolaborasiService(kolaborasiRepository, laporanService, notificationService);
 const adminService = new AdminService(adminRepository, laporanService, usersService, redisClient as unknown as IRedisClient);

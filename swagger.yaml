@@ -330,6 +330,51 @@ components:
           format: password
           description: Konfirmasi password, harus sama dengan password
 
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email akun user yang terdaftar
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - password
+        - confirmPassword
+      properties:
+        password:
+          type: string
+          format: password
+          description: Password baru minimal 6 karakter
+        confirmPassword:
+          type: string
+          format: password
+          description: Konfirmasi password baru, harus sama dengan password
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - oldPassword
+        - newPassword
+        - confirmNewPassword
+      properties:
+        oldPassword:
+          type: string
+          format: password
+          description: Password lama
+        newPassword:
+          type: string
+          format: password
+          description: Password baru minimal 6 karakter
+        confirmNewPassword:
+          type: string
+          format: password
+          description: Konfirmasi password baru, harus sama dengan newPassword
+
     PaginationMeta:
       type: object
       properties:
@@ -497,6 +542,108 @@ paths:
                     example: Logout berhasil
         '401':
           description: Session tidak valid / Token expired
+
+  /api/auth/forgot-password:
+    post:
+      tags:
+        - Auth
+      summary: Lupa password - Request Reset Link (Publik)
+      description: Mengirim email berisi token/URL reset password jika email terdaftar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: Request reset diproses (link terkirim)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Link reset password telah dikirim ke email Anda
+        '404':
+          description: Email tidak terdaftar
+        '500':
+          description: Gagal memproses permintaan reset password
+
+  /api/auth/reset-password:
+    post:
+      tags:
+        - Auth
+      summary: Lupa password - Reset Password (Publik)
+      description: Mengubah password lama dengan password baru menggunakan token dari email.
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Token reset password dari email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password berhasil diubah
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Password berhasil diubah, silakan login
+        '401':
+          description: Token tidak valid / kadaluwarsa / sudah digunakan
+        '400':
+          description: Validation Failed (password tidak cocok atau kurang dari 6 karakter)
+
+  /api/auth/change-password:
+    post:
+      tags:
+        - Auth
+      summary: Ubah password (Terautentikasi)
+      description: Mengubah password untuk user yang sudah login.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password berhasil diubah
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Password berhasil diubah
+        '400':
+          description: Password lama salah / validation failed
+        '401':
+          description: Unauthorized
 
 # USER / PROFILE
   /api/user/profile:
@@ -727,7 +874,6 @@ paths:
         '500':
           description: Terjadi kesalahan, tidak bisa mengambil laporan
 
-  /api/ob/laporan/{laporan_id}:
     post:
       tags:
         - OB
@@ -1073,6 +1219,44 @@ paths:
           description: Laporan tidak ditemukan
 
 # ADMIN
+  /api/admin/role:
+    get:
+      tags:
+        - Admin
+      summary: 'List semua role (Admin)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar role berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil mendapatkan data role
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                          example: dda2c23a-732c-41c5-80ee-b0818345fa25
+                        nama_role:
+                          type: string
+                          example: admin
+                        created_at:
+                          type: string
+                          format: date-time
+                          example: '2026-07-17T11:26:38.000Z'
+
   /api/admin/user:
     get:
       tags:
@@ -1135,6 +1319,18 @@ paths:
       responses:
         '201':
           description: User berhasil dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil menambahkan data user, link aktivasi sudah dikirim ke email user.
+
 
   /api/admin/user/all-ob:
     get:
@@ -1503,6 +1699,8 @@ paths:
                 profile_picture:
                   type: string
                   format: binary
+                is_active:
+                  type: boolean
       responses:
         '200':
           description: User berhasil diupdate
@@ -1522,6 +1720,41 @@ paths:
       responses:
         '200':
           description: User berhasil dihapus
+
+  /api/admin/user/{user_id}/renew-token:
+    post:
+      tags:
+        - Admin
+      summary: 'Perpanjang token aktivasi user (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Token aktivasi berhasil diperbarui dan dikirim ulang ke email user.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil memperbarui token aktivasi, link aktivasi baru sudah dikirim ke email user.
+        '400':
+          description: Akun sudah diaktivasi
+        '404':
+          description: User tidak ditemukan
+        '500':
+          description: Gagal memperbarui token aktivasi
 
   /api/admin/user/{user_id}/performance/ob:
     get:
@@ -2254,7 +2487,6 @@ paths:
                 - kategori_id
                 - lokasi_id
                 - lantai_id
-                - ob_id
               properties:
                 tugas_id:
                   type: string

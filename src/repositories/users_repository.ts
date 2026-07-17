@@ -1,6 +1,6 @@
 import type { UserSearchQuery } from "../dto/admin.js";
 import type { PaginatedResponse } from "../dto/response.js";
-import { Prisma, type PrismaClient, type User } from "../generated/prisma/client.js";
+import { Prisma, type PrismaClient, type User, type Role } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
 import type { IUsersRepository, ProfileUser, UserWithRoleAndToken } from "./users_repository.interface.js";
 
@@ -71,6 +71,13 @@ export class UsersRepository implements IUsersRepository {
         return user;
     }
 
+    async getByEmail(email: string): Promise<User | null> {
+        const user = await this.db.user.findFirst({
+            where: { email, is_deleted: false }
+        });
+        return user;
+    }
+
     async insert(req: UserCreateInput): Promise<User> {
         const user = await this.db.user.create({ data: req });
         return user;
@@ -133,5 +140,15 @@ export class UsersRepository implements IUsersRepository {
         where: { pelapor_id: userId }
     });
     return count;
-}
+   }
+
+   async getRoles(): Promise<Role[]> {
+       return this.db.role.findMany({
+           orderBy: { nama_role: 'asc' }
+       });
+   }
+
+   async transaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+       return this.db.$transaction(fn);
+   }
 }
