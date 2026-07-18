@@ -28,44 +28,28 @@ export class UsersService implements IUsersService {
         try {
             const cacheKey = `users:all:page=${page}:limit=${limit}:query=${JSON.stringify(query)}`;
 
-            const cachedData = await this.redis.get(cacheKey);
+            const cachedData = await this.redis.get(cacheKey)
             if (cachedData) {
-                const parsedData = JSON.parse(cachedData);
-                return parsedData;
+                const parsedData: PaginatedResponse<User> = JSON.parse(cachedData)
+                return parsedData
             }
 
-            const users = await this.usersRepo.getAll(page, limit, query);
-            if (users && users.items) {
-                users.items = users.items.map(user => {
-                    if (user.profile_picture) {
-                        user.profile_picture = resolveFileUrl(user.profile_picture);
-                    }
-                    return user;
-                });
-            }
-
-            if(users) {
-                await this.redis.setEx(cacheKey, 300, JSON.stringify(users))
-            }
-
-            return users;
+            const data = await this.usersRepo.getAll(page, limit, query);
+            await this.redis.setEx(cacheKey, 300, JSON.stringify(data))
+            return data;
         } catch (err) {
-            handlePrismaError(err)
+            throw handlePrismaError(err)
         }
     }
 
     async getByID(userId: string): Promise<UserWithRoleAndToken | null> {
         try {
-            const user = await this.usersRepo.getByID(userId);
+            const user = await this.usersRepo.getByID(userId)
             if (!user) return null;
-
-            if (user.profile_picture) {
-                user.profile_picture = resolveFileUrl(user.profile_picture);
-            }
 
             return user;
         } catch (err) {
-            handlePrismaError(err)
+            throw handlePrismaError(err)
         }
     }
 
@@ -74,7 +58,7 @@ export class UsersService implements IUsersService {
             const user = await this.usersRepo.getByEmail(email);
             return user;
         } catch (err) {
-            handlePrismaError(err);
+            throw handlePrismaError(err)
         }
     }
 
@@ -85,8 +69,6 @@ export class UsersService implements IUsersService {
                 throw new AppError("User tidak ditemukan", 404);
             }
 
-            const totalLaporan = await this.usersRepo.countLaporanByUserId(userId);
-
             const profile: UserProfileResponse = {
                 id: user.id,
                 nama_lengkap: user.nama_lengkap,
@@ -94,7 +76,6 @@ export class UsersService implements IUsersService {
                 email: user.email,
                 role: user.role.nama_role,
                 profile_picture: resolveFileUrl(user.profile_picture),
-                total_laporan: totalLaporan || 0
             };
             return profile;
         } catch (err) {
@@ -138,123 +119,137 @@ export class UsersService implements IUsersService {
             });
 
             const activationUrl = buildActivationUrl(activationToken.token);
-            await sendRenderedEmail(this.emailService, createdUser.email, "Aktivasi Akun LaporOB", "activation", {
-                userName: createdUser.username,
-                activationUrl: activationUrl,
-                expiresInHours: 5,
+            await sendRenderedEmail(this.emailService, req.email, "Aktivasi Akun", "activation", {
+                user: { nama_lengkap: req.nama_lengkap },
+                activationUrl,
             });
 
+            await this.redis.del("users:all:*");
         } catch (err) {
-            handlePrismaError(err);
+            throw handlePrismaError(err);
         }
     }
 
     async update(userId: string, req: UpdateUserReq): Promise<void> {
         try {
-            const userReq: UserUpdateInput = {}
+            const updateData: UserUpdateInput = {};
 
-            if (req.username !== undefined) userReq.username = req.username;
-            if (req.nama_lengkap !== undefined) userReq.nama_lengkap = req.nama_lengkap;
-            if (req.email !== undefined) userReq.email = req.email;
-            if (req.password !== undefined) userReq.password = await bcrypt.hash(req.password, 16);
-            if (req.profile_picture !== undefined) userReq.profile_picture = req.profile_picture;
-            if (req.role_id !== undefined) {
-                userReq.role = {
-                    connect: { id: req.role_id }
-                };
-            }
-            if (req.is_active !== undefined) {
-                userReq.is_active = req.is_active;
-            }
+            if (req.role_id) updateData.role = { connect: { id: req.role_id } };
+            if (req.username) updateData.username = req.username;
+            if (req.email) updateData.email = req.email;
+            if (req.nama_lengkap) updateData.nama_lengkap = req.nama_lengkap;
+            if (req.password) updateData.password = await bcrypt.hash(req.password, 10);
+            if (req.profile_picture) updateData.profile_picture = req.profile_picture;
+            if (req.is_active !== undefined) updateData.is_active = req.is_active;
+            if (req.is_active === false) updateData.is_deleted = true;
 
-            await this.usersRepo.update(userId, userReq);
+            await this.usersRepo.update(userId, updateData);
+            await this.redis.del("users:all:*");
         } catch (err) {
-            handlePrismaError(err)
+            throw handlePrismaError(err);
         }
     }
 
     async delete(userId: string): Promise<void> {
         try {
             await this.usersRepo.delete(userId);
+            await this.redis.del("users:all:*");
         } catch (err) {
-            handlePrismaError(err)
+            throw handlePrismaError(err);
         }
     }
 
     async completeActivation(userId: string, password: string, tokenId: string): Promise<void> {
         try {
-            const hashedPassword = await bcrypt.hash(password, 16);
-            await this.usersRepo.update(userId, {
-                password: hashedPassword,
-                is_active: true,
-            } as UserUpdateInput);
-            await this.usersRepo.markTokenAsUsed(tokenId);
+            const passwordHash = await bcrypt.hash(password, 10);
+            await this.usersRepo.transaction(async (tx) => {
+                await tx.user.update({
+                    where: { id: userId },
+                    data: {
+                        is_active: true,
+                        is_deleted: false,
+                        password: passwordHash,
+                    },
+                });
+
+                await tx.userToken.update({
+                    where: { id: tokenId },
+                    data: { used_at: new Date() },
+                });
+            });
         } catch (err) {
-            handlePrismaError(err);
+            throw handlePrismaError(err);
         }
     }
 
     async getRoles(): Promise<Role[]> {
         try {
             const roles = await this.usersRepo.getRoles();
-            return roles;
+            return roles
         } catch (err) {
-            handlePrismaError(err);
+            throw handlePrismaError(err)
         }
     }
 
     async renewActivationToken(userId: string): Promise<void> {
         try {
-            const existsUser = await this.getByID(userId);
-            if (!existsUser) {
+            const user = await this.usersRepo.getByID(userId);
+            if (!user) {
                 throw new AppError("User tidak ditemukan", 404);
             }
 
-            if (existsUser.password) {
-                throw new AppError("Akun sudah diaktivasi", 400);
+            const currentToken = user.tokens.find(t => t.type === "activation" && t.used_at === null);
+            if (currentToken) {
+                await this.usersRepo.markTokenAsUsed(currentToken.id);
             }
 
             const activationToken = generateActivationToken(5);
+
             await this.usersRepo.insertActivationToken({
                 user: { connect: { id: userId } },
                 token_hash: activationToken.tokenHash,
                 type: "activation",
                 expired_at: activationToken.expiredAt,
-            })
+            });
 
             const activationUrl = buildActivationUrl(activationToken.token);
-            await sendRenderedEmail(this.emailService, existsUser.email, "Aktivasi Akun LaporOB", "activation", {
-                userName: existsUser.username,
-                activationUrl: activationUrl,
-                expiresInHours: 24,
+            await sendRenderedEmail(this.emailService, user.email, "Aktivasi Akun (Baru)", "activation", {
+                user: { nama_lengkap: user.nama_lengkap },
+                activationUrl,
             });
         } catch (err) {
-            handlePrismaError(err);
+            throw handlePrismaError(err);
         }
     }
 
-
     async createPasswordResetToken(userId: string, tokenHash: string, expiredAt: Date): Promise<void> {
-        try {
-            await this.usersRepo.insertActivationToken({
-                token_hash: tokenHash,
-                type: "reset_password",
-                expired_at: expiredAt,
-                user: { connect: { id: userId } }
-            })
-        } catch (err) {
-            handlePrismaError(err);
-        }
+        await this.usersRepo.insertActivationToken({
+            user: { connect: { id: userId } },
+            token_hash: tokenHash,
+            type: "password_reset",
+            expired_at: expiredAt,
+        });
     }
 
     async resetUserPassword(userId: string, passwordHash: string, tokenId?: string | null): Promise<void> {
         try {
-            await this.usersRepo.update(userId, {password: passwordHash})
-            if (tokenId) {
-                await this.usersRepo.markTokenAsUsed(tokenId);
-            }
+            const updateData: UserUpdateInput = { password: passwordHash };
+
+            await this.usersRepo.transaction(async (tx) => {
+                await tx.user.update({
+                    where: { id: userId },
+                    data: updateData,
+                });
+
+                if (tokenId) {
+                    await tx.userToken.update({
+                        where: { id: tokenId },
+                        data: { used_at: new Date() }
+                    });
+                }
+            });
         } catch (err) {
-            handlePrismaError(err);
+            throw handlePrismaError(err);
         }
     }
 }

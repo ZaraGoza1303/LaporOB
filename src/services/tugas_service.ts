@@ -1,18 +1,19 @@
 import type { CreateTugasReq, UpdateTugasReq } from "../dto/tugas.js";
 import type { Tugas } from "../generated/prisma/client.js";
+import type { ObTugasItem } from "../dto/ob.js";
 import type { TugasCreateInput, TugasUpdateInput } from "../generated/prisma/models.js";
 import type { ITugasRepository } from "../repositories/tugas_repository.interface.js";
-import { handlePrismaError } from "../utils/error.js";
+import { handlePrismaError, AppError } from "../utils/error.js";
 import type { ITugasService } from "./tugas_service.interface.js";
-import type { IRedisClient } from "../database/redis.interface.js"
+import type { IRedisClient } from "../database/redis.interface.js";
 
 export class TugasService implements ITugasService {
     private tugasRepo: ITugasRepository;
-    private redis: IRedisClient
+    private redis: IRedisClient;
 
     constructor(tugasRepo: ITugasRepository, redis: IRedisClient) {
         this.tugasRepo = tugasRepo;
-        this.redis = redis
+        this.redis = redis;
     }
 
     async getAll(kategoriId?: string): Promise<Tugas[]> {
@@ -50,7 +51,7 @@ export class TugasService implements ITugasService {
                 },
                 nama_tugas: req.nama_tugas,
                 is_active: req.is_active ?? true,
-            }
+            };
 
             await this.tugasRepo.insert(tugasReq);
             await this.redis.del(`tugas:all:${req.kategori_id}`);
@@ -62,6 +63,11 @@ export class TugasService implements ITugasService {
 
     async update(tugasId: string, req: UpdateTugasReq): Promise<void> {
         try {
+            const existing = await this.tugasRepo.getByID(tugasId);
+            if (!existing) {
+                throw new AppError("Tugas tidak ditemukan", 404);
+            }
+
             const tugasReq: TugasUpdateInput = {}
             if (req.kategori_id !== undefined) tugasReq.kategori = { connect: { id: req.kategori_id } };
             if (req.nama_tugas !== undefined) tugasReq.nama_tugas = req.nama_tugas;
@@ -72,6 +78,7 @@ export class TugasService implements ITugasService {
             await this.redis.del("tugas:all:all");
 
         } catch (err) {
+            if (err instanceof AppError) throw err;
             handlePrismaError(err)
         }
     }
@@ -82,6 +89,31 @@ export class TugasService implements ITugasService {
             await this.redis.del("tugas:all:all");
         } catch (err) {
             handlePrismaError(err)
+        }
+    }
+
+    async getAvailableTugas(obId: string): Promise<ObTugasItem[]> {
+        try {
+            const tugas = await this.tugasRepo.getAvailableForOb(obId);
+            return tugas;
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async claimTugas(tugasId: string, obId: string): Promise<void> {
+        try {
+            await this.tugasRepo.claimByOb(tugasId, obId);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async completeTugas(tugasId: string, obId: string): Promise<void> {
+        try {
+            await this.tugasRepo.completeByOb(tugasId, obId);
+        } catch (err) {
+            throw handlePrismaError(err);
         }
     }
 }

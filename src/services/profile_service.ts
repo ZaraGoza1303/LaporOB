@@ -2,6 +2,7 @@ import type { IProfileService } from "./profile_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
 import type { IKaryawanService } from "./karyawan_service.interface.js";
 import type { IObService } from "./ob_service.interface.js";
+import type { ILaporanService } from "./laporan_service.interface.js";
 import type { ProfileLaporanQuery, ProfileRes, ObProfileResponse, UserProfileResponse, MappedProfileReport } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import { USER_ROLE } from "../utils/constants.js";
@@ -11,6 +12,7 @@ export class ProfileService implements IProfileService {
     private usersService: IUsersService,
     private karyawanService: IKaryawanService,
     private obService: IObService,
+    private laporanService: ILaporanService,
   ) {}
 
   async getProfile(userId: string, role: string, query: ProfileLaporanQuery): Promise<ProfileRes> {
@@ -21,11 +23,16 @@ export class ProfileService implements IProfileService {
       ? await this.obService.getProfile(userId)
       : await this.usersService.getProfile(userId);
 
-    const laporan = isOb
-      ? await this.obService.getRiwayat(userId, limit, { cursor, search, status })
-      : await this.karyawanService.getRiwayat(userId, limit, { cursor, search, status });
+    if (!isOb) {
+      const totalLaporan = await this.laporanService.getLaporanCountByUserId(userId);
+      (userProfile as UserProfileResponse).total_laporan = totalLaporan;
+    }
 
-    const profileRes = this.toProfileRes(userProfile as ObProfileResponse | UserProfileResponse, isOb, laporan as PaginatedResponse<MappedProfileReport>);
+    const laporan: PaginatedResponse<MappedProfileReport> = isOb
+      ? await this.laporanService.getRiwayat(userId, limit, cursor, search, status)
+      : await this.karyawanService.getRiwayat(userId, limit, { cursor, search, status }) as PaginatedResponse<MappedProfileReport>;
+
+    const profileRes = this.toProfileRes(userProfile as ObProfileResponse | UserProfileResponse, isOb, laporan);
     return profileRes;
   }
 
@@ -34,28 +41,24 @@ export class ProfileService implements IProfileService {
     isOb: boolean,
     laporan: PaginatedResponse<MappedProfileReport>
   ): ProfileRes {
-    const base = {
+    const user: ProfileRes['user'] = {
       id: userProfile.id,
       nama_lengkap: userProfile.nama_lengkap,
       username: userProfile.username,
       email: userProfile.email,
       role: userProfile.role,
       profile_picture: userProfile.profile_picture,
+      ...(isOb ? {
+        total_laporan: (userProfile as ObProfileResponse).laporanDiterima ?? 0,
+        tasksCompleted: (userProfile as ObProfileResponse).laporanSelesai ?? 0,
+      } : {
+        total_laporan: (userProfile as UserProfileResponse).total_laporan ?? 0,
+      }),
     };
-
-    const user = isOb
-      ? {
-          ...base,
-          tasksCompleted: (userProfile as ObProfileResponse).laporanSelesai,
-          rejected: (userProfile as ObProfileResponse).laporanDiterima - (userProfile as ObProfileResponse).laporanSelesai,
-          lokasi_aktif: (userProfile as ObProfileResponse).lokasiAktif || [],
-        }
-      : {
-          ...base,
-          total_laporan: (userProfile as UserProfileResponse).total_laporan,
-        };
-
-    const result: ProfileRes = { user, laporan };
-    return result;
+    const profileRes: ProfileRes = {
+      user,
+      laporan,
+    };
+    return profileRes;
   }
 }

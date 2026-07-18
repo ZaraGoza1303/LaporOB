@@ -1,10 +1,10 @@
 import type { PaginatedResponse } from "../dto/response.js";
 import type { UserActivityRes } from "../dto/users.js";
 import type { AdminLaporanQuery } from "../dto/admin.js";
-import type { PrismaClient } from "../generated/prisma/client.js";
+import type { PrismaClient, Prisma } from "../generated/prisma/client.js";
+import type { PeriodRange } from "../utils/date.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
-import type { ILaporanRepository, ProfileReport, DetailReportPayload, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload } from "./laporan_repository.interface.js";
-import { Prisma } from "../generated/prisma/client.js";
+import type { ILaporanRepository, ProfileReport, DetailReportPayload, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, LaporanKaryawanWithDetails } from "./laporan_repository.interface.js";
 import { LAPORAN_STATUS, KOLABORASI_STATUS } from "../utils/constants.js";
 
 export class LaporanRepository implements ILaporanRepository {
@@ -33,8 +33,7 @@ export class LaporanRepository implements ILaporanRepository {
             take: 2
         });
 
-        const result = data as unknown as UserActivityRes[];
-        return result;
+        return data;
     }
 
     async insertReport(req: Laporan_karyawanCreateInput): Promise<string> {
@@ -93,9 +92,17 @@ export class LaporanRepository implements ILaporanRepository {
                 },
                 ob: true,
                 pelapor: true,
-                histori_pekerjaan: true
+                histori_pekerjaan: true,
+                kolaborasi: {
+                    include: {
+                        ob: {
+                            select: { id: true, nama_lengkap: true }
+                        }
+                    }
+                }
             }
-        }) as unknown as DetailReportPayload | null;
+        });
+
         return report;
     }
 
@@ -111,7 +118,8 @@ export class LaporanRepository implements ILaporanRepository {
                 updated_at: 'desc'
             },
             take: limit
-        }) as unknown as RecentActivityPayload[];
+        });
+
         return activities;
     }
 
@@ -128,7 +136,8 @@ export class LaporanRepository implements ILaporanRepository {
                 status: true,
                 created_at: true
             }
-        }) as unknown as ReportSummaryPayload[];
+        });
+
         return reports;
     }
 
@@ -158,7 +167,7 @@ export class LaporanRepository implements ILaporanRepository {
         ]);
 
         const result: PaginatedResponse<AdminLaporanPayload> = {
-            items: laporan as unknown as AdminLaporanPayload[],
+            items: laporan,
             next_cursor: null,
             meta: {
                 total_items: total_laporan,
@@ -216,6 +225,107 @@ export class LaporanRepository implements ILaporanRepository {
         });
     }
 
+    async getReportsForObDashboard(obId: string): Promise<LaporanKaryawanWithDetails[]> {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        const assignments = await this.db.penugasanOb.findMany({
+            where: { ob_id: obId, bulan: now.getMonth() + 1, tahun: now.getFullYear() },
+            select: { lokasi_id: true }
+        });
+        const lokasiIds = assignments.map(a => a.lokasi_id);
+
+        const ownReports = await this.db.laporan_karyawan.findMany({
+            where: {
+                OR: [
+                    { ob_id: obId },
+                    { ob_id: null, status: { not: "PENDING" } }
+                ]
+            },
+            include: { kategori: true, lantai: { include: { lokasi: true } } },
+            orderBy: { created_at: 'desc' },
+            take: 3
+        });
+
+        if (ownReports.length >= 3) {
+            return ownReports;
+        }
+
+        const backupReports = await this.db.laporan_karyawan.findMany({
+            where: { ob_id: null, lantai: { lokasi_id: { notIn: lokasiIds } } },
+            include: { kategori: true, lantai: { include: { lokasi: true } } },
+            orderBy: { created_at: 'desc' },
+            take: 3 - ownReports.length
+        });
+
+        const result = [...ownReports, ...backupReports];
+        return result;
+    }
+
+    async ambilLaporan(laporanId: string, obId: string): Promise<void> {
+        const now = new Date();
+        await this.db.laporan_karyawan.update({
+            where: { id: laporanId },
+            data: { status: "PENDING", ob_id: obId, dikerjakan_at: now }
+        });
+    }
+
+    async createHistoriSelesai(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void> {
+        const now = new Date();
+        await this.db.$transaction([
+            this.db.histori_pekerjaan.create({
+                data: {
+                    laporan: { connect: { id: laporanId } },
+                    ob: { connect: { id: obId } },
+                    foto_selesai: { set: fotoSelesai },
+                    catatan: catatan,
+                }
+            }),
+            this.db.laporan_karyawan.update({
+                where: { id: laporanId },
+                data: { status: "SELESAI", selesai_at: now }
+            })
+        ]);
+    }
+
+    async batalkanLaporan(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void> {
+        const now = new Date();
+        await this.db.$transaction([
+            this.db.histori_pekerjaan.create({
+                data: {
+                    laporan: { connect: { id: laporanId } },
+                    ob: { connect: { id: obId } },
+                    foto_selesai: { set: fotoSelesai },
+                    catatan: catatan,
+                }
+            }),
+            this.db.laporan_karyawan.update({
+                where: { id: laporanId },
+                data: {
+                    status: "BELUM_DIKERJAKAN",
+                    ob_id: null,
+                    alasan_gagal: catatan,
+                    dibatalkan_at: now,
+                }
+            })
+        ]);
+    }
+
+    async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number }> {
+        const dateFilter = dateRange
+            ? { created_at: { gte: dateRange.start, lte: dateRange.end } }
+            : {};
+
+        const [laporanDiterima, laporanSelesai] = await Promise.all([
+            this.db.laporan_karyawan.count({ where: { ob_id: obId, ...dateFilter } }),
+            this.db.laporan_karyawan.count({ where: { ob_id: obId, status: "SELESAI", ...dateFilter } })
+        ]);
+
+        const result = { laporanDiterima, laporanSelesai };
+        return result;
+    }
+
     private async executePaginatedReports(whereCondition: Prisma.Laporan_karyawanWhereInput, limit: number, cursor?: string | null): Promise<PaginatedResponse<ProfileReport>> {
         const [reports, total] = await Promise.all([
             this.db.laporan_karyawan.findMany({
@@ -243,7 +353,7 @@ export class LaporanRepository implements ILaporanRepository {
         const nextCursor = hasNextPage ? (items[items.length - 1]?.id ?? null) : null;
 
         const result: PaginatedResponse<ProfileReport> = {
-            items: items as unknown as ProfileReport[],
+            items,
             next_cursor: nextCursor,
             meta: {
                 total_items: total,
@@ -261,14 +371,14 @@ export class LaporanRepository implements ILaporanRepository {
         if (search) {
             filters.push({
                 OR: [
-                    { deskripsi_kendala: { contains: search, mode: "insensitive" as const } },
-                    { lantai: { lokasi: { nama_lokasi: { contains: search, mode: "insensitive" as const } } } }
+                    { deskripsi_kendala: { contains: search, mode: "insensitive" } },
+                    { lantai: { lokasi: { nama_lokasi: { contains: search, mode: "insensitive" } } } }
                 ]
             });
         }
 
         if (status) {
-            filters.push({ status: { equals: status, mode: "insensitive" as const } });
+            filters.push({ status: { equals: status, mode: "insensitive" } });
         }
 
         const whereClause = filters.length === 1 ? filters[0]! : { AND: filters };
@@ -341,9 +451,26 @@ export class LaporanRepository implements ILaporanRepository {
             return orderBy;
         }
 
+        if (query.sort_by === "prioritas") {
+            const orderBy: Prisma.Laporan_karyawanOrderByWithRelationInput[] = [
+                { prioritas: sortOrder },
+                { created_at: "desc" }
+            ];
+            return orderBy;
+        }
+
+        if (query.sort_by === "status") {
+            const orderBy: Prisma.Laporan_karyawanOrderByWithRelationInput[] = [
+                { status: sortOrder },
+                { created_at: "desc" }
+            ];
+            return orderBy;
+        }
+
+        const defaultSortField = query.sort_by === "updated_at" ? "updated_at" : "created_at";
         const defaultOrderBy: Prisma.Laporan_karyawanOrderByWithRelationInput[] = [
-            { [query.sort_by]: sortOrder } as Prisma.Laporan_karyawanOrderByWithRelationInput,
-            { created_at: "desc" }
+            { [defaultSortField]: sortOrder },
+            { id: "desc" }
         ];
         return defaultOrderBy;
     }

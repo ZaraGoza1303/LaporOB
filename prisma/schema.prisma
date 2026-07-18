@@ -16,11 +16,11 @@ model User {
   id           String   @id @default(uuid()) @db.Uuid
   username     String   @unique @db.VarChar(50)
   email        String   @unique @db.VarChar(100)
-  password     String?   @db.VarChar(255)
+  password     String?  @db.VarChar(255)
   nama_lengkap String   @db.VarChar(100)
   profile_picture String? @db.VarChar(255) 
   role_id      String   @db.Uuid
-  is_active   Boolean  @default(false)
+  is_active    Boolean  @default(false)
   is_deleted   Boolean  @default(false)
   created_at   DateTime @default(now()) @db.Timestamp(6)
   updated_at   DateTime @updatedAt @db.Timestamp(6)
@@ -29,13 +29,15 @@ model User {
   checklist_harian        Checklist_harian[]
   laporan_sebagai_pelapor Laporan_karyawan[] @relation("LaporanPelapor")
   laporan_sebagai_ob      Laporan_karyawan[] @relation("LaporanOb")
-  tokens UserToken[]
-  notifikasi_diterima Notifikasi[] @relation("NotifikasiDiterima")
-  notifikasi_dikirim  Notifikasi[] @relation("NotifikasiDikirim")
-  penugasan_ob        PenugasanOb[]
-  kolaborasi_laporan   KolaborasiLaporan[]
-  histori_pekerjaan    Histori_pekerjaan[]
-  sessions            UserSession[]
+  tokens                  UserToken[]
+  notifikasi_diterima     Notifikasi[]       @relation("NotifikasiDiterima")
+  notifikasi_dikirim      Notifikasi[]       @relation("NotifikasiDikirim")
+  penugasan_ob            PenugasanOb[]
+  kolaborasi_laporan      KolaborasiLaporan[]
+  histori_pekerjaan       Histori_pekerjaan[]
+  sessions                UserSession[]
+  tugas_ob                Tugas[]        @relation("TugasOb")
+
   @@map("user")
 }
 
@@ -48,7 +50,7 @@ model UserToken {
   used_at    DateTime? @db.Timestamp(6)   
   created_at DateTime  @default(now()) @db.Timestamp(6)
 
- user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("user_token")
 }
@@ -102,7 +104,8 @@ model Lantai {
 
   checklist_harian Checklist_harian[]
   laporan_karyawan Laporan_karyawan[]
-  ruangan Ruangan[]
+  ruangan          Ruangan[]
+  tugas            Tugas[]
 
   @@map("lantai")
 }
@@ -134,16 +137,22 @@ model Kategori {
 }
 
 model Tugas {
-  id          String   @id @default(uuid()) @db.Uuid
-  kategori_id String   @db.Uuid
-  nama_tugas  String   @db.VarChar(150)
-  is_active   Boolean  @default(true)
-  created_at  DateTime @default(now()) @db.Timestamp(6)
-  updated_at  DateTime @updatedAt @db.Timestamp(6)
+  id             String    @id @default(uuid()) @db.Uuid
+  kategori_id    String    @db.Uuid
+  nama_tugas     String    @db.VarChar(150)
+  lantai_id      String?   @db.Uuid
+  ob_id          String?   @db.Uuid
+  status         String    @default("BELUM_DIKERJAKAN") @db.VarChar(30)
+  catatan        String?   @db.Text
+  dikerjakan_at  DateTime? @db.Timestamp(6)
+  selesai_at     DateTime? @db.Timestamp(6)
+  is_active      Boolean   @default(true)
+  created_at     DateTime  @default(now()) @db.Timestamp(6)
+  updated_at     DateTime  @updatedAt @db.Timestamp(6)
 
-  kategori   Kategori @relation(fields: [kategori_id], references: [id], onDelete: Cascade)
-  
-  checklist_harian Checklist_harian[]
+  kategori  Kategori @relation(fields: [kategori_id], references: [id], onDelete: Cascade)
+  lantai    Lantai?  @relation(fields: [lantai_id], references: [id])
+  ob        User?    @relation("TugasOb", fields: [ob_id], references: [id])
 
   @@map("tugas")
 }
@@ -151,11 +160,12 @@ model Tugas {
 model Checklist_harian {
   id              String    @id @default(uuid()) @db.Uuid
   tanggal         DateTime  @db.Date
+  nama_tugas      String    @db.VarChar(150)
   ob_id           String?   @db.Uuid
   lantai_id       String    @db.Uuid
   kategori_id     String    @db.Uuid
-  tugas_id        String    @db.Uuid
   status          String    @db.VarChar(30)
+  auto_generate   Boolean   @default(true)
   catatan         String?   @db.Text
   dikerjakan_at   DateTime? @db.Timestamp(6)
   selesai_at      DateTime? @db.Timestamp(6)
@@ -165,8 +175,6 @@ model Checklist_harian {
 
   ob       User?    @relation(fields: [ob_id], references: [id])
   lantai   Lantai   @relation(fields: [lantai_id], references: [id])
-  tugas    Tugas    @relation(fields: [tugas_id], references: [id])
-  
   kategori Kategori @relation(fields: [kategori_id], references: [id])
 
   @@map("checklist_harian")

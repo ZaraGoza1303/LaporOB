@@ -135,13 +135,6 @@ export class UsersRepository implements IUsersRepository {
         return users;
     }
 
-   async countLaporanByUserId(userId: string): Promise<number> {
-    const count = await this.db.laporan_karyawan.count({
-        where: { pelapor_id: userId }
-    });
-    return count;
-   }
-
    async getRoles(): Promise<Role[]> {
        return this.db.role.findMany({
            orderBy: { nama_role: 'asc' }

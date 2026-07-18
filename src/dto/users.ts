@@ -168,7 +168,7 @@ export interface UserProfileResponse {
   email: string;
   role: string;
   profile_picture: string | null;
-  total_laporan: number;
+  total_laporan?: number;
 }
 
 export interface ObProfileResponse {

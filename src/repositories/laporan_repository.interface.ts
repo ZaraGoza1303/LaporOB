@@ -3,6 +3,7 @@ import type { UserActivityRes } from "../dto/users.js";
 import type { AdminLaporanQuery, PatchLaporanReq } from "../dto/admin.js";
 import type { User, Kategori, Lantai, Lokasi, Laporan_karyawan, Prisma } from "../generated/prisma/client.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
+import type { PeriodRange } from "../utils/date.js";
 
 export type ProfileReport = Laporan_karyawan & {
     kategori: Kategori;
@@ -59,6 +60,17 @@ export interface RuanganTerpopulerPayload {
     total_laporan: number;
 }
 
+export type LaporanKaryawanWithDetails = Prisma.Laporan_karyawanGetPayload<{
+    include: {
+        kategori: true;
+        lantai: {
+            include: {
+                lokasi: true;
+            };
+        };
+    };
+}>;
+
 export interface ILaporanRepository {
     getActivity(userId: string): Promise<UserActivityRes[]>;
     insertReport(req: Laporan_karyawanCreateInput): Promise<string>;
@@ -74,5 +86,10 @@ export interface ILaporanRepository {
     countLaporanAktif(query: AdminLaporanQuery): Promise<number>;
     getLaporanCountByUserId(userId: string): Promise<number>;
     deleteLaporan(laporanId: string): Promise<void>;
+    getReportsForObDashboard(obId: string): Promise<LaporanKaryawanWithDetails[]>;
+    ambilLaporan(laporanId: string, obId: string): Promise<void>;
+    createHistoriSelesai(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void>;
+    batalkanLaporan(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void>;
+    getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number }>;
 }
 

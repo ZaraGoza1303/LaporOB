@@ -2,7 +2,7 @@ import type { ChecklistHarianQuery, CreateChecklistHarianReq, UpdateChecklistHar
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
-import type { ChecklistHarianWithRelations } from "../repositories/checklistHarian_repository.interface.js";
+import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails } from "../repositories/checklistHarian_repository.interface.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE, REF_TIPE, USER_ROLE } from "../utils/constants.js";
 import type { BulkNotificationData } from "../dto/notification.js";
@@ -23,28 +23,6 @@ export class ChecklistHarianService implements IChecklistHarianService {
         this.checklistRepo = checklistRepo;
         this.notificationService = notificationService;
         this.usersService = usersService;
-    }
-
-    private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {
-        const response: ChecklistHarianRes = {
-            id: item.id,
-            tugas_id: item.tugas_id,
-            kategori_id: item.kategori_id,
-            lantai_id: item.lantai_id,
-            ob_id: item.ob_id,
-            status: item.status,
-            catatan: item.catatan,
-            dikerjakan_at: item.dikerjakan_at ?? null,
-            selesai_at: item.selesai_at ?? null,
-            terlewat_at: item.terlewat_at ?? null,
-            created_at: item.created_at,
-            updated_at: item.updated_at,
-            tugas: item.tugas,
-            kategori: item.kategori,
-            lantai: item.lantai,
-            ob: item.ob,
-        };
-        return response;
     }
 
     async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<ChecklistHarianPageResponse> {
@@ -114,7 +92,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
     async create(userId: string, req: CreateChecklistHarianReq): Promise<void> {
         try {
             const dataToInsert: Checklist_harianUncheckedCreateInput = {
-                tugas_id: req.tugas_id,
+                nama_tugas: req.nama_tugas,
                 kategori_id: req.kategori_id,
                 lantai_id: req.lantai_id,
                 tanggal: new Date(),
@@ -143,7 +121,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
     async update(checklistId: string, req: UpdateChecklistHarianReq): Promise<void> {
         try {
             const dataToUpdate: Checklist_harianUncheckedUpdateInput = {};
-            if (req.tugas_id !== undefined) dataToUpdate.tugas_id = req.tugas_id;
+            if (req.nama_tugas !== undefined) dataToUpdate.nama_tugas = req.nama_tugas;
             if (req.kategori_id !== undefined) dataToUpdate.kategori_id = req.kategori_id;
             if (req.lantai_id !== undefined) dataToUpdate.lantai_id = req.lantai_id;
             if (req.ob_id !== undefined) dataToUpdate.ob_id = req.ob_id ?? null;
@@ -173,5 +151,42 @@ export class ChecklistHarianService implements IChecklistHarianService {
         } catch (err) {
             handlePrismaError(err);
         }
+    }
+
+    async getTodayChecklists(obId: string, tanggal: Date): Promise<ChecklistHarianWithDetails[]> {
+        const result = await this.checklistRepo.getTodayChecklists(obId, tanggal);
+        return result;
+    }
+
+    async countTodayChecklists(obId: string, tanggal: Date): Promise<number> {
+        const result = await this.checklistRepo.countTodayChecklists(obId, tanggal);
+        return result;
+    }
+
+    async ambilChecklist(checklistId: string, obId: string): Promise<void> {
+        await this.checklistRepo.ambilChecklist(checklistId, obId);
+    }
+
+    private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {
+        const response: ChecklistHarianRes = {
+            id: item.id,
+            nama_tugas: item.nama_tugas,
+            kategori_id: item.kategori_id,
+            lantai_id: item.lantai_id,
+            ob_id: item.ob_id,
+            status: item.status,
+            catatan: item.catatan,
+            dikerjakan_at: item.dikerjakan_at ?? null,
+            selesai_at: item.selesai_at ?? null,
+            terlewat_at: item.terlewat_at ?? null,
+            auto_generate: item.auto_generate,
+            tanggal: item.tanggal,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            kategori: item.kategori,
+            lantai: item.lantai,
+            ob: item.ob,
+        };
+        return response;
     }
 }

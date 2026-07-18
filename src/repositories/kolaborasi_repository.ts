@@ -30,7 +30,7 @@ export class KolaborasiRepository implements IKolaborasiRepository {
         const kolaborasi = await this.db.kolaborasiLaporan.findMany({
             where: { laporan_id: laporanId, status: KOLABORASI_STATUS.PENDING },
             include: { ob: { select: { id: true, nama_lengkap: true } } }
-        }) as unknown as KolaborasiLaporanWithOb[];
+        });
         return kolaborasi;
     }
 
@@ -38,7 +38,7 @@ export class KolaborasiRepository implements IKolaborasiRepository {
         const kolaborasi = await this.db.kolaborasiLaporan.findMany({
             where: { laporan_id: laporanId, status: KOLABORASI_STATUS.APPROVED },
             include: { ob: { select: { id: true, nama_lengkap: true } } }
-        }) as unknown as KolaborasiLaporanWithOb[];
+        });
         return kolaborasi;
     }
 

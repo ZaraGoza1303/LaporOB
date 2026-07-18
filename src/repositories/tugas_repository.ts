@@ -1,6 +1,10 @@
-import type { Tugas, PrismaClient } from "../generated/prisma/client.js";
+import type { PrismaClient } from "../generated/prisma/client.js";
+import type { Tugas } from "../generated/prisma/client.js";
 import type { TugasCreateInput, TugasUpdateInput } from "../generated/prisma/models.js";
 import type { ITugasRepository } from "./tugas_repository.interface.js";
+import { Prisma } from "../generated/prisma/client.js";
+import type { ObTugasItem } from "../dto/ob.js";
+import { TUGAS_STATUS } from "../utils/constants.js";
 
 export class TugasRepository implements ITugasRepository {
     private db: PrismaClient;
@@ -10,13 +14,16 @@ export class TugasRepository implements ITugasRepository {
     }
 
     async getAll(kategoriId?: string): Promise<Tugas[]> {
+        const where: Prisma.TugasWhereInput = {
+            is_active: true,
+        };
+
+        if (kategoriId) {
+            where.kategori_id = kategoriId;
+        }
+
         const data = await this.db.tugas.findMany({
-            where: kategoriId ? {
-                kategori_id: kategoriId,
-                is_active: true,
-            } : {
-                is_active: true,
-            },
+            where,
             orderBy: {
                 nama_tugas: 'asc',
             },
@@ -55,5 +62,64 @@ export class TugasRepository implements ITugasRepository {
                 id: tugasId
             }
         })
+    }
+
+    async getAvailableForOb(obId: string): Promise<ObTugasItem[]> {
+        const tugas = await this.db.tugas.findMany({
+            where: {
+                is_active: true,
+                OR: [
+                    { ob_id: null },
+                    { ob_id: obId },
+                ],
+            },
+            include: {
+                kategori: true,
+                lantai: {
+                    include: {
+                        lokasi: true,
+                    },
+                },
+            },
+            orderBy: {
+                created_at: 'desc',
+            },
+        });
+
+        const result: ObTugasItem[] = tugas.map((item) => ({
+            id: item.id,
+            nama_tugas: item.nama_tugas,
+            kategori: item.kategori?.nama_kategori || "",
+            lantai_id: item.lantai_id,
+            lokasi: item.lantai?.lokasi?.nama_lokasi || "",
+            nomor_lantai: item.lantai?.nomor_lantai || 0,
+            status: item.status,
+            catatan: item.catatan,
+            created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
+        }));
+        return result;
+    }
+
+    async claimByOb(tugasId: string, obId: string): Promise<void> {
+        const now = new Date();
+        await this.db.tugas.update({
+            where: { id: tugasId },
+            data: {
+                ob_id: obId,
+                status: TUGAS_STATUS.SEDANG_DIKERJAKAN,
+                dikerjakan_at: now,
+            },
+        });
+    }
+
+    async completeByOb(tugasId: string, obId: string): Promise<void> {
+        const now = new Date();
+        await this.db.tugas.update({
+            where: { id: tugasId, ob_id: obId },
+            data: {
+                status: TUGAS_STATUS.SELESAI,
+                selesai_at: now,
+            },
+        });
     }
 }

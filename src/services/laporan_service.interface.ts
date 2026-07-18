@@ -1,9 +1,10 @@
-import type { MappedReportDetailRes } from '../dto/users.js';
+import type { MappedReportDetailRes, MappedProfileReport } from '../dto/users.js';
 import type { PaginatedResponse } from '../dto/response.js';
 import type { AdminLaporanQuery, PatchLaporanReq } from '../dto/admin.js';
-import type { RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, DetailReportPayload, ProfileReport } from '../repositories/laporan_repository.interface.js';
+import type { RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, DetailReportPayload, ProfileReport, LaporanKaryawanWithDetails } from '../repositories/laporan_repository.interface.js';
 import type { UserActivityRes } from '../dto/users.js';
 import type { Laporan_karyawanCreateInput } from '../generated/prisma/models.js';
+import type { PeriodRange } from '../utils/date.js';
 
 export interface ILaporanService {
     getReportDetail(reportId: string, userId: string, role: string): Promise<MappedReportDetailRes>;
@@ -18,7 +19,14 @@ export interface ILaporanService {
     getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void>;
-    toggleKolaborasiOpen(laporanId: string, isOpen: boolean, catatan?: string): Promise<void>;
+    toggleKolaborasiOpen(laporanId: string, obId: string, isOpen: boolean, catatan?: string): Promise<void>;
     getLaporanCountByUserId(userId: string): Promise<number>;
     deleteLaporan(laporanId: string): Promise<void>;
+    getReportsForObDashboard(obId: string): Promise<LaporanKaryawanWithDetails[]>;
+    getRiwayat(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<MappedProfileReport>>;
+    getDetailRiwayat(laporanId: string, obId: string): Promise<MappedReportDetailRes>;
+    ambilLaporan(laporanId: string, obId: string): Promise<void>;
+    createHistoriPekerjaan(laporanId: string, fotoUrls: string[], catatan: string, obId: string): Promise<void>;
+    batalkanLaporan(laporanId: string, fotoUrls: string[], catatan: string, obId: string): Promise<void>;
+    getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number }>;
 }

@@ -1,30 +1,34 @@
 import type { IObService } from "./ob_service.interface.js";
-import type { IObRepository, ChecklistHarianWithDetails, LaporanKaryawanWithDetails } from "../repositories/ob_repository.interface.js";
-import type { ProfileReport } from "../repositories/laporan_repository.interface.js";
+import type { IObRepository } from "../repositories/ob_repository.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
-import type { INotificationService } from "./notification_service.interface.js";
-import type { NotificationData, BulkNotificationData } from "../dto/notification.js";
-import type { ObHomeRes, CreateHistoriReq } from "../dto/ob.js";
+import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
+import type { ObHomeRes } from "../dto/ob.js";
 import type { MappedProfileReport, MappedReportDetailRes, ObProfileResponse } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
-import type { PeriodRange } from "../utils/date.js";
 import type { RiwayatParams } from "./karyawan_service.interface.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { CHECKLIST_STATUS, LAPORAN_PRIORITY, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, REF_TIPE, type LaporanPriority, type LaporanStatus, USER_ROLE } from "../utils/constants.js";
+import type { ChecklistHarianWithDetails } from "../repositories/checklistHarian_repository.interface.js";
+import type { LaporanKaryawanWithDetails } from "../repositories/laporan_repository.interface.js";
 
 export class ObService implements IObService {
     private obRepo: IObRepository;
     private laporanService: ILaporanService;
+    private checklistService: IChecklistHarianService;
     private usersService: IUsersService;
-    private notificationService: INotificationService;
 
-    constructor(obRepo: IObRepository, laporanService: ILaporanService, usersService: IUsersService, notificationService: INotificationService) {
+    constructor(
+        obRepo: IObRepository,
+        laporanService: ILaporanService,
+        checklistService: IChecklistHarianService,
+        usersService: IUsersService
+    ) {
         this.obRepo = obRepo;
         this.laporanService = laporanService;
+        this.checklistService = checklistService;
         this.usersService = usersService;
-        this.notificationService = notificationService;
     }
 
     async getHomeStats(obId: string): Promise<ObHomeRes> {
@@ -36,9 +40,9 @@ export class ObService implements IObService {
 
             const today = new Date();
             const [checklists, totalChecklists, reports] = await Promise.all([
-                this.obRepo.getTodayChecklists(obId, today),
-                this.obRepo.countTodayChecklists(obId, today),
-                this.obRepo.getReports(obId)
+                this.checklistService.getTodayChecklists(obId, today),
+                this.checklistService.countTodayChecklists(obId, today),
+                this.laporanService.getReportsForObDashboard(obId),
             ]);
 
             let resolvedCount = 0;
@@ -56,7 +60,7 @@ export class ObService implements IObService {
 
                 const mapped = {
                     id: item.id,
-                    nama_tugas: item.tugas?.nama_tugas || "",
+                    nama_tugas: item.nama_tugas,
                     kategori: item.kategori?.nama_kategori || "",
                     lokasi: item.lantai?.lokasi?.nama_lokasi || "",
                     nomor_lantai: item.lantai?.nomor_lantai || 0,
@@ -105,89 +109,10 @@ export class ObService implements IObService {
             handlePrismaError(err);
         }
     }
-    async ambilLaporan(laporanId: string, obId: string): Promise<void> {
-        try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
-            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
-
-            if (laporan.ob_id && laporan.ob_id !== obId) {
-                throw new AppError("Laporan sudah diambil oleh OB lain", 409);
-            }
-
-            await this.obRepo.ambilLaporan(laporanId, obId);
-
-            const notifData: NotificationData = {
-                penerima_id: laporan.pelapor_id,
-                pengirim_id: obId,
-                tipe: NOTIFICATION_TYPE.LAPORAN_DIKERJAKAN,
-                judul: NOTIFICATION_TITLE.LAPORAN_DIKERJAKAN,
-                pesan: NOTIFICATION_MESSAGE.LAPORAN_DIKERJAKAN,
-                ref_id: laporanId,
-                ref_tipe: REF_TIPE.LAPORAN,
-            };
-            await this.notificationService.sendNotification(notifData);
-        } catch (err: unknown) {
-            throw handlePrismaError(err);
-        }
-    }
-
-    async ambilChecklist(checklistId: string, obId: string): Promise<void> {
-        try {
-            await this.obRepo.ambilChecklist(checklistId, obId);
-        } catch (err: unknown) {
-            throw handlePrismaError(err);
-        }
-    }
-
-    async createHistoriPekerjaan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq, obId: string): Promise<void> {
-        try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
-            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
-            if (laporan.ob_id !== obId) throw new AppError("Hanya OB utama yang bisa menyelesaikan laporan", 403);
-
-            await this.obRepo.createHistoriPekerjaan(laporanId, obId, fotoUrls, dto.catatan);
-
-            const notifData: NotificationData = {
-                penerima_id: laporan.pelapor_id,
-                pengirim_id: obId,
-                tipe: NOTIFICATION_TYPE.LAPORAN_BERES,
-                judul: NOTIFICATION_TITLE.LAPORAN_BERES,
-                pesan: dto.catatan,
-                ref_id: laporanId,
-                ref_tipe: REF_TIPE.LAPORAN,
-            };
-            await this.notificationService.sendNotification(notifData);
-        } catch (err: unknown) {
-            throw handlePrismaError(err);
-        }
-    }
-
-    async batalkanLaporan(laporanId: string, fotoUrls: string[], dto: CreateHistoriReq, obId: string): Promise<void> {
-        try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
-            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
-            if (laporan.ob_id !== obId) throw new AppError("Hanya OB utama yang bisa membatalkan laporan", 403);
-
-            await this.obRepo.batalkanLaporan(laporanId, obId, fotoUrls, dto.catatan);
-
-            const notifData: NotificationData = {
-                penerima_id: laporan.pelapor_id,
-                pengirim_id: obId,
-                tipe: NOTIFICATION_TYPE.LAPORAN_DIBATALKAN,
-                judul: NOTIFICATION_TITLE.LAPORAN_DIBATALKAN,
-                pesan: dto.catatan,
-                ref_id: laporanId,
-                ref_tipe: REF_TIPE.LAPORAN,
-            };
-            await this.notificationService.sendNotification(notifData);
-        } catch (err: unknown) {
-            throw handlePrismaError(err);
-        }
-    }
 
     async getProfile(obId: string): Promise<ObProfileResponse> {
         try {
-            const user = await this.obRepo.getObById(obId);
+            const user = await this.usersService.getByID(obId);
             if (!user) {
                 throw new AppError("OB tidak ditemukan", 404);
             }
@@ -197,7 +122,7 @@ export class ObService implements IObService {
             const tahun = today.getFullYear();
 
             const [obStats, penugasan] = await Promise.all([
-                this.getObPerformanceStats(obId),
+                this.laporanService.getObPerformanceStats(obId),
                 this.obRepo.getActiveAssignments(obId, bulan, tahun)
             ]);
 
@@ -221,123 +146,6 @@ export class ObService implements IObService {
 
             return profile;
         } catch (err: unknown) {
-            throw handlePrismaError(err);
-        }
-    }
-
-    async toggleKolaborasi(laporanId: string, obId: string, isOpen: boolean, catatan?: string): Promise<void> {
-        try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
-            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
-            if (laporan.ob_id !== obId) throw new AppError("Hanya OB pemilik laporan yang bisa mengatur kolaborasi", 403);
-
-            await this.laporanService.toggleKolaborasiOpen(laporanId, isOpen, catatan);
-
-            if (isOpen) {
-                const obUsers = await this.usersService.getByRole(USER_ROLE.OB);
-                const otherObIds = obUsers
-                    .filter((u) => u.id !== obId)
-                    .map((u) => u.id);
-
-                if (otherObIds.length > 0) {
-                    const bulkNotif: BulkNotificationData = {
-                        penerima_ids: otherObIds,
-                        pengirim_id: obId,
-                        tipe: NOTIFICATION_TYPE.KOLABORASI_DIBUKA,
-                        judul: NOTIFICATION_TITLE.KOLABORASI_DIBUKA,
-                        pesan: NOTIFICATION_MESSAGE.KOLABORASI_DIBUKA,
-                        ref_id: laporanId,
-                        ref_tipe: REF_TIPE.KOLABORASI,
-                    };
-                    await this.notificationService.sendBulkNotification(bulkNotif);
-                }
-            }
-        } catch (err: unknown) {
-            throw handlePrismaError(err);
-        }
-    }
-
-    async getRiwayat(obId: string, limit: number, params: RiwayatParams): Promise<PaginatedResponse<MappedProfileReport>> {
-        try {
-            const reportsData = await this.laporanService.getReportsByObId(obId, limit, params.cursor, params.search, params.status);
-
-            const laporanMapped: MappedProfileReport[] = reportsData.items.map((item: ProfileReport) => {
-                const mapped = {
-                    id: item.id,
-                    kategori: item.kategori?.nama_kategori || "",
-                    deskripsi_kendala: item.deskripsi_kendala || "",
-                    status: item.status as LaporanStatus,
-                    prioritas: item.prioritas as LaporanPriority,
-                    foto_masalah: (item.foto_masalah ?? []).map((f: string) => resolveFileUrl(f)).filter((url): url is string => url !== null),
-                    lokasi: item.lantai?.lokasi?.nama_lokasi || "",
-                    nomor_lantai: item.lantai?.nomor_lantai || 0,
-                    nama_ob: item.ob?.nama_lengkap || null,
-                    created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
-                    updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : String(item.updated_at)
-                };
-                return mapped;
-            });
-
-            const result: PaginatedResponse<MappedProfileReport> = {
-                items: laporanMapped,
-                next_cursor: reportsData.next_cursor ?? null,
-                meta: reportsData.meta ?? {
-                    total_items: 0,
-                    current_page: 1,
-                    limit,
-                    total_pages: 0
-                }
-            };
-
-            return result;
-        } catch (err) {
-            handlePrismaError(err);
-        }
-    }
-
-   
-    async getDetailRiwayat(obId: string, laporanId: string): Promise<MappedReportDetailRes> {
-        try {
-            const item = await this.laporanService.getReportDetailById(laporanId);
-            if (!item) {
-                throw new AppError("Laporan tidak ditemukan", 404);
-            }
-
-            if (item.ob_id !== obId) {
-                throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
-            }
-
-            const history = item.histori_pekerjaan?.[0];
-
-            const detail: MappedReportDetailRes = {
-                id: item.id,
-                kategori: item.kategori?.nama_kategori || "",
-                deskripsi_kendala: item.deskripsi_kendala || "",
-                status: item.status as LaporanStatus,
-                prioritas: item.prioritas as LaporanPriority,
-                foto_masalah: Array.isArray(item.foto_masalah) ? (item.foto_masalah as string[]).map(resolveFileUrl).filter((url): url is string => !!url) : [],
-                foto_selesai: history && Array.isArray(history.foto_selesai) ? history.foto_selesai.map(resolveFileUrl).filter((url): url is string => !!url) : [],
-                catatan: history?.catatan || "",
-                lokasi: item.lantai?.lokasi?.nama_lokasi || "",
-                nomor_lantai: item.lantai?.nomor_lantai || 0,
-                nama_karyawan: item.pelapor?.nama_lengkap || "",
-                nama_ob: item.ob?.nama_lengkap || null,
-                is_kolaborasi_open: item.is_kolaborasi_open,
-                catatan_kolaborasi: item.catatan_kolaborasi,
-                created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
-            };
-
-            return detail;
-        } catch (err) {
-            handlePrismaError(err);
-        }
-    }
-
-    async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number, laporanSelesai: number }> {
-        try {
-            const stats = await this.obRepo.getObPerformanceStats(obId, dateRange);
-            return stats;
-        } catch (err) {
             throw handlePrismaError(err);
         }
     }

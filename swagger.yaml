@@ -433,6 +433,122 @@ components:
             nama_lengkap:
               type: string
 
+    TugasResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        kategori_id:
+          type: string
+          format: uuid
+        nama_tugas:
+          type: string
+        lantai_id:
+          type: string
+          format: uuid
+          nullable: true
+        ob_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+          enum: [BELUM_DIKERJAKAN, SEDANG_DIKERJAKAN, SELESAI, TERLEWAT]
+        catatan:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        dikerjakan_at:
+          type: string
+          format: date-time
+          nullable: true
+        selesai_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ObTugasItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nama_tugas:
+          type: string
+        kategori:
+          type: string
+          description: Nama kategori
+        lantai_id:
+          type: string
+          format: uuid
+          nullable: true
+        lokasi:
+          type: string
+          description: Nama lokasi
+        nomor_lantai:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [BELUM_DIKERJAKAN, SEDANG_DIKERJAKAN, SELESAI, TERLEWAT]
+        catatan:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    ChecklistHarianResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tanggal:
+          type: string
+          format: date
+        ob_id:
+          type: string
+          format: uuid
+          nullable: true
+        lantai_id:
+          type: string
+          format: uuid
+        kategori_id:
+          type: string
+          format: uuid
+        nama_tugas:
+          type: string
+          description: Nama tugas langsung (independen dari master Tugas)
+        status:
+          type: string
+          enum:
+            - BELUM_DIKERJAKAN
+            - SEDANG_DIKERJAKAN
+            - SELESAI
+            - TERLEWAT
+        auto_generate:
+          type: boolean
+          default: true
+          description: Jika true, row ini akan di-clone oleh cron job setiap hari untuk tanggal berikutnya
+        catatan:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
 # AUTH
 paths:
   /api/auth/login:
@@ -808,7 +924,13 @@ paths:
         - OB
       summary: 'Dashboard OB (OB)'
       description: |
-        Menampilkan checklist harian dan daftar laporan OB.
+        Menampilkan ringkasan tugas harian milik OB yang login.
+
+        Response berisi:
+        - `tugas_harian`: array tugas harian hari ini
+        - `tugas_harian_stats`: statistik total/resolved/pending tugas harian
+        - `laporan`: daftar laporan yang relevan
+
         Laporan yang ditampilkan:
         - Semua laporan yang sudah di-assign ke OB ini (`ob_id` = OB login)
         - Laporan belum di-assign (`ob_id` null) dengan status selain `PENDING`
@@ -817,6 +939,81 @@ paths:
       responses:
         '200':
           description: Berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      ob:
+                        type: object
+                        properties:
+                          nama_lengkap:
+                            type: string
+                      tugas_harian_stats:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                          resolved:
+                            type: integer
+                          pending:
+                            type: integer
+                      tugas_harian:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            nama_tugas:
+                              type: string
+                            kategori:
+                              type: string
+                            lokasi:
+                              type: string
+                            nomor_lantai:
+                              type: integer
+                            status:
+                              type: string
+                            tanggal:
+                              type: string
+                              format: date
+                      laporan:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              format: uuid
+                            kategori:
+                              type: string
+                            deskripsi_kendala:
+                              type: string
+                            status:
+                              type: string
+                            foto_masalah:
+                              type: array
+                              items:
+                                type: string
+                            lokasi:
+                              type: string
+                            nomor_lantai:
+                              type: integer
+                            priority:
+                              type: string
+                            is_kolaborasi_open:
+                              type: boolean
+                            created_at:
+                              type: string
+                              format: date-time
 
   /api/ob/laporan/{laporan_id}:
     patch:
@@ -1217,6 +1414,118 @@ paths:
           description: Hanya OB pemilik laporan yang bisa mengatur kolaborasi
         '404':
           description: Laporan tidak ditemukan
+
+  /api/ob/tugas:
+    get:
+      tags:
+        - OB Tugas
+      summary: 'Daftar tugas (OB)'
+      description: |
+        Menampilkan daftar tugas ad-hoc yang tersedia (belum diklaim) 
+        dan tugas yang sudah diklaim oleh OB yang login.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar tugas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ObTugasItem'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/ob/tugas/{tugas_id}/claim:
+    patch:
+      tags:
+        - OB Tugas
+      summary: 'Klaim tugas (OB)'
+      description: |
+        OB mengklaim tugas ad-hoc untuk dikerjakan. Status berubah menjadi
+        SEDANG_DIKERJAKAN dan waktu dikerjakan tercatat.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tugas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tugas berhasil diklaim
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Tugas berhasil diklaim
+        '400':
+          description: Gagal mengklaim tugas
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Tugas tidak ditemukan
+
+  /api/ob/tugas/{tugas_id}/selesai:
+    patch:
+      tags:
+        - OB Tugas
+      summary: 'Selesaikan tugas (OB)'
+      description: |
+        OB menyelesaikan tugas yang sudah diklaim. Status berubah menjadi
+        SELESAI dan waktu selesai tercatat.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tugas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tugas berhasil diselesaikan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Tugas berhasil diselesaikan
+        '400':
+          description: Gagal menyelesaikan tugas
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Tugas tidak ditemukan
 
 # ADMIN
   /api/admin/role:
@@ -2314,7 +2623,10 @@ paths:
     get:
       tags:
         - Tugas
-      summary: 'List jenis tugas (Admin)'
+      summary: 'List tugas (Admin)'
+      description: |
+        Menampilkan daftar tugas (katalog tugas). Tugas adalah master data katalog
+        tugas yang bisa dikelola oleh Admin.
       security:
         - BearerAuth: []
       parameters:
@@ -2324,14 +2636,28 @@ paths:
           schema:
             type: string
             format: uuid
-          description: Filter tugas berdasarkan kategori id (optional)
+          description: Filter berdasarkan kategori id (optional)
       responses:
         '200':
           description: Daftar tugas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TugasResponse'
     post:
       tags:
         - Tugas
-      summary: 'Tambah jenis tugas (Admin)'
+      summary: 'Tambah tugas (Admin)'
+      description: |
+        Membuat tugas baru (master data katalog tugas).
       security:
         - BearerAuth: []
       requestBody:
@@ -2349,9 +2675,29 @@ paths:
                   format: uuid
                 nama_tugas:
                   type: string
+                lantai_id:
+                  type: string
+                  format: uuid
+                  description: Lantai lokasi tugas (opsional)
+                catatan:
+                  type: string
+                  description: Catatan tambahan untuk OB (opsional)
       responses:
         '201':
           description: Tugas berhasil dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Tugas berhasil dibuat
+                  data:
+                    $ref: '#/components/schemas/TugasResponse'
 
   /api/tugas/{tugas_id}:
     get:
@@ -2370,6 +2716,16 @@ paths:
       responses:
         '200':
           description: Data tugas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/TugasResponse'
     patch:
       tags:
         - Tugas
@@ -2393,13 +2749,47 @@ paths:
                 kategori_id:
                   type: string
                   format: uuid
+                  description: UUID kategori (opsional)
                 nama_tugas:
                   type: string
+                  description: Nama tugas (opsional)
+                lantai_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: Lantai lokasi tugas (opsional, null untuk hapus)
+                catatan:
+                  type: string
+                  nullable: true
+                  description: Catatan tambahan untuk OB (opsional, null untuk hapus)
                 is_active:
                   type: boolean
+                  description: Aktif/nonaktif (opsional)
+                status:
+                  type: string
+                  enum: [BELUM_DIKERJAKAN, SEDANG_DIKERJAKAN, SELESAI, TERLEWAT]
+                  description: Status tugas (opsional)
+                ob_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: UUID OB yang ditugaskan (opsional)
       responses:
         '200':
           description: Tugas berhasil diupdate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Tugas berhasil diupdate
+                  data:
+                    $ref: '#/components/schemas/TugasResponse'
     delete:
       tags:
         - Tugas
@@ -2483,18 +2873,15 @@ paths:
             schema:
               type: object
               required:
-                - tugas_id
+                - nama_tugas
                 - kategori_id
-                - lokasi_id
                 - lantai_id
               properties:
-                tugas_id:
+                nama_tugas:
                   type: string
-                  format: uuid
+                  maxLength: 150
+                  description: Nama tugas (independen dari master Tugas)
                 kategori_id:
-                  type: string
-                  format: uuid
-                lokasi_id:
                   type: string
                   format: uuid
                 lantai_id:
@@ -2544,13 +2931,10 @@ paths:
             schema:
               type: object
               properties:
-                tugas_id:
+                nama_tugas:
                   type: string
-                  format: uuid
+                  maxLength: 150
                 kategori_id:
-                  type: string
-                  format: uuid
-                lokasi_id:
                   type: string
                   format: uuid
                 lantai_id:
