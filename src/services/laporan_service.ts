@@ -1,21 +1,33 @@
-import type { MappedReportDetailRes } from "../dto/users.js";
+import type { MappedReportDetailRes, MappedProfileReport } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { AdminLaporanQuery, PatchLaporanReq } from "../dto/admin.js";
-import type { ILaporanRepository, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, DetailReportPayload, ProfileReport } from "../repositories/laporan_repository.interface.js";
+import type { ILaporanRepository, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, DetailReportPayload, ProfileReport, LaporanKaryawanWithDetails } from "../repositories/laporan_repository.interface.js";
 import type { UserActivityRes } from "../dto/users.js";
-import { USER_ROLE, LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
+import { USER_ROLE, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, REF_TIPE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { handlePrismaError } from "../utils/error.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { AppError } from "../utils/error.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import { Prisma } from "../generated/prisma/client.js";
+import type { PeriodRange } from "../utils/date.js";
+import type { INotificationService } from "./notification_service.interface.js";
+import type { IUsersService } from "./users_service.interface.js";
+import type { NotificationData, BulkNotificationData } from "../dto/notification.js";
 
 export class LaporanService implements ILaporanService {
     private laporanRepo: ILaporanRepository;
+    private notificationService: INotificationService;
+    private usersService: IUsersService;
 
-    constructor(laporanRepo: ILaporanRepository) {
+    constructor(
+        laporanRepo: ILaporanRepository,
+        notificationService: INotificationService,
+        usersService: IUsersService
+    ) {
         this.laporanRepo = laporanRepo;
+        this.notificationService = notificationService;
+        this.usersService = usersService;
     }
 
     async getReportDetail(reportId: string, userId: string, role: string): Promise<MappedReportDetailRes> {
@@ -167,6 +179,79 @@ export class LaporanService implements ILaporanService {
         }
     }
 
+    async getRiwayat(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<MappedProfileReport>> {
+        try {
+            const reportsData = await this.laporanRepo.getReportsByObId(obId, limit, cursor, search, status);
+
+            const items: MappedProfileReport[] = reportsData.items.map((item: ProfileReport) => {
+                const mapped: MappedProfileReport = {
+                    id: item.id,
+                    kategori: item.kategori?.nama_kategori || "",
+                    deskripsi_kendala: item.deskripsi_kendala || "",
+                    status: item.status as LaporanStatus,
+                    prioritas: item.prioritas as LaporanPriority,
+                    foto_masalah: (item.foto_masalah ?? []).map((f: string) => resolveFileUrl(f)).filter((url): url is string => url !== null),
+                    lokasi: item.lantai?.lokasi?.nama_lokasi || "",
+                    nomor_lantai: item.lantai?.nomor_lantai || 0,
+                    nama_ob: item.ob?.nama_lengkap || null,
+                    created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
+                    updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : String(item.updated_at)
+                };
+                return mapped;
+            });
+
+            const result: PaginatedResponse<MappedProfileReport> = {
+                items,
+                next_cursor: reportsData.next_cursor ?? null,
+                meta: reportsData.meta ?? {
+                    total_items: 0,
+                    current_page: 1,
+                    limit,
+                    total_pages: 0
+                }
+            };
+            return result;
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
+    async getDetailRiwayat(laporanId: string, obId: string): Promise<MappedReportDetailRes> {
+        try {
+            const item = await this.laporanRepo.getReportDetailById(laporanId);
+            if (!item) {
+                throw new AppError("Laporan tidak ditemukan", 404);
+            }
+
+            if (item.ob_id !== obId) {
+                throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
+            }
+
+            const history = item.histori_pekerjaan?.[0];
+
+            const detail: MappedReportDetailRes = {
+                id: item.id,
+                kategori: item.kategori?.nama_kategori || "",
+                deskripsi_kendala: item.deskripsi_kendala || "",
+                status: item.status as LaporanStatus,
+                prioritas: item.prioritas as LaporanPriority,
+                foto_masalah: Array.isArray(item.foto_masalah) ? (item.foto_masalah as string[]).map(resolveFileUrl).filter((url): url is string => !!url) : [],
+                foto_selesai: history && Array.isArray(history.foto_selesai) ? history.foto_selesai.map(resolveFileUrl).filter((url): url is string => !!url) : [],
+                catatan: history?.catatan || "",
+                lokasi: item.lantai?.lokasi?.nama_lokasi || "",
+                nomor_lantai: item.lantai?.nomor_lantai || 0,
+                nama_karyawan: item.pelapor?.nama_lengkap || "",
+                nama_ob: item.ob?.nama_lengkap || null,
+                is_kolaborasi_open: item.is_kolaborasi_open,
+                catatan_kolaborasi: item.catatan_kolaborasi,
+                created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
+            };
+            return detail;
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
     async patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void> {
         try {
             const now = new Date();
@@ -202,9 +287,33 @@ export class LaporanService implements ILaporanService {
         }
     }
 
-    async toggleKolaborasiOpen(laporanId: string, isOpen: boolean, catatan?: string): Promise<void> {
+    async toggleKolaborasiOpen(laporanId: string, obId: string, isOpen: boolean, catatan?: string): Promise<void> {
         try {
+            const laporan = await this.laporanRepo.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+            if (laporan.ob_id !== obId) throw new AppError("Hanya OB pemilik laporan yang bisa mengatur kolaborasi", 403);
+
             await this.laporanRepo.updateKolaborasiOpen(laporanId, isOpen, catatan);
+
+            if (isOpen) {
+                const obUsers = await this.usersService.getByRole(USER_ROLE.OB);
+                const otherObIds = obUsers
+                    .filter((u) => u.id !== obId)
+                    .map((u) => u.id);
+
+                if (otherObIds.length > 0) {
+                    const bulkNotif: BulkNotificationData = {
+                        penerima_ids: otherObIds,
+                        pengirim_id: obId,
+                        tipe: NOTIFICATION_TYPE.KOLABORASI_DIBUKA,
+                        judul: NOTIFICATION_TITLE.KOLABORASI_DIBUKA,
+                        pesan: NOTIFICATION_MESSAGE.KOLABORASI_DIBUKA,
+                        ref_id: laporanId,
+                        ref_tipe: REF_TIPE.KOLABORASI,
+                    };
+                    await this.notificationService.sendBulkNotification(bulkNotif);
+                }
+            }
         } catch (err) {
             handlePrismaError(err);
         }
@@ -222,6 +331,95 @@ export class LaporanService implements ILaporanService {
     async deleteLaporan(laporanId: string): Promise<void> {
         try {
             await this.laporanRepo.deleteLaporan(laporanId);
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
+    async getReportsForObDashboard(obId: string): Promise<LaporanKaryawanWithDetails[]> {
+        try {
+            const reports = await this.laporanRepo.getReportsForObDashboard(obId);
+            return reports;
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
+    async ambilLaporan(laporanId: string, obId: string): Promise<void> {
+        try {
+            const laporan = await this.laporanRepo.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+            if (laporan.ob_id && laporan.ob_id !== obId) {
+                throw new AppError("Laporan sudah diambil oleh OB lain", 409);
+            }
+
+            await this.laporanRepo.ambilLaporan(laporanId, obId);
+
+            const notifData: NotificationData = {
+                penerima_id: laporan.pelapor_id,
+                pengirim_id: obId,
+                tipe: NOTIFICATION_TYPE.LAPORAN_DIKERJAKAN,
+                judul: NOTIFICATION_TITLE.LAPORAN_DIKERJAKAN,
+                pesan: NOTIFICATION_MESSAGE.LAPORAN_DIKERJAKAN,
+                ref_id: laporanId,
+                ref_tipe: REF_TIPE.LAPORAN,
+            };
+            await this.notificationService.sendNotification(notifData);
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
+    async createHistoriPekerjaan(laporanId: string, fotoUrls: string[], catatan: string, obId: string): Promise<void> {
+        try {
+            const laporan = await this.laporanRepo.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+            if (laporan.ob_id !== obId) throw new AppError("Hanya OB utama yang bisa menyelesaikan laporan", 403);
+
+            await this.laporanRepo.createHistoriSelesai(laporanId, obId, fotoUrls, catatan);
+
+            const notifData: NotificationData = {
+                penerima_id: laporan.pelapor_id,
+                pengirim_id: obId,
+                tipe: NOTIFICATION_TYPE.LAPORAN_BERES,
+                judul: NOTIFICATION_TITLE.LAPORAN_BERES,
+                pesan: catatan,
+                ref_id: laporanId,
+                ref_tipe: REF_TIPE.LAPORAN,
+            };
+            await this.notificationService.sendNotification(notifData);
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
+    async batalkanLaporan(laporanId: string, fotoUrls: string[], catatan: string, obId: string): Promise<void> {
+        try {
+            const laporan = await this.laporanRepo.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+            if (laporan.ob_id !== obId) throw new AppError("Hanya OB utama yang bisa membatalkan laporan", 403);
+
+            await this.laporanRepo.batalkanLaporan(laporanId, obId, fotoUrls, catatan);
+
+            const notifData: NotificationData = {
+                penerima_id: laporan.pelapor_id,
+                pengirim_id: obId,
+                tipe: NOTIFICATION_TYPE.LAPORAN_DIBATALKAN,
+                judul: NOTIFICATION_TITLE.LAPORAN_DIBATALKAN,
+                pesan: catatan,
+                ref_id: laporanId,
+                ref_tipe: REF_TIPE.LAPORAN,
+            };
+            await this.notificationService.sendNotification(notifData);
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
+    async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number }> {
+        try {
+            const stats = await this.laporanRepo.getObPerformanceStats(obId, dateRange);
+            return stats;
         } catch (err) {
             handlePrismaError(err);
         }

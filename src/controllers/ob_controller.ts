@@ -1,8 +1,11 @@
 import type { Request, Response } from "express";
 import type { IObService } from "../services/ob_service.interface.js";
-import { sendSuccessfullResponse, sendErrorResponse } from "../utils/response.js";
+import type { ITugasService } from "../services/tugas_service.interface.js";
+import type { ILaporanService } from "../services/laporan_service.interface.js";
+import type { IChecklistHarianService } from "../services/checklistHarian_service.interface.js";
 import type { IStorageService } from "../services/storage_service.interface.js";
-import { CreateHistoriSchema, ChecklistIdParamSchema } from "../dto/ob.js";
+import { sendSuccessfullResponse, sendErrorResponse } from "../utils/response.js";
+import { CreateHistoriSchema, ChecklistIdParamSchema, ObTugasIdParamSchema } from "../dto/ob.js";
 import { LaporanIdParamSchema } from "../dto/users.js";
 import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
 import { z } from "zod";
@@ -10,17 +13,28 @@ import { AppError } from "../utils/error.js";
 
 export class ObController {
     private obService: IObService;
+    private tugasService: ITugasService;
+    private laporanService: ILaporanService;
+    private checklistService: IChecklistHarianService;
     private storageService: IStorageService;
 
-    constructor(obService: IObService, storageService: IStorageService) {
+    constructor(
+        obService: IObService,
+        tugasService: ITugasService,
+        laporanService: ILaporanService,
+        checklistService: IChecklistHarianService,
+        storageService: IStorageService
+    ) {
         this.obService = obService;
+        this.tugasService = tugasService;
+        this.laporanService = laporanService;
+        this.checklistService = checklistService;
         this.storageService = storageService;
     }
 
     async getHomeStats(req: Request, res: Response) {
         try {
             const obId = req.user?.id as string;
-
             const response = await this.obService.getHomeStats(obId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data home OB", response));
         } catch (err: unknown) {
@@ -41,8 +55,7 @@ export class ObController {
             const laporanId = validateParams.data.laporan_id;
             const obId = req.user?.id as string;
 
-            await this.obService.ambilLaporan(laporanId, obId);
-
+            await this.laporanService.ambilLaporan(laporanId, obId);
             return res.status(200).json(sendSuccessfullResponse("Laporan berhasil diambil"));
         } catch (err: unknown) {
             if (err instanceof AppError) {
@@ -63,7 +76,6 @@ export class ObController {
             const obId = req.user?.id as string;
 
             const validate = CreateHistoriSchema.safeParse(req.body);
-
             if (!validate.success) {
                 const formatedErr = validate.error.flatten().fieldErrors;
                 return res.status(400).json(sendErrorResponse("Validation failed", formatedErr));
@@ -94,8 +106,7 @@ export class ObController {
                 fotoUrls.push(url);
             }
 
-            await this.obService.createHistoriPekerjaan(laporanId, fotoUrls, validate.data, obId);
-
+            await this.laporanService.createHistoriPekerjaan(laporanId, fotoUrls, validate.data.catatan, obId);
             return res.status(200).json(sendSuccessfullResponse("Histori pekerjaan berhasil disimpan"));
         } catch (err: unknown) {
             if (err instanceof AppError) {
@@ -116,7 +127,6 @@ export class ObController {
             const obId = req.user?.id as string;
 
             const validate = CreateHistoriSchema.safeParse(req.body);
-
             if (!validate.success) {
                 const formatedErr = validate.error.flatten().fieldErrors;
                 return res.status(400).json(sendErrorResponse("Validasi Gagal", formatedErr));
@@ -143,8 +153,7 @@ export class ObController {
                 fotoUrls.push(url);
             }
 
-            await this.obService.batalkanLaporan(laporanId, fotoUrls, validate.data, obId);
-
+            await this.laporanService.batalkanLaporan(laporanId, fotoUrls, validate.data.catatan, obId);
             return res.status(200).json(sendSuccessfullResponse("Laporan berhasil dibatalkan dan bukti disimpan"));
         } catch (err: unknown) {
             if (err instanceof AppError) {
@@ -165,8 +174,7 @@ export class ObController {
             const checklistId = validateParams.data.checklist_id;
             const obId = req.user?.id as string;
 
-            await this.obService.ambilChecklist(checklistId, obId);
-
+            await this.checklistService.ambilChecklist(checklistId, obId);
             return res.status(200).json(sendSuccessfullResponse("Checklist berhasil diklaim"));
         } catch (err: unknown) {
             if (err instanceof AppError) {
@@ -195,13 +203,117 @@ export class ObController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
 
-            await this.obService.toggleKolaborasi(laporanId, obId, validateBody.data.is_open, validateBody.data.catatan);
+            await this.laporanService.toggleKolaborasiOpen(laporanId, obId, validateBody.data.is_open, validateBody.data.catatan);
             return res.status(200).json(sendSuccessfullResponse("Status kolaborasi berhasil diubah"));
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
             return res.status(500).json(sendErrorResponse("Gagal mengubah status kolaborasi"));
+        }
+    }
+
+    async getRiwayat(req: Request, res: Response) {
+        try {
+            const obId = req.user?.id as string;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const cursor = req.query.cursor as string | undefined;
+            const status = req.query.status as string | undefined;
+            const search = req.query.search as string | undefined;
+
+            const result = await this.laporanService.getRiwayat(obId, limit, cursor, search, status);
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan riwayat", result));
+        } catch (err) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan riwayat"));
+        }
+    }
+
+    async getDetailRiwayat(req: Request, res: Response) {
+        try {
+            const validateParams = LaporanIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const laporanId = validateParams.data.laporan_id;
+            const obId = req.user?.id as string;
+
+            const detail = await this.laporanService.getDetailRiwayat(laporanId, obId);
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan detail riwayat", detail));
+        } catch (err) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan detail riwayat"));
+        }
+    }
+
+    async getProfile(req: Request, res: Response) {
+        try {
+            const obId = req.user?.id as string;
+            const profile = await this.obService.getProfile(obId);
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan profil", profile));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan profil"));
+        }
+    }
+
+    async getTugas(req: Request, res: Response) {
+        try {
+            const obId = req.user?.id as string;
+            const tugas = await this.tugasService.getAvailableTugas(obId);
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan daftar tugas", tugas));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan daftar tugas"));
+        }
+    }
+
+    async claimTugas(req: Request, res: Response) {
+        try {
+            const validateParams = ObTugasIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const tugasId = validateParams.data.tugas_id;
+            const obId = req.user?.id as string;
+
+            await this.tugasService.claimTugas(tugasId, obId);
+            return res.status(200).json(sendSuccessfullResponse("Tugas berhasil diklaim"));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengklaim tugas"));
+        }
+    }
+
+    async completeTugas(req: Request, res: Response) {
+        try {
+            const validateParams = ObTugasIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+            const tugasId = validateParams.data.tugas_id;
+            const obId = req.user?.id as string;
+
+            await this.tugasService.completeTugas(tugasId, obId);
+            return res.status(200).json(sendSuccessfullResponse("Tugas berhasil diselesaikan"));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal menyelesaikan tugas"));
         }
     }
 }

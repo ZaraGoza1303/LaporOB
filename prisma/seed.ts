@@ -1,5 +1,6 @@
 import pg from "pg";
 import bcrypt from "bcrypt";
+import { randomUUID } from "crypto";
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -12,7 +13,7 @@ async function main() {
   try {
     await client.query("BEGIN");
 
-    // Role 
+    // ============ ROLE ============
     console.log("  Insert role...");
     await client.query(`
       INSERT INTO role (id, nama_role, created_at) VALUES
@@ -23,7 +24,7 @@ async function main() {
       ON CONFLICT (nama_role) DO NOTHING
     `);
 
-    // User 
+    // ============ USER ============
     console.log("  Insert user...");
     const hashedPassword = await bcrypt.hash("password123", 10);
     await client.query(
@@ -41,7 +42,7 @@ async function main() {
       [hashedPassword]
     );
 
-    // User Token 
+    // ============ USER TOKEN ============
     console.log("  Insert user_token...");
     await client.query(`
       INSERT INTO user_token (id, user_id, token_hash, type, expired_at, used_at, created_at) VALUES
@@ -50,7 +51,7 @@ async function main() {
       ON CONFLICT (token_hash) DO NOTHING
     `);
 
-    //  Lokasi 
+    // ============ LOKASI ============
     console.log("  Insert lokasi...");
     await client.query(`
       INSERT INTO lokasi (id, nama_lokasi, created_at, updated_at) VALUES
@@ -59,7 +60,7 @@ async function main() {
       ON CONFLICT (id) DO NOTHING
     `);
 
-    //  Lantai 
+    // ============ LANTAI ============
     console.log("  Insert lantai...");
     await client.query(`
       INSERT INTO lantai (id, lokasi_id, nomor_lantai, created_at, updated_at) VALUES
@@ -71,7 +72,7 @@ async function main() {
       ON CONFLICT (id) DO NOTHING
     `);
 
-    // Ruangan
+    // ============ RUANGAN ============
     console.log("  Insert ruangan...");
     await client.query(`
       INSERT INTO ruangan (id, lantai_id, nama, created_at, updated_at) VALUES
@@ -99,7 +100,7 @@ async function main() {
       ON CONFLICT (id) DO NOTHING
     `);
 
-    // Kategori 
+    // ============ KATEGORI ============
     console.log("  Insert kategori...");
     await client.query(`
       INSERT INTO kategori (id, nama_kategori, created_at, updated_at) VALUES
@@ -109,31 +110,94 @@ async function main() {
       ON CONFLICT (id) DO NOTHING
     `);
 
-    //  Tugas 
+    // ============ TUGAS ============
     console.log("  Insert tugas...");
+    
     await client.query(`
       INSERT INTO tugas (id, kategori_id, nama_tugas, is_active, created_at, updated_at) VALUES
         -- Kebersihan
-        ('550fd576-3fd1-4a42-af0b-bb16c06436b2', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Bersihkan lantai toilet',                     true, now(), now()),
-        ('b8e4dd5c-227e-4650-bda5-ec630226a9d4', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Sapu dan pel lantai ruangan',                 true, now(), now()),
-        ('db8b6a86-3ac3-4cf7-bfc7-8fc72a368580', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Lap meja dan kursi',                          true, now(), now()),
-        ('ee68c3e1-e03f-4bfc-80d3-8526d4385ddb', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Bersihkan kaca jendela',                      true, now(), now()),
-        ('695d2f29-7afe-47af-805e-bb47ddfd5c0b', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Angkut & buang sampah ke TPS',                true, now(), now()),
-        ('22225c68-64fe-4d22-9fc4-b5cd94e3e5aa', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Cuci peralatan makan di pantry',              true, now(), now()),
+        ('550fd576-3fd1-4a42-af0b-bb16c06436b2', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Bersihkan lantai toilet', true, now(), now()),
+        ('b8e4dd5c-227e-4650-bda5-ec630226a9d4', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Sapu dan pel lantai ruangan', true, now(), now()),
+        ('db8b6a86-3ac3-4cf7-bfc7-8fc72a368580', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Lap meja dan kursi', true, now(), now()),
+        ('695d2f29-7afe-47af-805e-bb47ddfd5c0b', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Angkut & buang sampah ke TPS', true, now(), now()),
         -- Pengecekan
-        ('9595353c-bd0c-44e4-ba9f-c1bbd588fcf1', 'd2597de5-120f-47b0-878a-83a46c47db34', 'Cek kebersihan ruangan setelah dibersihkan',  true, now(), now()),
-        ('d7d74511-f099-48ae-b357-6e3af2ccbde5', 'd2597de5-120f-47b0-878a-83a46c47db34', 'Cek kondisi wastafel & toilet',               true, now(), now()),
-        ('cb9b64e7-e59f-481b-a357-78e93719a4a9', 'd2597de5-120f-47b0-878a-83a46c47db34', 'Cek kondisi AC ruangan',                      true, now(), now()),
-        -- Peralatan
-        ('7140b0e9-5512-453b-baa8-cfba4c00da11', '5dcba45c-b5de-437c-858b-50dbe7624f9b', 'Isi ulang sabun & tisu',                      true, now(), now()),
-        ('1e47f903-71c5-4366-90f3-4e0daad6fc3d', '5dcba45c-b5de-437c-858b-50dbe7624f9b', 'Cek stok peralatan kebersihan',               true, now(), now())
+        ('d7d74511-f099-48ae-b357-6e3af2ccbde5', 'd2597de5-120f-47b0-878a-83a46c47db34', 'Cek kondisi wastafel & toilet', true, now(), now()),
+        ('cb9b64e7-e59f-481b-a357-78e93719a4a9', 'd2597de5-120f-47b0-878a-83a46c47db34', 'Cek kondisi AC ruangan', true, now(), now())
+      ON CONFLICT (id) DO NOTHING
+    `);
+
+    // ============ PENUGASAN OB ============
+    console.log("  Insert penugasan_ob...");
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+
+    await client.query(`
+      INSERT INTO penugasan_ob (id, ob_id, lokasi_id, bulan, tahun, created_at, updated_at) VALUES
+        ('${randomUUID()}', '6fb8dfa8-92dc-4125-a00a-6ba9c6cd5820', '033f0941-8378-42e3-af2c-29cf83ab8e11', ${currentMonth}, ${currentYear}, now(), now()),
+        ('${randomUUID()}', '9e4d64c0-34e2-455c-b317-b9e4d6d5e6bd', '6c58477b-a345-4175-893a-58472165b899', ${currentMonth}, ${currentYear}, now(), now())
+      ON CONFLICT (ob_id, lokasi_id, bulan, tahun) DO NOTHING
+    `);
+
+    // ============ CHECKLIST HARIAN ============
+    console.log("  Insert checklist_harian...");
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    await client.query(`
+      INSERT INTO checklist_harian (id, tanggal, nama_tugas, ob_id, lantai_id, kategori_id, status, auto_generate, created_at, updated_at) VALUES
+        ('${randomUUID()}', '${todayStr}'::date, 'Bersihkan lantai toilet', '6fb8dfa8-92dc-4125-a00a-6ba9c6cd5820', '45a8d4d0-ea99-404d-b35b-f39cd7315c2b', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'BELUM_DIKERJAKAN', true, now(), now()),
+        ('${randomUUID()}', '${todayStr}'::date, 'Sapu dan pel lantai ruangan', '6fb8dfa8-92dc-4125-a00a-6ba9c6cd5820', '45a8d4d0-ea99-404d-b35b-f39cd7315c2b', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'SEDANG_DIKERJAKAN', true, now(), now()),
+        ('${randomUUID()}', '${todayStr}'::date, 'Lap meja dan kursi', '9e4d64c0-34e2-455c-b317-b9e4d6d5e6bd', '5970908a-117c-4ab9-95f6-065ed4d8b04c', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'BELUM_DIKERJAKAN', true, now(), now()),
+        ('${randomUUID()}', '${todayStr}'::date, 'Angkut & buang sampah ke TPS', '9e4d64c0-34e2-455c-b317-b9e4d6d5e6bd', '5970908a-117c-4ab9-95f6-065ed4d8b04c', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'BELUM_DIKERJAKAN', true, now(), now())
+      ON CONFLICT (id) DO NOTHING
+    `);
+
+    // ============ LAPORAN KARYAWAN ============
+    console.log("  Insert laporan_karyawan...");
+    await client.query(`
+      INSERT INTO laporan_karyawan (
+        id, pelapor_id, ob_id, lantai_id, ruangan_id, kategori_id, 
+        deskripsi_kendala, status, prioritas, foto_masalah, 
+        is_approved, created_at, updated_at
+      ) VALUES
+        (
+          '${randomUUID()}',
+          '1faac01e-e059-4686-af13-f04bce031a71',
+          '6fb8dfa8-92dc-4125-a00a-6ba9c6cd5820',
+          '45a8d4d0-ea99-404d-b35b-f39cd7315c2b',
+          'a8db3d11-447a-4c28-98e3-b0fc844e1e02',
+          'ba7079f3-fc98-4be7-afe3-cc769ffa3458',
+          'Toilet pria lantai 1 kotor dan bau',
+          'SELESAI',
+          'URGENT',
+          ARRAY['foto1.jpg', 'foto2.jpg'],
+          true,
+          now(),
+          now()
+        ),
+        (
+          '${randomUUID()}',
+          'd2ecedca-a2aa-4aa4-a721-34d6703e530c',
+          '9e4d64c0-34e2-455c-b317-b9e4d6d5e6bd',
+          '5970908a-117c-4ab9-95f6-065ed4d8b04c',
+          'b8db3d11-447a-4c28-98e3-b0fc844e1e02',
+          'd2597de5-120f-47b0-878a-83a46c47db34',
+          'AC ruangan utama B1 tidak dingin',
+          'PENDING',
+          'STANDARD',
+          ARRAY['ac_masalah.jpg'],
+          false,
+          now(),
+          now()
+        )
       ON CONFLICT (id) DO NOTHING
     `);
 
     await client.query("COMMIT");
-    console.log("Seed Beres");
+    console.log("✅ Seed Beres!");
   } catch (err) {
     await client.query("ROLLBACK");
+    console.error("❌ Seed gagal:", err);
     throw err;
   } finally {
     client.release();

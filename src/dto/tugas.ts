@@ -7,10 +7,16 @@ export const TugasIdParamSchema = z.object({
 export const CreateTugasSchema = z.object({
     kategori_id: z.string().uuid({ message: "Format Kategori ID harus berupa UUID yang valid" }),
     nama_tugas: z.string().trim().min(1, { message: "Nama tugas tidak boleh kosong" }).max(150, { message: "Nama tugas maksimal 150 karakter" }),
+    lantai_id: z.string().uuid({ message: "Format Lantai ID harus berupa UUID yang valid" }).optional(),
+    catatan: z.string().trim().optional(),
     is_active: z.boolean().optional().default(true),
 });
 
-export const UpdateTugasSchema = CreateTugasSchema.partial();
+export const UpdateTugasSchema = z.object({
+    kategori_id: z.string().uuid({ message: "Format Kategori ID harus berupa UUID yang valid" }).optional(),
+    nama_tugas: z.string().trim().min(1, { message: "Nama tugas tidak boleh kosong" }).max(150, { message: "Nama tugas maksimal 150 karakter" }).optional(),
+    is_active: z.boolean().optional(),
+});
 
 export const TugasQuerySchema = z.object({
     kategori_id: z.string().uuid({ message: "Format Kategori ID harus berupa UUID yang valid" }).optional(),

@@ -75,20 +75,20 @@ const emailService = EmailServiceFactory.getProvider();
 //  SERVICES 
 const kategoriService = new KategoriService(kategoriRepository, redisClient as unknown as IRedisClient);
 const lantaiService = new LantaiService(lantaiRepository, redisClient as unknown as IRedisClient);
-const laporanService = new LaporanService(laporanRepository);
+const usersService = new UsersService(usersRepository, redisClient as unknown as IRedisClient, emailService);
+const notificationService = new NotificationService(notificationRepository);
 const lokasiService = new LokasiService(lokasiRepository, redisClient as unknown as IRedisClient);
 const ruanganService = new RuanganService(ruanganRepository, redisClient as unknown as IRedisClient);
 const tugasService = new TugasService(tugasRepository, redisClient as unknown as IRedisClient);
-const usersService = new UsersService(usersRepository, redisClient as unknown as IRedisClient, emailService);
-const notificationService = new NotificationService(notificationRepository);
+const laporanService = new LaporanService(laporanRepository, notificationService, usersService);
 const checklistHarianService = new ChecklistHarianService(checklistHarianRepository, notificationService, usersService);
 const sessionService = new UserSessionService(userSessionRepository, redisClient as unknown as IRedisClient);
 const authService = new AuthService(authRepository, usersService, sessionService, emailService);
-const obService = new ObService(obRepository, laporanService, usersService, notificationService);
+const obService = new ObService(obRepository, laporanService, checklistHarianService, usersService);
 const kolaborasiService = new KolaborasiService(kolaborasiRepository, laporanService, notificationService);
 const adminService = new AdminService(adminRepository, laporanService, usersService, redisClient as unknown as IRedisClient);
 const karyawanService = new KaryawanService(usersService, laporanService, kategoriService, notificationService);
-const profileService = new ProfileService(usersService, karyawanService, obService);
+const profileService = new ProfileService(usersService, karyawanService, obService, laporanService);
 
 //  CONTROLLERS 
 export const adminController = new AdminController(adminService);
@@ -98,7 +98,7 @@ export const karyawanController = new KaryawanController(karyawanService, storag
 export const kategoriController = new KategoriController(kategoriService);
 export const lantaiController = new LantaiController(lantaiService);
 export const lokasiController = new LokasiController(lokasiService);
-export const obController = new ObController(obService, storageService);
+export const obController = new ObController(obService, tugasService, laporanService, checklistHarianService, storageService);
 export const ruanganController = new RuanganController(ruanganService);
 export const tugasController = new TugasController(tugasService);
 export const usersController = new UsersController(

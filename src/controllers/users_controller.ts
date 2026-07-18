@@ -327,7 +327,7 @@ export class UsersController {
             }
 
             const dateRange = calculatePeriodRange(validateQuery.data.period);
-            const response = await this.obService.getObPerformanceStats(obId, dateRange);
+            const response = await this.laporanService.getObPerformanceStats(obId, dateRange);
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan statistik performa OB", response));
         } catch (err: unknown) {
