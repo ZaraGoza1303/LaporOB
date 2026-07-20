@@ -1,6 +1,6 @@
 import type { CreateSkillDefinitionReq, UpdateSkillDefinitionReq, AssignSkillReq, SkillDefinitionRes, ObSkillRes } from "../dto/skill.js";
 import type { ISkillRepository } from "../repositories/skill_repository.interface.js";
-import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
+import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { ISkillService } from "./skill_service.interface.js";
 import type { SkillDefinition, ObSkill, Prisma } from "../generated/prisma/client.js";
 import { handlePrismaError } from "../utils/error.js";
@@ -13,18 +13,18 @@ import type { BulkNotificationData } from "../dto/notification.js";
 
 export class SkillService implements ISkillService {
     private skillRepo: ISkillRepository;
-    private checklistRepo: IChecklistHarianRepository;
+    private checklistService: IChecklistHarianService;
     private notificationService: INotificationService;
     private usersService: IUsersService;
 
     constructor(
         skillRepo: ISkillRepository,
-        checklistRepo: IChecklistHarianRepository,
+        checklistService: IChecklistHarianService,
         notificationService: INotificationService,
         usersService: IUsersService,
     ) {
         this.skillRepo = skillRepo;
-        this.checklistRepo = checklistRepo;
+        this.checklistService = checklistService;
         this.notificationService = notificationService;
         this.usersService = usersService;
     }
@@ -152,7 +152,7 @@ export class SkillService implements ISkillService {
             const definitions = await this.skillRepo.getActiveAutoDefinitions();
             if (definitions.length === 0) return 0;
 
-            const completed = await this.checklistRepo.getCompletedChecklistByOb();
+            const completed = await this.checklistService.getCompletedByOb();
             if (completed.length === 0) return 0;
 
             let unlockedCount = 0;
