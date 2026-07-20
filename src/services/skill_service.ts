@@ -2,10 +2,11 @@ import type { CreateSkillDefinitionReq, UpdateSkillDefinitionReq, AssignSkillReq
 import type { ISkillRepository } from "../repositories/skill_repository.interface.js";
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
 import type { ISkillService } from "./skill_service.interface.js";
-import type { SkillDefinition, ObSkill } from "../generated/prisma/client.js";
+import type { SkillDefinition, ObSkill, Prisma } from "../generated/prisma/client.js";
 import { handlePrismaError } from "../utils/error.js";
+import { AppError } from "../utils/error.js";
 import { matchSkillIds } from "../utils/skillMatcher.js";
-import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE, REF_TIPE, USER_ROLE } from "../utils/constants.js";
+import { NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE, REF_TIPE } from "../utils/constants.js";
 import type { INotificationService } from "./notification_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
 import type { BulkNotificationData } from "../dto/notification.js";
@@ -93,7 +94,7 @@ export class SkillService implements ISkillService {
 
     async updateDefinition(skillId: string, req: UpdateSkillDefinitionReq): Promise<void> {
         try {
-            const dataToUpdate: Record<string, unknown> = {};
+            const dataToUpdate: Prisma.SkillDefinitionUncheckedUpdateInput = {};
             if (req.nama_skill !== undefined) dataToUpdate.nama_skill = req.nama_skill;
             if (req.keyword !== undefined) dataToUpdate.keyword = req.keyword;
             if (req.deskripsi !== undefined) dataToUpdate.deskripsi = req.deskripsi;
@@ -101,7 +102,7 @@ export class SkillService implements ISkillService {
             if (req.is_active !== undefined) dataToUpdate.is_active = req.is_active;
             if (req.threshold !== undefined) dataToUpdate.threshold = req.threshold;
 
-            await this.skillRepo.updateDefinition(skillId, dataToUpdate as never);
+            await this.skillRepo.updateDefinition(skillId, dataToUpdate);
         } catch (err) {
             handlePrismaError(err);
         }
@@ -119,7 +120,7 @@ export class SkillService implements ISkillService {
         try {
             const def = await this.skillRepo.getDefinitionByID(req.skill_id);
             if (!def) {
-                throw new Error("Skill definition tidak ditemukan");
+                throw new AppError("Skill definition tidak ditemukan", 404);
             }
             const assigned = await this.skillRepo.assignSkill(req.ob_id, req.skill_id, adminId);
 

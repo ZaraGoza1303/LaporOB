@@ -11,6 +11,12 @@ export class JadwalChecklistController {
         this.jadwalService = jadwalService;
     }
 
+    private getUserId(req: Request): string {
+        const userId = req.user?.id;
+        if (!userId) throw new AppError("User tidak terautentikasi", 401);
+        return userId;
+    }
+
     async getAll(req: Request, res: Response) {
         try {
             const jadwals = await this.jadwalService.getAll();
@@ -25,7 +31,7 @@ export class JadwalChecklistController {
 
     async create(req: Request, res: Response) {
         try {
-            const userId = req.user?.id as string;
+            const userId = this.getUserId(req);
 
             if (!req.body) {
                 return res.status(400).json(sendErrorResponse("Request body empty"));

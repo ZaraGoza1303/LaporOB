@@ -135,7 +135,9 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
             where: { status: "SELESAI", ob_id: { not: null } },
             select: { ob_id: true, nama_tugas: true },
         });
-        return rows.map(r => ({ ob_id: r.ob_id as string, nama_tugas: r.nama_tugas }));
+        return rows
+            .filter((r): r is { ob_id: string; nama_tugas: string } => r.ob_id !== null)
+            .map(r => ({ ob_id: r.ob_id, nama_tugas: r.nama_tugas }));
     }
 
     async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<PaginatedResponse<ChecklistHarianWithRelations>> {
