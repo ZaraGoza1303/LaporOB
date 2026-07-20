@@ -179,7 +179,6 @@ export class ChecklistHarianService implements IChecklistHarianService {
             dikerjakan_at: item.dikerjakan_at ?? null,
             selesai_at: item.selesai_at ?? null,
             terlewat_at: item.terlewat_at ?? null,
-            auto_generate: item.auto_generate,
             tanggal: item.tanggal,
             created_at: item.created_at,
             updated_at: item.updated_at,

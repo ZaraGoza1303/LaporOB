@@ -31,10 +31,6 @@ export interface IChecklistHarianRepository {
     countTotalChecklistDone(dateRange?: PeriodRange): Promise<number>;
     countTotalChecklistPending(dateRange?: PeriodRange): Promise<number>;
     countTotalChecklistLate(dateRange?: PeriodRange): Promise<number>;
-
-    /** For cron: ambil checklist dengan auto_generate=true untuk tanggal tertentu */
-    findAutoGenerateTemplates(tanggal: Date): Promise<Checklist_harian[]>;
-    /** For cron: batch insert cloned checklist */
     insertMany(data: Checklist_harianUncheckedCreateInput[]): Promise<void>;
 
     /** For OB dashboard: get today's checklists for an OB */

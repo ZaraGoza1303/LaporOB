@@ -535,10 +535,6 @@ components:
             - SEDANG_DIKERJAKAN
             - SELESAI
             - TERLEWAT
-        auto_generate:
-          type: boolean
-          default: true
-          description: Jika true, row ini akan di-clone oleh cron job setiap hari untuk tanggal berikutnya
         catatan:
           type: string
           nullable: true

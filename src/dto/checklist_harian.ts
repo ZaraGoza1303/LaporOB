@@ -57,7 +57,6 @@ export interface ChecklistHarianRes {
     dikerjakan_at?: Date | null;
     selesai_at?: Date | null;
     terlewat_at?: Date | null;
-    auto_generate: boolean;
     tanggal: Date;
     created_at: Date;
     updated_at: Date;

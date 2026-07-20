@@ -144,11 +144,11 @@ async function main() {
     const todayStr = today.toISOString().split('T')[0];
 
     await client.query(`
-      INSERT INTO checklist_harian (id, tanggal, nama_tugas, ob_id, lantai_id, kategori_id, status, auto_generate, created_at, updated_at) VALUES
-        ('${randomUUID()}', '${todayStr}'::date, 'Bersihkan lantai toilet', '6fb8dfa8-92dc-4125-a00a-6ba9c6cd5820', '45a8d4d0-ea99-404d-b35b-f39cd7315c2b', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'BELUM_DIKERJAKAN', true, now(), now()),
-        ('${randomUUID()}', '${todayStr}'::date, 'Sapu dan pel lantai ruangan', '6fb8dfa8-92dc-4125-a00a-6ba9c6cd5820', '45a8d4d0-ea99-404d-b35b-f39cd7315c2b', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'SEDANG_DIKERJAKAN', true, now(), now()),
-        ('${randomUUID()}', '${todayStr}'::date, 'Lap meja dan kursi', '9e4d64c0-34e2-455c-b317-b9e4d6d5e6bd', '5970908a-117c-4ab9-95f6-065ed4d8b04c', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'BELUM_DIKERJAKAN', true, now(), now()),
-        ('${randomUUID()}', '${todayStr}'::date, 'Angkut & buang sampah ke TPS', '9e4d64c0-34e2-455c-b317-b9e4d6d5e6bd', '5970908a-117c-4ab9-95f6-065ed4d8b04c', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'BELUM_DIKERJAKAN', true, now(), now())
+      INSERT INTO checklist_harian (id, tanggal, nama_tugas, ob_id, lantai_id, kategori_id, status, created_at, updated_at) VALUES
+        ('${randomUUID()}', '${todayStr}'::date, 'Bersihkan lantai toilet', '6fb8dfa8-92dc-4125-a00a-6ba9c6cd5820', '45a8d4d0-ea99-404d-b35b-f39cd7315c2b', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'BELUM_DIKERJAKAN', now(), now()),
+        ('${randomUUID()}', '${todayStr}'::date, 'Sapu dan pel lantai ruangan', '6fb8dfa8-92dc-4125-a00a-6ba9c6cd5820', '45a8d4d0-ea99-404d-b35b-f39cd7315c2b', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'SEDANG_DIKERJAKAN', now(), now()),
+        ('${randomUUID()}', '${todayStr}'::date, 'Lap meja dan kursi', '9e4d64c0-34e2-455c-b317-b9e4d6d5e6bd', '5970908a-117c-4ab9-95f6-065ed4d8b04c', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'BELUM_DIKERJAKAN', now(), now()),
+        ('${randomUUID()}', '${todayStr}'::date, 'Angkut & buang sampah ke TPS', '9e4d64c0-34e2-455c-b317-b9e4d6d5e6bd', '5970908a-117c-4ab9-95f6-065ed4d8b04c', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'BELUM_DIKERJAKAN', now(), now())
       ON CONFLICT (id) DO NOTHING
     `);
 
