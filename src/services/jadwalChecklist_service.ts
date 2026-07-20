@@ -45,7 +45,18 @@ export class JadwalChecklistService implements IJadwalChecklistService {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            const matching = await this.getMatchingTodayForJadwal(dataToInsert, today);
+            const tanggalMulai: Date = new Date(req.tanggal_mulai);
+            const tanggalSelesai: Date = new Date(req.tanggal_selesai);
+            const hari: string[] = req.hari ?? [];
+            const tanggalSpesifik: Date[] = (req.tanggal_spesifik ?? []).map(d => new Date(d));
+            const matching = await this.getMatchingTodayForJadwal(
+                tanggalMulai,
+                tanggalSelesai,
+                hari,
+                tanggalSpesifik,
+                req.tanggal_ulang ?? null,
+                today,
+            );
 
             await this.jadwalRepo.transaction(async (tx) => {
                 await tx.jadwalChecklist.create({ data: dataToInsert });
@@ -146,22 +157,29 @@ export class JadwalChecklistService implements IJadwalChecklistService {
         }
     }
 
-    private async getMatchingTodayForJadwal(jadwal: JadwalChecklistUncheckedCreateInput, today: Date): Promise<boolean> {
-        if (new Date(jadwal.tanggal_mulai as Date) > today) return false;
-        if (new Date(jadwal.tanggal_selesai as Date) < today) return false;
+    private async getMatchingTodayForJadwal(
+        tanggalMulai: Date,
+        tanggalSelesai: Date,
+        hari: string[],
+        tanggalSpesifik: Date[],
+        tanggalUlang: number | null,
+        today: Date,
+    ): Promise<boolean> {
+        if (tanggalMulai > today) return false;
+        if (tanggalSelesai < today) return false;
 
         const todayName = HARI[today.getDay()] ?? '';
         const todayDateNum = today.getDate();
 
-        const hasHari = (jadwal.hari as string[]).length > 0;
-        const hasUlang = jadwal.tanggal_ulang !== null && jadwal.tanggal_ulang !== undefined;
-        const hasSpesifik = (jadwal.tanggal_spesifik as Date[]).length > 0;
+        const hasHari = hari.length > 0;
+        const hasUlang = tanggalUlang !== null && tanggalUlang !== undefined;
+        const hasSpesifik = tanggalSpesifik.length > 0;
 
         if (!hasHari && !hasUlang && !hasSpesifik) return true;
 
-        const hariOk = hasHari && (jadwal.hari as string[]).includes(todayName);
-        const ulangOk = hasUlang && jadwal.tanggal_ulang === todayDateNum;
-        const spesifikOk = hasSpesifik && (jadwal.tanggal_spesifik as Date[]).some(d =>
+        const hariOk = hasHari && hari.includes(todayName);
+        const ulangOk = hasUlang && tanggalUlang === todayDateNum;
+        const spesifikOk = hasSpesifik && tanggalSpesifik.some(d =>
             d.getFullYear() === today.getFullYear() &&
             d.getMonth() === today.getMonth() &&
             d.getDate() === today.getDate()

@@ -16,6 +16,12 @@ export class SkillController {
         this.skillService = skillService;
     }
 
+    private getUserId(req: Request): string {
+        const userId = req.user?.id;
+        if (!userId) throw new AppError("User tidak terautentikasi", 401);
+        return userId;
+    }
+
     async createDefinition(req: Request, res: Response) {
         try {
             if (!req.body) return res.status(400).json(sendErrorResponse("Request body empty"));
@@ -97,7 +103,7 @@ export class SkillController {
             if (!validate.success) {
                 return res.status(400).json(sendErrorResponse("Validation Failed", validate.error.flatten().fieldErrors));
             }
-            const adminId = req.user?.id as string;
+            const adminId = this.getUserId(req);
             const result = await this.skillService.assignSkillToOb(validate.data, adminId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil menugaskan skill ke OB", result));
         } catch (err: unknown) {
@@ -108,8 +114,10 @@ export class SkillController {
 
     async getObSkills(req: Request, res: Response) {
         try {
-            const ob_id = req.params.ob_id as string;
-            if (!ob_id) return res.status(400).json(sendErrorResponse("ob_id wajib diisi"));
+            const ob_id = req.params.ob_id;
+            if (typeof ob_id !== "string" || ob_id.length === 0) {
+                return res.status(400).json(sendErrorResponse("ob_id wajib diisi"));
+            }
             const result = await this.skillService.getObSkills(ob_id);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil skill OB", result));
         } catch (err: unknown) {
@@ -120,7 +128,7 @@ export class SkillController {
 
     async getMySkills(req: Request, res: Response) {
         try {
-            const obId = req.user?.id as string;
+            const obId = this.getUserId(req);
             const result = await this.skillService.getObSkills(obId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil skill saya", result));
         } catch (err: unknown) {
