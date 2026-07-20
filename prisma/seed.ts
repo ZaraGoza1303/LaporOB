@@ -193,6 +193,19 @@ async function main() {
       ON CONFLICT (id) DO NOTHING
     `);
 
+    // ============ SKILL DEFINITION ============
+    console.log("  Insert skill_definition...");
+    await client.query(`
+      INSERT INTO skill_definition (id, nama_skill, keyword, deskripsi, is_auto, is_active, threshold, created_at, updated_at) VALUES
+        ('b1a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c4d', 'Perawatan AC', ARRAY['ac','pendingin','air conditioner','filter ac','remote ac','freon'], 'Merawat dan memperbaiki AC ruangan', true, true, 3, now(), now()),
+        ('b2a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c4e', 'Kebersihan Sanitasi', ARRAY['toilet','wc','kamar mandi','kloset','wastafel','urinoir','cermin toilet','sanitasi'], 'Membersihkan area sanitasi & kamar mandi', true, true, 5, now(), now()),
+        ('b3a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c4f', 'Perawatan Lantai', ARRAY['lantai','sapu','pel','menyapu','mengepel','keset','vinil','vynil','noda lantai'], 'Merawat kebersihan lantai', true, true, 5, now(), now()),
+        ('b4a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c50', 'Kebersihan Meja & Kursi', ARRAY['meja','kursi','lap meja','membersihkan meja'], 'Membersihkan meja dan kursi kerja', true, true, 5, now(), now()),
+        ('b5a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c51', 'Pengelolaan Sampah', ARRAY['sampah','tps','tong sampah','limbah','buang sampah','angkut sampah','kantong plastik sampah','recycle'], 'Mengelola dan membuang sampah', true, true, 5, now(), now()),
+        ('b6a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c52', 'Karyawan Teladan', ARRAY[]::text[], 'Penghargaan khusus dari admin', false, true, 0, now(), now())
+      ON CONFLICT (id) DO NOTHING
+    `);
+
     await client.query("COMMIT");
     console.log("✅ Seed Beres!");
   } catch (err) {

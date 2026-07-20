@@ -43,6 +43,7 @@ export const NOTIFICATION_TYPE = {
     KELUAR_KOLABORASI: "KELUAR_KOLABORASI",
     DIKELUARKAN_KOLABORASI: "DIKELUARKAN_KOLABORASI",
     KOLABORASI_DIBUKA: "KOLABORASI_DIBUKA",
+    SKILL_DI_PEROLEH: "SKILL_DI_PEROLEH",
 } as const;
 
 export const NOTIFICATION_TITLE = {
@@ -58,6 +59,7 @@ export const NOTIFICATION_TITLE = {
     KELUAR_KOLABORASI: "OB keluar dari kolaborasi",
     DIKELUARKAN_KOLABORASI: "Dikeluarkan dari kolaborasi",
     KOLABORASI_DIBUKA: "Kolaborasi dibuka",
+    SKILL_DI_PEROLEH: "Skill baru diperoleh",
 } as const;
 
 export const NOTIFICATION_MESSAGE = {
@@ -69,6 +71,7 @@ export const NOTIFICATION_MESSAGE = {
     KELUAR_KOLABORASI: "OB telah keluar dari kolaborasi laporan",
     DIKELUARKAN_KOLABORASI: "Anda telah dikeluarkan dari kolaborasi laporan oleh OB utama",
     KOLABORASI_DIBUKA: "Laporan telah dibuka untuk kolaborasi",
+    SKILL_DI_PEROLEH: "Selamat! Anda memperoleh skill baru",
 } as const;
 
 export const REF_TIPE = {
