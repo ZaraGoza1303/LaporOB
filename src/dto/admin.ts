@@ -22,7 +22,13 @@ export const AdminLaporanQuerySchema = z.object({
     sort_order: z.enum(["asc", "desc"]).default("desc"),
 });
 
+export const AdminLaporanHistoryQuerySchema = z.object({
+    search: z.preprocess(emptyToNull, z.string().nullable()),
+    user_id: z.preprocess(emptyToNull, z.string().uuid({ message: "Format user_id harus UUID yang valid" })),
+});
+
 export type AdminLaporanQuery = z.infer<typeof AdminLaporanQuerySchema>;
+export type AdminLaporanHistoryQuery = z.infer<typeof AdminLaporanHistoryQuerySchema>;
 
 export interface StatDetail {
     count: number;

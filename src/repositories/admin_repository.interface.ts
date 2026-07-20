@@ -1,4 +1,4 @@
-import type { Prisma, Laporan_karyawan } from "../generated/prisma/client.js";
+import type { Prisma } from "../generated/prisma/client.js";
 import type { AdminLaporanQuery, UserStatsRes, DailyChecklistObPayload } from "../dto/admin.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { AssignObRepoArgs } from "../dto/admin.js";
@@ -69,6 +69,4 @@ export interface IAdminRepository {
     getUserStats(): Promise<UserStatsRes>;
     getDailyChecklistOB(tanggal: Date): Promise<DailyChecklistObReport[]>;
     getPenugasanByPeriode(bulan: number, tahun: number): Promise<PenugasanObWithDetails[]>;
-    approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan>;
-    rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan>;
 }

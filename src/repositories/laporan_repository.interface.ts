@@ -1,6 +1,6 @@
 import type { PaginatedResponse } from "../dto/response.js";
 import type { UserActivityRes } from "../dto/users.js";
-import type { AdminLaporanQuery, PatchLaporanReq } from "../dto/admin.js";
+import type { AdminLaporanHistoryQuery, AdminLaporanQuery } from '../dto/admin.js';
 import type { User, Kategori, Lantai, Lokasi, Laporan_karyawan, Prisma } from "../generated/prisma/client.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { PeriodRange } from "../utils/date.js";
@@ -82,6 +82,7 @@ export interface ILaporanRepository {
     getRecentActivities(limit: number): Promise<RecentActivityPayload[]>;
     getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]>;
     getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>>;
+    getAllHistoryLaporan(page: number, limit: number, query: AdminLaporanHistoryQuery): Promise<PaginatedResponse<Laporan_karyawan>>;
     getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<any[]>;
     countLaporanAktif(query: AdminLaporanQuery): Promise<number>;
     getLaporanCountByUserId(userId: string): Promise<number>;
@@ -90,6 +91,8 @@ export interface ILaporanRepository {
     ambilLaporan(laporanId: string, obId: string): Promise<void>;
     createHistoriSelesai(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void>;
     batalkanLaporan(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void>;
+    approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan>;
+    rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan>;
     getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number }>;
 }
 

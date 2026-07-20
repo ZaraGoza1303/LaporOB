@@ -1696,6 +1696,38 @@ paths:
         '200':
           description: Statistik user
 
+  /api/admin/laporan/history:
+    get:
+      tags:
+        - Admin
+      summary: 'History laporan dengan filter search & user_id (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: |
+            Daftar history laporan. Response body paginated berisi laporan dengan kategori, lantai, dan lokasi.
+
   /api/admin/laporan:
     get:
       tags:
@@ -2625,8 +2657,7 @@ paths:
         - Tugas
       summary: 'List tugas (Admin)'
       description: |
-        Menampilkan daftar tugas (katalog tugas). Tugas adalah master data katalog
-        tugas yang bisa dikelola oleh Admin.
+        Menampilkan daftar tugas 
       security:
         - BearerAuth: []
       parameters:
@@ -2657,7 +2688,7 @@ paths:
         - Tugas
       summary: 'Tambah tugas (Admin)'
       description: |
-        Membuat tugas baru (master data katalog tugas).
+        Membuat tugas baru.
       security:
         - BearerAuth: []
       requestBody:

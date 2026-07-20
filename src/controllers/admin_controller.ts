@@ -1,5 +1,5 @@
 
-import { AdminLaporanQuerySchema, AssignObToLocationsSchema, GetDashboardQuerySchema, PatchLaporanReqSchema } from '../dto/admin.js';
+import { AdminLaporanHistoryQuerySchema, AdminLaporanQuerySchema, AssignObToLocationsSchema, GetDashboardQuerySchema, PatchLaporanReqSchema } from '../dto/admin.js';
 import { LaporanIdParamSchema } from '../dto/users.js';
 import type { IAdminService } from "../services/admin_service.interface.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
@@ -48,6 +48,28 @@ export class AdminController {
 
             const response = await this.adminService.getAllLaporan(page, limit, validate.data);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data laporan pengguna", response));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mendapatkan data laporan pengguna"));
+        }
+    }
+
+    async getAllHistoryLaporan(req: Request, res: Response) {
+        try {
+            const page = parseInt(String(req.query.page), 10) || 1;
+            const limit = parseInt(String(req.query.limit), 10) || 10;
+
+            const validate = AdminLaporanHistoryQuerySchema.safeParse(req.query);
+            if (!validate.success) {
+                const formatedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
+            }
+
+            const response = await this.adminService.getAllHistoryLaporan(page, limit, validate.data);
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data laporan pengguna", response));
+
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));

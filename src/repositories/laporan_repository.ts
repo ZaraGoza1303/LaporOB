@@ -1,7 +1,7 @@
 import type { PaginatedResponse } from "../dto/response.js";
 import type { UserActivityRes } from "../dto/users.js";
-import type { AdminLaporanQuery } from "../dto/admin.js";
-import type { PrismaClient, Prisma } from "../generated/prisma/client.js";
+import type { AdminLaporanHistoryQuery, AdminLaporanQuery } from "../dto/admin.js";
+import type { PrismaClient, Prisma, Laporan_karyawan } from "../generated/prisma/client.js";
 import type { PeriodRange } from "../utils/date.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { ILaporanRepository, ProfileReport, DetailReportPayload, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, LaporanKaryawanWithDetails } from "./laporan_repository.interface.js";
@@ -179,6 +179,41 @@ export class LaporanRepository implements ILaporanRepository {
         return result
     }
 
+    async getAllHistoryLaporan(page: number, limit: number, query: AdminLaporanHistoryQuery): Promise<PaginatedResponse<Laporan_karyawan>> {
+        const offset = (page - 1) * limit;
+        const where = this.buildHistorySearchWhere(query);
+
+        const [laporan, total_laporan] = await Promise.all([
+            this.db.laporan_karyawan.findMany({
+                where,
+                skip: offset,
+                take: limit,
+                include: {
+                    lantai: {
+                        include: {
+                            lokasi: true
+                        }
+                    },
+                    kategori: true
+                },
+                orderBy: { created_at: "desc" }
+            }),
+            this.db.laporan_karyawan.count({ where })
+        ]);
+
+        const result: PaginatedResponse<Laporan_karyawan> = {
+            items: laporan,
+            next_cursor: null,
+            meta: {
+                total_items: total_laporan,
+                current_page: page,
+                limit,
+                total_pages: Math.ceil(total_laporan / limit)
+            }
+        };
+        return result
+    }
+
     async getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<any[]> {
         const where = this.buildAdminLaporanWhereClause(query);
 
@@ -312,6 +347,32 @@ export class LaporanRepository implements ILaporanRepository {
         ]);
     }
 
+    async approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan> {
+        const laporan = await this.db.laporan_karyawan.update({
+            where: { id: laporanId },
+            data: {
+                is_approved: true,
+                admin_catatan: catatan ?? null,
+            }
+        });
+        return laporan;
+    }
+
+    async rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan> {
+        const now = new Date();
+        const laporan = await this.db.laporan_karyawan.update({
+            where: { id: laporanId },
+            data: {
+                status: LAPORAN_STATUS.DIBATALKAN,
+                ob_id: null,
+                is_approved: false,
+                admin_catatan: catatan,
+                dibatalkan_at: now,
+            }
+        });
+        return laporan;
+    }
+
     async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number }> {
         const dateFilter = dateRange
             ? { created_at: { gte: dateRange.start, lte: dateRange.end } }
@@ -431,6 +492,37 @@ export class LaporanRepository implements ILaporanRepository {
 
         return where;
     }
+
+    private buildHistorySearchWhere(query: AdminLaporanHistoryQuery): Prisma.Laporan_karyawanWhereInput {
+        const where: Prisma.Laporan_karyawanWhereInput = {};
+
+        if (query.user_id) {
+            where.OR = [
+                { ob_id: query.user_id },
+                { pelapor_id: query.user_id },
+            ];
+        }
+
+        if (query.search) {
+            const searchFilter = {
+                OR: [
+                    { deskripsi_kendala: { contains: query.search, mode: "insensitive" as const } },
+                    { kategori: { nama_kategori: { contains: query.search, mode: "insensitive" as const } } },
+                    { lantai: { lokasi: { nama_lokasi: { contains: query.search, mode: "insensitive" as const } } } },
+                    { pelapor: { nama_lengkap: { contains: query.search, mode: "insensitive" as const } } },
+                ],
+            };
+
+            if (where.OR) {
+                where.AND = [searchFilter];
+            } else {
+                where.OR = searchFilter.OR;
+            }
+        }
+
+        return where;
+    }
+
 
     private buildAdminLaporanOrderBy(query: AdminLaporanQuery): Prisma.Laporan_karyawanOrderByWithRelationInput[] {
         const sortOrder = query.sort_order;

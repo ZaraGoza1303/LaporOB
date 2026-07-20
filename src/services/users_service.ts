@@ -120,7 +120,7 @@ export class UsersService implements IUsersService {
 
             const activationUrl = buildActivationUrl(activationToken.token);
             await sendRenderedEmail(this.emailService, req.email, "Aktivasi Akun", "activation", {
-                user: { nama_lengkap: req.nama_lengkap },
+                userName: req.nama_lengkap,
                 activationUrl,
             });
 
