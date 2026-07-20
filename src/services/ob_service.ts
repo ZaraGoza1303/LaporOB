@@ -137,7 +137,7 @@ export class ObService implements IObService {
                 nama_lengkap: user.nama_lengkap,
                 username: user.username,
                 email: user.email,
-                role: user.role_id || USER_ROLE.OB,
+                role: user.role?.nama_role || "OB",
                 profile_picture: resolveFileUrl(user.profile_picture),
                 laporanDiterima: obStats.laporanDiterima || 0,
                 laporanSelesai: obStats.laporanSelesai || 0,
