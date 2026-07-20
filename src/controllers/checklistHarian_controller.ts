@@ -13,8 +13,8 @@ export class ChecklistHarianController {
 
     async getAll(req: Request, res: Response) {
         try {
-            const page = parseInt(String(req.query.page)) || 1;
-            const limit = parseInt(String(req.query.limit)) || 10;
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
 
             const validate = ChecklistHarianQuerySchema.safeParse(req.query);
             if (!validate.success) {
