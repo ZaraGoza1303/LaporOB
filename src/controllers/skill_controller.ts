@@ -114,10 +114,8 @@ export class SkillController {
 
     async getObSkills(req: Request, res: Response) {
         try {
-            const ob_id = req.params.ob_id;
-            if (typeof ob_id !== "string" || ob_id.length === 0) {
-                return res.status(400).json(sendErrorResponse("ob_id wajib diisi"));
-            }
+            const ob_id = req.params.ob_id as string;
+            if (!ob_id) return res.status(400).json(sendErrorResponse("ob_id wajib diisi"));
             const result = await this.skillService.getObSkills(ob_id);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil skill OB", result));
         } catch (err: unknown) {
