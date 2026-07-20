@@ -198,25 +198,6 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
         return data
     }
 
-    async findAutoGenerateTemplates(tanggal: Date): Promise<Checklist_harian[]> {
-        const startOfDay = new Date(tanggal);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(tanggal);
-        endOfDay.setHours(23, 59, 59, 999);
-
-        const data = await this.db.checklist_harian.findMany({
-            where: {
-                auto_generate: true,
-                tanggal: {
-                    gte: startOfDay,
-                    lte: endOfDay,
-                },
-            },
-        });
-
-        return data;
-    }
-
     async insertMany(data: Checklist_harianUncheckedCreateInput[]): Promise<void> {
         if (data.length === 0) return;
 

@@ -165,7 +165,6 @@ model Checklist_harian {
   lantai_id       String    @db.Uuid
   kategori_id     String    @db.Uuid
   status          String    @db.VarChar(30)
-  auto_generate   Boolean   @default(true)
   catatan         String?   @db.Text
   dikerjakan_at   DateTime? @db.Timestamp(6)
   selesai_at      DateTime? @db.Timestamp(6)
