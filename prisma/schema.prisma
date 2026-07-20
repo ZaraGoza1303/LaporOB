@@ -38,6 +38,7 @@ model User {
   histori_pekerjaan       Histori_pekerjaan[]
   sessions                UserSession[]
   tugas_ob                Tugas[]        @relation("TugasOb")
+  skills                  ObSkill[]
 
   @@map("user")
 }
@@ -207,6 +208,39 @@ model JadwalChecklist {
   kategori Kategori @relation(fields: [kategori_id], references: [id])
 
   @@map("jadwal_checklist")
+}
+
+model SkillDefinition {
+  id           String   @id @default(uuid()) @db.Uuid
+  nama_skill   String   @db.VarChar(100)
+  keyword      String[] @default([])
+  deskripsi    String?  @db.Text
+  is_auto      Boolean  @default(true)
+  is_active    Boolean  @default(true)
+  threshold    Int      @default(5)
+  created_at   DateTime @default(now()) @db.Timestamp(6)
+  updated_at   DateTime @updatedAt @db.Timestamp(6)
+
+  ob_skills    ObSkill[]
+
+  @@map("skill_definition")
+}
+
+model ObSkill {
+  id             String    @id @default(uuid()) @db.Uuid
+  ob_id          String    @db.Uuid
+  skill_id       String    @db.Uuid
+  jumlah_selesai Int       @default(0)
+  assigned_by    String?   @db.Uuid
+  diperoleh_at   DateTime?
+  created_at     DateTime  @default(now()) @db.Timestamp(6)
+  updated_at     DateTime  @updatedAt @db.Timestamp(6)
+
+  ob    User           @relation(fields: [ob_id], references: [id], onDelete: Cascade)
+  skill SkillDefinition @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+
+  @@unique([ob_id, skill_id])
+  @@map("ob_skill")
 }
 
 model Laporan_karyawan {

@@ -126,8 +126,16 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
     async ambilChecklist(checklistId: string, obId: string): Promise<void> {
         await this.db.checklist_harian.update({
             where: { id: checklistId },
-            data: { ob_id: obId, status: "SEDANG_DIKERJAKAN" }
+            data: { ob_id: obId },
         });
+    }
+
+    async getCompletedChecklistByOb(): Promise<Array<{ ob_id: string; nama_tugas: string }>> {
+        const rows = await this.db.checklist_harian.findMany({
+            where: { status: "SELESAI", ob_id: { not: null } },
+            select: { ob_id: true, nama_tugas: true },
+        });
+        return rows.map(r => ({ ob_id: r.ob_id as string, nama_tugas: r.nama_tugas }));
     }
 
     async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<PaginatedResponse<ChecklistHarianWithRelations>> {

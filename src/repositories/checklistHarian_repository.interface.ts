@@ -40,4 +40,6 @@ export interface IChecklistHarianRepository {
     getTodayChecklists(obId: string, tanggal: Date): Promise<ChecklistHarianWithDetails[]>;
     countTodayChecklists(obId: string, tanggal: Date): Promise<number>;
     ambilChecklist(checklistId: string, obId: string): Promise<void>;
+
+    getCompletedChecklistByOb(): Promise<Array<{ ob_id: string; nama_tugas: string }>>;
 }

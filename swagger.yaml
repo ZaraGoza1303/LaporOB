@@ -665,10 +665,39 @@ components:
           type: array
           items:
             type: string
-        ref_tipe:
+    ref_tipe:
+      type: array
+      items:
+        type: string
+
+    SkillDefinitionRequest:
+      type: object
+      properties:
+        nama_skill:
+          type: string
+        keyword:
           type: array
           items:
             type: string
+        deskripsi:
+          type: string
+        is_auto:
+          type: boolean
+        threshold:
+          type: integer
+
+    AssignSkillRequest:
+      type: object
+      required:
+        - ob_id
+        - skill_id
+      properties:
+        ob_id:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
 
 # AUTH
 paths:
