@@ -29,7 +29,7 @@ export type LoginUserData = {
 export type LoginReq = z.infer<typeof LoginSchema>;
 
 export const ActivateAccountSchema = z.object({
-    password: z.string().min(6, { message: 'Password minimal 6 karakter' }),
+    password: z.string().min(1, { message: 'Password wajib 6 karakter' }),
     confirmPassword: z.string().min(6, { message: 'Konfirmasi password minimal 6 karakter' }),
 }).refine(data => data.password === data.confirmPassword, {
     message: "Password dan konfirmasi password tidak cocok",

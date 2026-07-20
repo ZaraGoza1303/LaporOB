@@ -2,6 +2,7 @@ import { PrismaClient } from "./generated/prisma/client.js";
 import { AdminRepository } from "./repositories/admin_repository.js";
 import { AuthRepository } from "./repositories/auth_repository.js";
 import { ChecklistHarianRepository } from "./repositories/checklistHarian_repository.js";
+import { JadwalChecklistRepository } from "./repositories/jadwalChecklist_repository.js";
 import { KategoriRepository } from "./repositories/kategori_repository.js";
 import { LantaiRepository } from "./repositories/lantai_repository.js";
 import { LaporanRepository } from "./repositories/laporan_repository.js";
@@ -14,6 +15,8 @@ import { UserSessionRepository } from "./repositories/userSession_repository.js"
 import { AdminService } from "./services/admin_service.js";
 import { AuthService } from "./services/auth_service.js";
 import { ChecklistHarianService } from "./services/checklistHarian_service.js";
+import { JadwalChecklistService } from "./services/jadwalChecklist_service.js";
+import { ConstantsService } from "./services/constants_service.js";
 import { KaryawanService } from "./services/karyawan_service.js";
 import { KategoriService } from "./services/kategori_service.js";
 import { LantaiService } from "./services/lantai_service.js";
@@ -29,6 +32,8 @@ import { UserSessionService } from "./services/userSession_service.js";
 import { AdminController } from "./controllers/admin_controller.js";
 import { AuthController } from "./controllers/auth_controller.js";
 import { ChecklistHarianController } from "./controllers/checklistHarian_controller.js";
+import { JadwalChecklistController } from "./controllers/jadwalChecklist_controller.js";
+import { ConstantsController } from "./controllers/constants_controller.js";
 import { KaryawanController } from "./controllers/karyawan_controller.js";
 import { KategoriController } from "./controllers/kategori_controller.js";
 import { LantaiController } from "./controllers/lantai_controller.js";
@@ -54,6 +59,7 @@ const prisma = new PrismaClient();
 const adminRepository = new AdminRepository(prisma);
 const authRepository = new AuthRepository(prisma);
 const checklistHarianRepository = new ChecklistHarianRepository(prisma);
+const jadwalChecklistRepository = new JadwalChecklistRepository(prisma);
 const kategoriRepository = new KategoriRepository(prisma);
 const lantaiRepository = new LantaiRepository(prisma);
 const laporanRepository = new LaporanRepository(prisma);
@@ -79,9 +85,11 @@ const usersService = new UsersService(usersRepository, redisClient as unknown as
 const notificationService = new NotificationService(notificationRepository);
 const lokasiService = new LokasiService(lokasiRepository, redisClient as unknown as IRedisClient);
 const ruanganService = new RuanganService(ruanganRepository, redisClient as unknown as IRedisClient);
-const tugasService = new TugasService(tugasRepository, redisClient as unknown as IRedisClient);
+export const tugasService = new TugasService(tugasRepository, redisClient as unknown as IRedisClient);
 const laporanService = new LaporanService(laporanRepository, notificationService, usersService);
-const checklistHarianService = new ChecklistHarianService(checklistHarianRepository, notificationService, usersService);
+export const jadwalChecklistService = new JadwalChecklistService(jadwalChecklistRepository, checklistHarianRepository, notificationService, usersService);
+export const checklistHarianService = new ChecklistHarianService(checklistHarianRepository, notificationService, usersService);
+export const constantsService = new ConstantsService();
 const sessionService = new UserSessionService(userSessionRepository, redisClient as unknown as IRedisClient);
 const authService = new AuthService(authRepository, usersService, sessionService, emailService);
 const obService = new ObService(obRepository, laporanService, checklistHarianService, usersService);
@@ -94,6 +102,8 @@ const profileService = new ProfileService(usersService, karyawanService, obServi
 export const adminController = new AdminController(adminService);
 export const authController = new AuthController(authService);
 export const checklistHarianController = new ChecklistHarianController(checklistHarianService);
+export const jadwalChecklistController = new JadwalChecklistController(jadwalChecklistService);
+export const constantsController = new ConstantsController(constantsService);
 export const karyawanController = new KaryawanController(karyawanService, storageService);
 export const kategoriController = new KategoriController(kategoriService);
 export const lantaiController = new LantaiController(lantaiService);
@@ -118,6 +128,7 @@ export const container = {
     authController,
     adminController,
     checklistHarianController,
+    jadwalChecklistController,
     karyawanController,
     kategoriController,
     lantaiController,

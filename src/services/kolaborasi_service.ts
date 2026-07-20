@@ -24,7 +24,7 @@ export class KolaborasiService implements IKolaborasiService {
 
     async gabung(laporanId: string, obId: string): Promise<GabungResponse> {
         try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            const laporan = await this.laporanService.getReportDetailWithRelations(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
             if (!laporan.ob_id) throw new AppError("Laporan belum diambil oleh OB manapun", 400);
             if (laporan.ob_id === obId) throw new AppError("Anda sudah menjadi OB utama laporan ini", 400);
@@ -65,7 +65,7 @@ export class KolaborasiService implements IKolaborasiService {
 
     async setujui(kolaborasiId: string, laporanId: string, primaryObId: string): Promise<void> {
         try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            const laporan = await this.laporanService.getReportDetailWithRelations(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
             if (laporan.ob_id !== primaryObId) throw new AppError("Hanya OB utama yang bisa menyetujui", 403);
 
@@ -93,7 +93,7 @@ export class KolaborasiService implements IKolaborasiService {
 
     async tolak(kolaborasiId: string, laporanId: string, primaryObId: string): Promise<void> {
         try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            const laporan = await this.laporanService.getReportDetailWithRelations(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
             if (laporan.ob_id !== primaryObId) throw new AppError("Hanya OB utama yang bisa menolak", 403);
 
@@ -121,7 +121,7 @@ export class KolaborasiService implements IKolaborasiService {
 
     async daftarRequest(laporanId: string, obId: string): Promise<DaftarGabungItem[]> {
         try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            const laporan = await this.laporanService.getReportDetailWithRelations(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
             if (laporan.ob_id !== obId) throw new AppError("Hanya OB utama yang bisa melihat permintaan", 403);
 
@@ -144,7 +144,7 @@ export class KolaborasiService implements IKolaborasiService {
 
     async keluar(laporanId: string, obId: string): Promise<void> {
         try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            const laporan = await this.laporanService.getReportDetailWithRelations(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
             if (!laporan.ob_id) throw new AppError("Laporan belum diambil OB manapun", 400);
             if (laporan.ob_id === obId) throw new AppError("OB utama tidak bisa keluar, gunakan batalkan laporan", 400);
@@ -171,7 +171,7 @@ export class KolaborasiService implements IKolaborasiService {
 
     async keluarkan(kolaborasiId: string, laporanId: string, primaryObId: string): Promise<void> {
         try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            const laporan = await this.laporanService.getReportDetailWithRelations(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
             if (laporan.ob_id !== primaryObId) throw new AppError("Hanya OB utama yang bisa mengeluarkan anggota", 403);
 

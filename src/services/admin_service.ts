@@ -148,14 +148,13 @@ export class AdminService implements IAdminService {
     }
 
     async getReportDetail(id: string): Promise<AdminReportDetailResponse> {
-        const laporan = await this.laporanService.getReportDetailById(id);
+        const laporan = await this.laporanService.getReportDetailWithRelations(id);
 
         if (!laporan) {
             throw new AppError("Laporan tidak ditemukan", 404);
         }
 
         const historiTerakhir = laporan.histori_pekerjaan?.[laporan.histori_pekerjaan.length - 1] ?? null;
-
 
         const jamUpload = historiTerakhir
             ? historiTerakhir.created_at.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
@@ -217,7 +216,7 @@ export class AdminService implements IAdminService {
 
     async patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void> {
         try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            const laporan = await this.laporanService.getReportDetailWithRelations(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
 
             if (dto.ob_id) {
@@ -242,7 +241,7 @@ export class AdminService implements IAdminService {
 
     async approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan> {
         try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            const laporan = await this.laporanService.getReportDetail(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
 
             const result = await this.laporanService.approveLaporan(laporanId, catatan);
@@ -254,7 +253,7 @@ export class AdminService implements IAdminService {
 
     async rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan> {
         try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            const laporan = await this.laporanService.getReportDetail(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
 
             const result = await this.laporanService.rejectLaporan(laporanId, catatan);
@@ -266,7 +265,7 @@ export class AdminService implements IAdminService {
 
     async deleteLaporan(laporanId: string): Promise<void> {
         try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            const laporan = await this.laporanService.getReportDetail(laporanId);
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
 
             await this.laporanService.deleteLaporan(laporanId);

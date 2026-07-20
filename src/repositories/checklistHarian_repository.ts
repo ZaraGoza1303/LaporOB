@@ -2,6 +2,7 @@ import type { ChecklistHarianQuery } from "../dto/checklist_harian.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import { Prisma, type PrismaClient } from "../generated/prisma/client.js";
 import type { Checklist_harian } from "../generated/prisma/client.js";
+import type { JadwalChecklist } from "../generated/prisma/client.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
 import { calculatePeriodRange, type PeriodRange } from "../utils/date.js";
@@ -227,5 +228,31 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
                 id: checklist_harianId
             }
         })
+    }
+
+    async insertFromJadwal(jadwal: JadwalChecklist): Promise<void> {
+        await this.db.checklist_harian.create({
+            data: {
+                tanggal: new Date(),
+                nama_tugas: jadwal.nama_tugas,
+                ob_id: jadwal.ob_id,
+                lantai_id: jadwal.lantai_id,
+                kategori_id: jadwal.kategori_id,
+                status: CHECKLIST_STATUS.BELUM_DIKERJAKAN,
+                catatan: null,
+            },
+        });
+    }
+
+    async getExistingInstanceKeys(today: Date): Promise<Array<{ nama_tugas: string; lantai_id: string; ob_id: string | null }>> {
+        const startOfDay = new Date(today);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(today);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        return this.db.checklist_harian.findMany({
+            where: { tanggal: { gte: startOfDay, lte: endOfDay } },
+            select: { nama_tugas: true, lantai_id: true, ob_id: true },
+        });
     }
 }

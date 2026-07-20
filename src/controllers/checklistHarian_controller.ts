@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { IChecklistHarianService } from "../services/checklistHarian_service.interface.js";
-import { ChecklistHarianQuerySchema, CreateChecklistHarianSchema, UpdateChecklistHarianSchema, ChecklistHarianIdParamSchema } from "../dto/checklist_harian.js";
+import { ChecklistHarianQuerySchema, UpdateChecklistHarianSchema, ChecklistHarianIdParamSchema } from "../dto/checklist_harian.js";
 import { AppError } from "../utils/error.js";
 
 export class ChecklistHarianController {
@@ -52,30 +52,6 @@ export class ChecklistHarianController {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
             }
             return res.status(500).json(sendErrorResponse("Gagal mengambil data checklist harian"));
-        }
-    }
-
-    async create(req: Request, res: Response) {
-        try {
-            const userId = req.user?.id as string;
-
-            if (!req.body) {
-                return res.status(400).json(sendErrorResponse("Request body empty"));
-            }
-
-            const validate = CreateChecklistHarianSchema.safeParse(req.body);
-            if (!validate.success) {
-                const formattedErr = validate.error.flatten().fieldErrors;
-                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
-            }
-
-            await this.checklistService.create(userId, validate.data);
-            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data checklist harian"));
-        } catch (err: unknown) {
-            if (err instanceof AppError) {
-                return res.status(err.statusCode).json(sendErrorResponse(err.message))
-            }
-            return res.status(500).json(sendErrorResponse("Gagal menambahkan checklist harian"));
         }
     }
 

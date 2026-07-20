@@ -298,10 +298,8 @@ export class UsersController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
             const laporanId = validateParams.data.laporan_id;
-            const userId = req.user?.id as string;
-            const role = req.user?.role as string;
             
-            const response = await this.laporanService.getReportDetail(laporanId, userId, role);
+            const response = await this.laporanService.getReportDetail(laporanId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan detail laporan", response));
         } catch (err: unknown) {
             if (err instanceof AppError) {

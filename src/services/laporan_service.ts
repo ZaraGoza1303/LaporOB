@@ -30,15 +30,11 @@ export class LaporanService implements ILaporanService {
         this.usersService = usersService;
     }
 
-    async getReportDetail(reportId: string, userId: string, role: string): Promise<MappedReportDetailRes> {
+    async getReportDetail(reportId: string): Promise<MappedReportDetailRes> {
         try {
             const item = await this.laporanRepo.getReportDetailById(reportId);
             if (!item) {
                 throw new AppError("Laporan tidak ditemukan", 404);
-            }
-
-            if (role !== USER_ROLE.OB || item.ob_id !== userId) {
-                throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
             }
 
             const history = item.histori_pekerjaan?.[0];
@@ -66,10 +62,47 @@ export class LaporanService implements ILaporanService {
         }
     }
 
-    async getReportDetailById(reportId: string): Promise<DetailReportPayload | null> {
+    async getReportDetailWithRelations(reportId: string): Promise<DetailReportPayload | null> {
         try {
             const detail = await this.laporanRepo.getReportDetailById(reportId);
             return detail;
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
+    async getRiwayat(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<MappedProfileReport>> {
+        try {
+            const reportsData = await this.laporanRepo.getReportsByObId(obId, limit, cursor, search, status);
+
+            const items: MappedProfileReport[] = reportsData.items.map((item: ProfileReport) => {
+                const mapped: MappedProfileReport = {
+                    id: item.id,
+                    kategori: item.kategori?.nama_kategori || "",
+                    deskripsi_kendala: item.deskripsi_kendala || "",
+                    status: item.status as LaporanStatus,
+                    prioritas: item.prioritas as LaporanPriority,
+                    foto_masalah: (item.foto_masalah ?? []).map((f: string) => resolveFileUrl(f)).filter((url): url is string => url !== null),
+                    lokasi: item.lantai?.lokasi?.nama_lokasi || "",
+                    nomor_lantai: item.lantai?.nomor_lantai || 0,
+                    nama_ob: item.ob?.nama_lengkap || null,
+                    created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
+                    updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : String(item.updated_at)
+                };
+                return mapped;
+            });
+
+            const result: PaginatedResponse<MappedProfileReport> = {
+                items,
+                next_cursor: reportsData.next_cursor ?? null,
+                meta: reportsData.meta ?? {
+                    total_items: 0,
+                    current_page: 1,
+                    limit,
+                    total_pages: 0
+                }
+            };
+            return result;
         } catch (err) {
             handlePrismaError(err);
         }
@@ -183,79 +216,6 @@ export class LaporanService implements ILaporanService {
         try {
             const reports = await this.laporanRepo.getReportsByObId(obId, limit, cursor, search, status);
             return reports;
-        } catch (err) {
-            handlePrismaError(err);
-        }
-    }
-
-    async getRiwayat(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<MappedProfileReport>> {
-        try {
-            const reportsData = await this.laporanRepo.getReportsByObId(obId, limit, cursor, search, status);
-
-            const items: MappedProfileReport[] = reportsData.items.map((item: ProfileReport) => {
-                const mapped: MappedProfileReport = {
-                    id: item.id,
-                    kategori: item.kategori?.nama_kategori || "",
-                    deskripsi_kendala: item.deskripsi_kendala || "",
-                    status: item.status as LaporanStatus,
-                    prioritas: item.prioritas as LaporanPriority,
-                    foto_masalah: (item.foto_masalah ?? []).map((f: string) => resolveFileUrl(f)).filter((url): url is string => url !== null),
-                    lokasi: item.lantai?.lokasi?.nama_lokasi || "",
-                    nomor_lantai: item.lantai?.nomor_lantai || 0,
-                    nama_ob: item.ob?.nama_lengkap || null,
-                    created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
-                    updated_at: item.updated_at instanceof Date ? item.updated_at.toISOString() : String(item.updated_at)
-                };
-                return mapped;
-            });
-
-            const result: PaginatedResponse<MappedProfileReport> = {
-                items,
-                next_cursor: reportsData.next_cursor ?? null,
-                meta: reportsData.meta ?? {
-                    total_items: 0,
-                    current_page: 1,
-                    limit,
-                    total_pages: 0
-                }
-            };
-            return result;
-        } catch (err) {
-            handlePrismaError(err);
-        }
-    }
-
-    async getDetailRiwayat(laporanId: string, obId: string): Promise<MappedReportDetailRes> {
-        try {
-            const item = await this.laporanRepo.getReportDetailById(laporanId);
-            if (!item) {
-                throw new AppError("Laporan tidak ditemukan", 404);
-            }
-
-            if (item.ob_id !== obId) {
-                throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
-            }
-
-            const history = item.histori_pekerjaan?.[0];
-
-            const detail: MappedReportDetailRes = {
-                id: item.id,
-                kategori: item.kategori?.nama_kategori || "",
-                deskripsi_kendala: item.deskripsi_kendala || "",
-                status: item.status as LaporanStatus,
-                prioritas: item.prioritas as LaporanPriority,
-                foto_masalah: Array.isArray(item.foto_masalah) ? (item.foto_masalah as string[]).map(resolveFileUrl).filter((url): url is string => !!url) : [],
-                foto_selesai: history && Array.isArray(history.foto_selesai) ? history.foto_selesai.map(resolveFileUrl).filter((url): url is string => !!url) : [],
-                catatan: history?.catatan || "",
-                lokasi: item.lantai?.lokasi?.nama_lokasi || "",
-                nomor_lantai: item.lantai?.nomor_lantai || 0,
-                nama_karyawan: item.pelapor?.nama_lengkap || "",
-                nama_ob: item.ob?.nama_lengkap || null,
-                is_kolaborasi_open: item.is_kolaborasi_open,
-                catatan_kolaborasi: item.catatan_kolaborasi,
-                created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
-            };
-            return detail;
         } catch (err) {
             handlePrismaError(err);
         }

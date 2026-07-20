@@ -50,6 +50,8 @@ export class TugasService implements ITugasService {
                     connect: { id: req.kategori_id }
                 },
                 nama_tugas: req.nama_tugas,
+                tanggal_mulai: new Date(req.tanggal_mulai),
+                tanggal_selesai: new Date(req.tanggal_selesai),
                 is_active: req.is_active ?? true,
             };
 

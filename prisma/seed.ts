@@ -114,15 +114,15 @@ async function main() {
     console.log("  Insert tugas...");
     
     await client.query(`
-      INSERT INTO tugas (id, kategori_id, nama_tugas, is_active, created_at, updated_at) VALUES
+      INSERT INTO tugas (id, kategori_id, nama_tugas, is_active, tanggal_mulai, tanggal_selesai, created_at, updated_at) VALUES
         -- Kebersihan
-        ('550fd576-3fd1-4a42-af0b-bb16c06436b2', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Bersihkan lantai toilet', true, now(), now()),
-        ('b8e4dd5c-227e-4650-bda5-ec630226a9d4', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Sapu dan pel lantai ruangan', true, now(), now()),
-        ('db8b6a86-3ac3-4cf7-bfc7-8fc72a368580', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Lap meja dan kursi', true, now(), now()),
-        ('695d2f29-7afe-47af-805e-bb47ddfd5c0b', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Angkut & buang sampah ke TPS', true, now(), now()),
+        ('550fd576-3fd1-4a42-af0b-bb16c06436b2', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Bersihkan lantai toilet', true, now(), now() + interval '30 days', now(), now()),
+        ('b8e4dd5c-227e-4650-bda5-ec630226a9d4', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Sapu dan pel lantai ruangan', true, now(), now() + interval '30 days', now(), now()),
+        ('db8b6a86-3ac3-4cf7-bfc7-8fc72a368580', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Lap meja dan kursi', true, now(), now() + interval '30 days', now(), now()),
+        ('695d2f29-7afe-47af-805e-bb47ddfd5c0b', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Angkut & buang sampah ke TPS', true, now(), now() + interval '30 days', now(), now()),
         -- Pengecekan
-        ('d7d74511-f099-48ae-b357-6e3af2ccbde5', 'd2597de5-120f-47b0-878a-83a46c47db34', 'Cek kondisi wastafel & toilet', true, now(), now()),
-        ('cb9b64e7-e59f-481b-a357-78e93719a4a9', 'd2597de5-120f-47b0-878a-83a46c47db34', 'Cek kondisi AC ruangan', true, now(), now())
+        ('d7d74511-f099-48ae-b357-6e3af2ccbde5', 'd2597de5-120f-47b0-878a-83a46c47db34', 'Cek kondisi wastafel & toilet', true, now(), now() + interval '30 days', now(), now()),
+        ('cb9b64e7-e59f-481b-a357-78e93719a4a9', 'd2597de5-120f-47b0-878a-83a46c47db34', 'Cek kondisi AC ruangan', true, now(), now() + interval '30 days', now(), now())
       ON CONFLICT (id) DO NOTHING
     `);
 
