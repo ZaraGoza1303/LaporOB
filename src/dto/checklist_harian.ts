@@ -27,13 +27,6 @@ export const ChecklistHarianIdParamSchema = z.object({
     checklist_harian_id: z.string().trim().uuid({ message: "Format checklist_harian_id harus UUID yang valid" })
 });
 
-export const CreateChecklistHarianSchema = z.object({
-    nama_tugas: z.string().min(1, { message: "Nama tugas wajib diisi" }).max(150, { message: "Maksimal 150 karakter" }),
-    kategori_id: z.string().trim().uuid({ message: "Format kategori_id harus berupa UUID yang valid" }),
-    lantai_id: z.string().trim().uuid({ message: "Format lantai_id harus berupa UUID yang valid" }),
-    ob_id: z.string().trim().uuid({ message: "Format ob_id harus berupa UUID yang valid" }).optional(),
-});
-
 export const UpdateChecklistHarianSchema = z.object({
     nama_tugas: z.string().min(1).max(150).optional(),
     kategori_id: z.string().trim().uuid({ message: "Format kategori_id harus berupa UUID yang valid" }).optional(),
@@ -43,7 +36,6 @@ export const UpdateChecklistHarianSchema = z.object({
     catatan: z.string().optional(),
 });
 
-export type CreateChecklistHarianReq = z.infer<typeof CreateChecklistHarianSchema>;
 export type UpdateChecklistHarianReq = z.infer<typeof UpdateChecklistHarianSchema>;
 
 export interface ChecklistHarianRes {

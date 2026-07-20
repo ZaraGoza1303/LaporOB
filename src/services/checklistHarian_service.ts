@@ -1,9 +1,9 @@
-import type { ChecklistHarianQuery, CreateChecklistHarianReq, UpdateChecklistHarianReq, ChecklistHarianRes, ChecklistHarianPageResponse, ChecklistHarianGroupedByOB } from "../dto/checklist_harian.js";
+import type { ChecklistHarianQuery, UpdateChecklistHarianReq, ChecklistHarianRes, ChecklistHarianPageResponse, ChecklistHarianGroupedByOB } from "../dto/checklist_harian.js";
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails } from "../repositories/checklistHarian_repository.interface.js";
-import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
+import type { Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE, REF_TIPE, USER_ROLE } from "../utils/constants.js";
 import type { BulkNotificationData } from "../dto/notification.js";
 import type { INotificationService } from "./notification_service.interface.js";
@@ -84,35 +84,6 @@ export class ChecklistHarianService implements IChecklistHarianService {
             if (!item) return null;
             const result = this.mapToResponse(item);
             return result;
-        } catch (err) {
-            handlePrismaError(err);
-        }
-    }
-
-    async create(userId: string, req: CreateChecklistHarianReq): Promise<void> {
-        try {
-            const dataToInsert: Checklist_harianUncheckedCreateInput = {
-                nama_tugas: req.nama_tugas,
-                kategori_id: req.kategori_id,
-                lantai_id: req.lantai_id,
-                tanggal: new Date(),
-                status: CHECKLIST_STATUS.BELUM_DIKERJAKAN,
-                ob_id: null,
-            };
-
-            await this.checklistRepo.insert(dataToInsert);
-
-            const allOb = await this.usersService.getByRole(USER_ROLE.OB);
-            const notifData: BulkNotificationData = {
-                penerima_ids: allOb.map(ob => ob.id),
-                pengirim_id: userId,
-                tipe: NOTIFICATION_TYPE.PENUGASAN_CHECKLIST,
-                judul: NOTIFICATION_TITLE.PENUGASAN_CHECKLIST,
-                pesan: NOTIFICATION_MESSAGE.ADMIN_MENUGASKAN_OB,
-                ref_tipe: REF_TIPE.CHECKLIST,
-            };
-
-            await this.notificationService.sendBulkNotification(notifData);
         } catch (err) {
             handlePrismaError(err);
         }

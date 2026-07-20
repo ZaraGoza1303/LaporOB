@@ -545,6 +545,131 @@ components:
           type: string
           format: date-time
 
+    JadwalChecklistRequest:
+      type: object
+      required:
+        - nama_tugas
+        - kategori_id
+        - lantai_id
+        - tanggal_mulai
+        - tanggal_selesai
+      properties:
+        nama_tugas:
+          type: string
+          maxLength: 150
+        kategori_id:
+          type: string
+          format: uuid
+        lantai_id:
+          type: string
+          format: uuid
+        ob_id:
+          type: string
+          format: uuid
+          nullable: true
+        hari:
+          type: array
+          items:
+            type: string
+          description: Hari pengulangan ["senin","rabu"] atau [] = tiap hari
+        tanggal_ulang:
+          type: integer
+          nullable: true
+          description: Tanggal ulang tiap bulan (1-31)
+        tanggal_spesifik:
+          type: array
+          items:
+            type: string
+            format: date
+          description: Tanggal-tanggal spesifik
+        tanggal_mulai:
+          type: string
+          format: date-time
+          description: Awal rentang jadwal (ISO 8601)
+        tanggal_selesai:
+          type: string
+          format: date-time
+          description: Akhir rentang jadwal (ISO 8601)
+
+    JadwalChecklistResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nama_tugas:
+          type: string
+        kategori_id:
+          type: string
+          format: uuid
+        lantai_id:
+          type: string
+          format: uuid
+        ob_id:
+          type: string
+          format: uuid
+          nullable: true
+        hari:
+          type: array
+          items:
+            type: string
+        tanggal_ulang:
+          type: integer
+          nullable: true
+        tanggal_spesifik:
+          type: array
+          items:
+            type: string
+            format: date
+        tanggal_mulai:
+          type: string
+          format: date-time
+        tanggal_selesai:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AppConstantsResponse:
+      type: object
+      properties:
+        hari:
+          type: array
+          items:
+            type: string
+        checklist_status:
+          type: array
+          items:
+            type: string
+        tugas_status:
+          type: array
+          items:
+            type: string
+        laporan_status:
+          type: array
+          items:
+            type: string
+        laporan_priority:
+          type: array
+          items:
+            type: string
+        kolaborasi_status:
+          type: array
+          items:
+            type: string
+        user_role:
+          type: array
+          items:
+            type: string
+        ref_tipe:
+          type: array
+          items:
+            type: string
+
 # AUTH
 paths:
   /api/auth/login:
@@ -2696,6 +2821,8 @@ paths:
               required:
                 - kategori_id
                 - nama_tugas
+                - tanggal_mulai
+                - tanggal_selesai
               properties:
                 kategori_id:
                   type: string
@@ -2709,6 +2836,14 @@ paths:
                 catatan:
                   type: string
                   description: Catatan tambahan untuk OB (opsional)
+                tanggal_mulai:
+                  type: string
+                  format: date-time
+                  description: Awal rentang tugas (ISO 8601, wajib)
+                tanggal_selesai:
+                  type: string
+                  format: date-time
+                  description: Akhir rentang tugas (ISO 8601, wajib)
       responses:
         '201':
           description: Tugas berhasil dibuat
@@ -2834,6 +2969,123 @@ paths:
         '200':
           description: Tugas berhasil dihapus
 
+# JADWAL CHECKLIST
+  /api/jadwal-checklist:
+    get:
+      tags:
+        - Jadwal Checklist
+      summary: 'List semua jadwal checklist (Admin)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar jadwal checklist
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JadwalChecklistResponse'
+    post:
+      tags:
+        - Jadwal Checklist
+      summary: 'Buat jadwal checklist (Admin)'
+      description: |
+        Admin membuat jadwal checklist (template). Jika jadwal cocok dengan hari ini,
+        instance langsung dibuat di checklist harian dan notifikasi dikirim ke semua OB.
+
+        **WebSocket Notification**: Notifikasi real-time dikirim ke semua OB via WebSocket dengan tipe `PENUGASAN_CHECKLIST`
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JadwalChecklistRequest'
+      responses:
+        '201':
+          description: Jadwal checklist berhasil dibuat
+  /api/jadwal-checklist/{jadwal_checklist_id}:
+    get:
+      tags:
+        - Jadwal Checklist
+      summary: 'Detail jadwal checklist (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: jadwal_checklist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detail jadwal checklist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JadwalChecklistResponse'
+    patch:
+      tags:
+        - Jadwal Checklist
+      summary: 'Update jadwal checklist (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: jadwal_checklist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JadwalChecklistRequest'
+      responses:
+        '200':
+          description: Jadwal checklist berhasil diupdate
+    delete:
+      tags:
+        - Jadwal Checklist
+      summary: 'Hapus jadwal checklist (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: jadwal_checklist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Jadwal checklist berhasil dihapus
+
+# CONSTANTS
+  /api/constants:
+    get:
+      tags:
+        - Constants
+      summary: 'Ambil konstanta aplikasi (wajib login)'
+      description: |
+        Mengembalikan daftar nilai konstanta yang dipakai frontend untuk merender
+        form/dropdown secara dinamis (hari, status checklist, status tugas, status laporan,
+        prioritas laporan, status kolaborasi, role user, ref_tipe).
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Konstanta aplikasi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppConstantsResponse'
+
 # CHECKLIST HARIAN
   /api/checklist-harian:
     get:
@@ -2883,43 +3135,6 @@ paths:
       responses:
         '200':
           description: Daftar checklist
-    post:
-      tags:
-        - Checklist Harian
-      summary: 'Buat checklist harian (Admin)'
-      description: |
-        Admin membuat checklist harian yang akan di-assign ke OB.
-        
-        **WebSocket Notification**: Notifikasi real-time dikirim ke semua OB via WebSocket dengan tipe `PENUGASAN_CHECKLIST`
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - nama_tugas
-                - kategori_id
-                - lantai_id
-              properties:
-                nama_tugas:
-                  type: string
-                  maxLength: 150
-                  description: Nama tugas (independen dari master Tugas)
-                kategori_id:
-                  type: string
-                  format: uuid
-                lantai_id:
-                  type: string
-                  format: uuid
-                ob_id:
-                  type: string
-                  format: uuid
-      responses:
-        '201':
-          description: Checklist berhasil dibuat
 
   /api/checklist-harian/{checklist_harian_id}:
     get:

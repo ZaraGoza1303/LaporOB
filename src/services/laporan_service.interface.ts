@@ -8,8 +8,9 @@ import type { Laporan_karyawan } from "../generated/prisma/client.js";
 import type { PeriodRange } from "../utils/date.js";
 
 export interface ILaporanService {
-    getReportDetail(reportId: string, userId: string, role: string): Promise<MappedReportDetailRes>;
-    getReportDetailById(reportId: string): Promise<DetailReportPayload | null>;
+    getReportDetail(reportId: string): Promise<MappedReportDetailRes>;
+    getReportDetailWithRelations(reportId: string): Promise<DetailReportPayload | null>;
+    getRiwayat(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<MappedProfileReport>>;
     getRecentActivities(limit: number): Promise<RecentActivityPayload[]>;
     getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]>;
     getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>>;
@@ -25,8 +26,6 @@ export interface ILaporanService {
     getLaporanCountByUserId(userId: string): Promise<number>;
     deleteLaporan(laporanId: string): Promise<void>;
     getReportsForObDashboard(obId: string): Promise<LaporanKaryawanWithDetails[]>;
-    getRiwayat(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<MappedProfileReport>>;
-    getDetailRiwayat(laporanId: string, obId: string): Promise<MappedReportDetailRes>;
     ambilLaporan(laporanId: string, obId: string): Promise<void>;
     createHistoriPekerjaan(laporanId: string, fotoUrls: string[], catatan: string, obId: string): Promise<void>;
     batalkanLaporan(laporanId: string, fotoUrls: string[], catatan: string, obId: string): Promise<void>;

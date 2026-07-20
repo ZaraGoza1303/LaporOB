@@ -3,6 +3,7 @@ import type { PaginatedResponse } from "../dto/response.js";
 import { Prisma } from "../generated/prisma/client.js";
 import type { Checklist_harian } from "../generated/prisma/client.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
+import type { JadwalChecklist } from "../generated/prisma/client.js";
 import type { PeriodRange } from "../utils/date.js";
 
 export type ChecklistHarianWithRelations = Prisma.Checklist_harianGetPayload<{
@@ -33,10 +34,10 @@ export interface IChecklistHarianRepository {
     countTotalChecklistLate(dateRange?: PeriodRange): Promise<number>;
     insertMany(data: Checklist_harianUncheckedCreateInput[]): Promise<void>;
 
-    /** For OB dashboard: get today's checklists for an OB */
+    insertFromJadwal(jadwal: JadwalChecklist): Promise<void>;
+    getExistingInstanceKeys(today: Date): Promise<Array<{ nama_tugas: string; lantai_id: string; ob_id: string | null }>>;
+
     getTodayChecklists(obId: string, tanggal: Date): Promise<ChecklistHarianWithDetails[]>;
-    /** For OB dashboard: count today's checklists for an OB */
     countTodayChecklists(obId: string, tanggal: Date): Promise<number>;
-    /** For OB: take/claim a checklist */
     ambilChecklist(checklistId: string, obId: string): Promise<void>;
 }
