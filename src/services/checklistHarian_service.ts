@@ -138,6 +138,10 @@ export class ChecklistHarianService implements IChecklistHarianService {
         await this.checklistRepo.ambilChecklist(checklistId, obId);
     }
 
+    async getCompletedByOb(): Promise<Array<{ ob_id: string; nama_tugas: string }>> {
+        return this.checklistRepo.getCompletedChecklistByOb();
+    }
+
     private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {
         const response: ChecklistHarianRes = {
             id: item.id,
