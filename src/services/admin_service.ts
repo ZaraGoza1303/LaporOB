@@ -1,4 +1,4 @@
-import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse } from "../dto/admin.js";
+import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse, AdminLaporanHistoryQuery } from "../dto/admin.js";
 import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse, DailyChecklistOBResponse } from "../dto/admin.js";
 import type { IAdminRepository, PenugasanObWithDetails } from "../repositories/admin_repository.interface.js";
 import type { AdminLaporanPayload } from "../repositories/laporan_repository.interface.js";
@@ -12,6 +12,7 @@ import type { IAdminService } from "./admin_service.interface.js";
 import type { Laporan_karyawan } from "../generated/prisma/client.js";
 import type { DailyChecklistObReport } from "../repositories/admin_repository.interface.js";
 import type { IRedisClient } from "../database/redis.interface.js";
+import type { PaginatedResponse } from "../dto/response.js";
 
 
 export class AdminService implements IAdminService {
@@ -90,7 +91,16 @@ export class AdminService implements IAdminService {
         }
     }
 
-    public async getDashboardData(query: GetDashboardQuery): Promise<DashboardMainResponse> {
+    async getAllHistoryLaporan(page: number, limit: number, query: AdminLaporanHistoryQuery): Promise<PaginatedResponse<Laporan_karyawan>> {
+        try {
+            const laporan = await this.laporanService.getAllHistoryLaporan(page, limit, query)
+            return laporan;
+        } catch (err) {
+            handlePrismaError(err)
+        }
+    }
+
+    async getDashboardData(query: GetDashboardQuery): Promise<DashboardMainResponse> {
         const { period } = query;
         const cacheKey = `admin:dashboard:${period}`
         const cachedData = await this.redis.get(cacheKey)
@@ -136,6 +146,176 @@ export class AdminService implements IAdminService {
         await this.redis.setEx(cacheKey, 300, JSON.stringify(dashboard))
         return dashboard;
     }
+
+    async getReportDetail(id: string): Promise<AdminReportDetailResponse> {
+        const laporan = await this.laporanService.getReportDetailById(id);
+
+        if (!laporan) {
+            throw new AppError("Laporan tidak ditemukan", 404);
+        }
+
+        const historiTerakhir = laporan.histori_pekerjaan?.[laporan.histori_pekerjaan.length - 1] ?? null;
+
+
+        const jamUpload = historiTerakhir
+            ? historiTerakhir.created_at.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
+            : null;
+
+        const detail: AdminReportDetailResponse = {
+            id: laporan.id,
+            status: laporan.status as LaporanStatus,
+            prioritas: laporan.prioritas as LaporanPriority,
+            nama_karyawan: laporan.pelapor?.nama_lengkap ?? "Anonim",
+            lokasi: laporan.lantai?.lokasi
+                ? `Lantai ${laporan.lantai.nomor_lantai} - ${laporan.lantai.lokasi.nama_lokasi}`
+                : "Lokasi tidak diketahui",
+            kategori: laporan.kategori.nama_kategori,
+            ob_ditugaskan: laporan.ob?.nama_lengkap ?? "Belum Ditugaskan",
+            waktu_laporan: laporan.created_at,
+            waktu_selesai: historiTerakhir?.created_at ?? null,
+            dikerjakan_at: laporan.dikerjakan_at,
+            selesai_at: laporan.selesai_at,
+            dibatalkan_at: laporan.dibatalkan_at,
+            admin_catatan: laporan.admin_catatan,
+            deskripsi_kendala: laporan.deskripsi_kendala,
+            bukti_foto: {
+                urls: laporan.status === "SELESAI"
+                    ? (historiTerakhir?.foto_selesai ?? []).map(resolveFileUrl).filter((url): url is string => !!url)
+                    : laporan.foto_masalah.map(resolveFileUrl).filter((url): url is string => !!url),
+                diupload_oleh: laporan.ob?.nama_lengkap ?? null,
+                jam_upload: jamUpload
+            }
+        };
+
+        return detail;
+    }
+
+    async assignObToLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number): Promise<void> {
+        try {
+            const obUser = await this.usersService.getByID(obId);
+            if (!obUser) {
+                throw new AppError("OB user tidak ditemukan", 404);
+            }
+            if (obUser.role?.nama_role?.toLowerCase() !== USER_ROLE.OB) {
+                throw new AppError("User bukan merupakan OB", 400);
+            }
+
+            await this.adminRepo.assignObToLocations(obId, lokasiIds, bulan, tahun);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async getPenugasanByPeriode(bulan: number, tahun: number): Promise<PenugasanObWithDetails[]> {
+        try {
+            const penugasan = await this.adminRepo.getPenugasanByPeriode(bulan, tahun);
+            return penugasan;
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void> {
+        try {
+            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+
+            if (dto.ob_id) {
+                const obUser = await this.usersService.getByID(dto.ob_id);
+                if (!obUser || obUser.role?.nama_role !== USER_ROLE.OB) {
+                    throw new AppError("OB tidak ditemukan", 404);
+                }
+            }
+
+            if (dto.status === LAPORAN_STATUS.PENDING) {
+                const targetObId = dto.ob_id ?? laporan.ob_id;
+                if (!targetObId) {
+                    throw new AppError("Status PENDING memerlukan OB yang ditugaskan", 400);
+                }
+            }
+
+            await this.laporanService.patchLaporan(laporanId, dto);
+        } catch (err: unknown) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan> {
+        try {
+            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+
+            const result = await this.laporanService.approveLaporan(laporanId, catatan);
+            return result;
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan> {
+        try {
+            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+
+            const result = await this.laporanService.rejectLaporan(laporanId, catatan);
+            return result;
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async deleteLaporan(laporanId: string): Promise<void> {
+        try {
+            const laporan = await this.laporanService.getReportDetailById(laporanId);
+            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
+
+            await this.laporanService.deleteLaporan(laporanId);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+
+    private calculateBarChart(reports: ReportSummaryPayload[], period: string): BarChartResponse[] {
+        const groups: Record<string, number> = {};
+
+        const DAY_LABELS: Record<number, string> = {
+            0: "Min", 1: "Sen", 2: "Sel", 3: "Rab",
+            4: "Kam", 5: "Jum", 6: "Sab"
+        };
+
+        reports.forEach(report => {
+            const date = new Date(report.created_at);
+            let label = '';
+
+            if (period === 'harian') {
+                label = `${String(date.getHours()).padStart(2, '0')}:00`;
+            } else if (period === 'mingguan') {
+                label = date.toLocaleDateString('id-ID', { weekday: 'short' });
+            } else if (period === 'bulanan') {
+                label = `Mgg ${Math.ceil(date.getDate() / 7)}`;
+            } else {
+                label = date.toLocaleDateString('id-ID', { month: 'short' });
+            }
+
+            groups[label] = (groups[label] || 0) + 1;
+        });
+
+        if (period === 'mingguan') {
+            const orderedLabels = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+            const result = orderedLabels
+                .filter(label => label in groups || true)
+                .map(label => ({ label, count: groups[label] || 0 }));
+            return result;
+        }
+
+        const result = Object.keys(groups).map(label => ({
+            label,
+            count: groups[label] || 0
+        }));
+        return result;
+    }
+
 
     private calculateKpi(current: ReportSummaryPayload[], previous: ReportSummaryPayload[]): DashboardMainResponse['kpi'] {
         const calculateTrend = (currCount: number, prevCount: number): StatDetail => {
@@ -210,173 +390,5 @@ export class AdminService implements IAdminService {
             return mapped;
         });
         return result;
-    }
-
-    private calculateBarChart(reports: ReportSummaryPayload[], period: string): BarChartResponse[] {
-        const groups: Record<string, number> = {};
-
-        const DAY_LABELS: Record<number, string> = {
-            0: "Min", 1: "Sen", 2: "Sel", 3: "Rab",
-            4: "Kam", 5: "Jum", 6: "Sab"
-        };
-
-        reports.forEach(report => {
-            const date = new Date(report.created_at);
-            let label = '';
-
-            if (period === 'harian') {
-                label = `${String(date.getHours()).padStart(2, '0')}:00`;
-            } else if (period === 'mingguan') {
-                label = date.toLocaleDateString('id-ID', { weekday: 'short' });
-            } else if (period === 'bulanan') {
-                label = `Mgg ${Math.ceil(date.getDate() / 7)}`;
-            } else {
-                label = date.toLocaleDateString('id-ID', { month: 'short' });
-            }
-
-            groups[label] = (groups[label] || 0) + 1;
-        });
-
-        if (period === 'mingguan') {
-            const orderedLabels = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
-            const result = orderedLabels
-                .filter(label => label in groups || true)
-                .map(label => ({ label, count: groups[label] || 0 }));
-            return result;
-        }
-
-        const result = Object.keys(groups).map(label => ({
-            label,
-            count: groups[label] || 0
-        }));
-        return result;
-    }
-
-    public async getReportDetail(id: string): Promise<AdminReportDetailResponse> {
-        const laporan = await this.laporanService.getReportDetailById(id);
-
-        if (!laporan) {
-            throw new AppError("Laporan tidak ditemukan", 404);
-        }
-
-        const historiTerakhir = laporan.histori_pekerjaan?.[laporan.histori_pekerjaan.length - 1] ?? null;
-
-
-        const jamUpload = historiTerakhir
-            ? historiTerakhir.created_at.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
-            : null;
-
-        const detail: AdminReportDetailResponse = {
-            id: laporan.id,
-            status: laporan.status as LaporanStatus,
-            prioritas: laporan.prioritas as LaporanPriority,
-            nama_karyawan: laporan.pelapor?.nama_lengkap ?? "Anonim",
-            lokasi: laporan.lantai?.lokasi
-                ? `Lantai ${laporan.lantai.nomor_lantai} - ${laporan.lantai.lokasi.nama_lokasi}`
-                : "Lokasi tidak diketahui",
-            kategori: laporan.kategori.nama_kategori,
-            ob_ditugaskan: laporan.ob?.nama_lengkap ?? "Belum Ditugaskan",
-            waktu_laporan: laporan.created_at,
-            waktu_selesai: historiTerakhir?.created_at ?? null,
-            dikerjakan_at: laporan.dikerjakan_at,
-            selesai_at: laporan.selesai_at,
-            dibatalkan_at: laporan.dibatalkan_at,
-            admin_catatan: laporan.admin_catatan,
-            deskripsi_kendala: laporan.deskripsi_kendala,
-            bukti_foto: {
-                urls: laporan.status === "SELESAI"
-                    ? (historiTerakhir?.foto_selesai ?? []).map(resolveFileUrl).filter((url): url is string => !!url)
-                    : laporan.foto_masalah.map(resolveFileUrl).filter((url): url is string => !!url),
-                diupload_oleh: laporan.ob?.nama_lengkap ?? null,
-                jam_upload: jamUpload
-            }
-        };
-
-        return detail;
-    }
-
-    async assignObToLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number): Promise<void> {
-        try {
-            const obUser = await this.usersService.getByID(obId);
-            if (!obUser) {
-                throw new AppError("OB user tidak ditemukan", 404);
-            }
-            if (obUser.role?.nama_role?.toLowerCase() !== USER_ROLE.OB) {
-                throw new AppError("User bukan merupakan OB", 400);
-            }
-
-            await this.adminRepo.assignObToLocations(obId, lokasiIds, bulan, tahun);
-        } catch (err) {
-            throw handlePrismaError(err);
-        }
-    }
-
-    async getPenugasanByPeriode(bulan: number, tahun: number): Promise<PenugasanObWithDetails[]> {
-        try {
-            const penugasan = await this.adminRepo.getPenugasanByPeriode(bulan, tahun);
-            return penugasan;
-        } catch (err) {
-            throw handlePrismaError(err);
-        }
-    }
-
-    public async patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void> {
-        try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
-            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
-
-            if (dto.ob_id) {
-                const obUser = await this.usersService.getByID(dto.ob_id);
-                if (!obUser || obUser.role?.nama_role !== USER_ROLE.OB) {
-                    throw new AppError("OB tidak ditemukan", 404);
-                }
-            }
-
-            if (dto.status === LAPORAN_STATUS.PENDING) {
-                const targetObId = dto.ob_id ?? laporan.ob_id;
-                if (!targetObId) {
-                    throw new AppError("Status PENDING memerlukan OB yang ditugaskan", 400);
-                }
-            }
-
-            await this.laporanService.patchLaporan(laporanId, dto);
-        } catch (err: unknown) {
-            throw handlePrismaError(err);
-        }
-    }
-
-    async approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan> {
-        try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
-            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
-
-            const result = await this.adminRepo.approveLaporan(laporanId, catatan);
-            return result;
-        } catch (err) {
-            throw handlePrismaError(err);
-        }
-    }
-
-    async rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan> {
-        try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
-            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
-
-            const result = await this.adminRepo.rejectLaporan(laporanId, catatan);
-            return result;
-        } catch (err) {
-            throw handlePrismaError(err);
-        }
-    }
-
-    async deleteLaporan(laporanId: string): Promise<void> {
-        try {
-            const laporan = await this.laporanService.getReportDetailById(laporanId);
-            if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
-
-            await this.laporanService.deleteLaporan(laporanId);
-        } catch (err) {
-            throw handlePrismaError(err);
-        }
     }
 }

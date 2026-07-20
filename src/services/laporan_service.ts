@@ -1,6 +1,6 @@
 import type { MappedReportDetailRes, MappedProfileReport } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
-import type { AdminLaporanQuery, PatchLaporanReq } from "../dto/admin.js";
+import type { AdminLaporanHistoryQuery, AdminLaporanQuery, PatchLaporanReq } from "../dto/admin.js";
 import type { ILaporanRepository, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, DetailReportPayload, ProfileReport, LaporanKaryawanWithDetails } from "../repositories/laporan_repository.interface.js";
 import type { UserActivityRes } from "../dto/users.js";
 import { USER_ROLE, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, REF_TIPE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
@@ -9,7 +9,7 @@ import { resolveFileUrl } from "../utils/url.js";
 import { AppError } from "../utils/error.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
-import { Prisma } from "../generated/prisma/client.js";
+import { Prisma, type Laporan_karyawan } from "../generated/prisma/client.js";
 import type { PeriodRange } from "../utils/date.js";
 import type { INotificationService } from "./notification_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
@@ -96,6 +96,15 @@ export class LaporanService implements ILaporanService {
     async getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>> {
         try {
             const laporan = await this.laporanRepo.getAllLaporan(page, limit, query);
+            return laporan;
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+        
+    async getAllHistoryLaporan(page: number, limit: number, query: AdminLaporanHistoryQuery): Promise<PaginatedResponse<Laporan_karyawan>> {
+        try {
+            const laporan = await this.laporanRepo.getAllHistoryLaporan(page, limit, query);
             return laporan;
         } catch (err) {
             handlePrismaError(err);
@@ -413,6 +422,24 @@ export class LaporanService implements ILaporanService {
             await this.notificationService.sendNotification(notifData);
         } catch (err) {
             handlePrismaError(err);
+        }
+    }
+
+    async approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan> {
+        try {
+            const laporan = await this.laporanRepo.approveLaporan(laporanId, catatan);
+            return laporan;
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan> {
+        try {
+            const laporan = await this.laporanRepo.rejectLaporan(laporanId, catatan);
+            return laporan;
+        } catch (err) {
+            throw handlePrismaError(err);
         }
     }
 

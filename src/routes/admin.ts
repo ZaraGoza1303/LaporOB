@@ -17,6 +17,7 @@ adminRouter.post("/user/assign-locations", (req, res) => adminController.assignO
 adminRouter.get("/user/assignments", (req, res) => adminController.getPenugasanByPeriode(req, res));
 
 //laporan
+adminRouter.get("/laporan/history", (req, res) => adminController.getAllHistoryLaporan(req, res));
 adminRouter.get("/laporan", (req, res) => adminController.getAllLaporan(req, res));
 adminRouter.get("/laporan/:laporan_id", (req, res) => adminController.getReportDetail(req, res));
 adminRouter.patch("/laporan/:laporan_id", (req, res) => adminController.patchLaporan(req, res));

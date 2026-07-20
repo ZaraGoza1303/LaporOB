@@ -1,9 +1,7 @@
 import type { UserStatsRes, AdminLaporanQuery } from "../dto/admin.js";
-import { PrismaClient, type Laporan_karyawan } from "../generated/prisma/client.js";
+import { PrismaClient } from "../generated/prisma/client.js";
 import type { IAdminRepository, DailyChecklistObReport, PenugasanObWithDetails } from "./admin_repository.interface.js";
 import { CHECKLIST_STATUS, LAPORAN_STATUS, USER_ROLE } from "../utils/constants.js";
-import type { AssignObRepoArgs } from "../dto/admin.js";
-import type { AuthService } from "../services/auth_service.js";
 
 export class AdminRepository implements IAdminRepository {
     private db: PrismaClient;
@@ -153,31 +151,5 @@ export class AdminRepository implements IAdminRepository {
             }
         });
         return penugasan;
-    }
-
-    async approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan> {
-        const laporan = await this.db.laporan_karyawan.update({
-            where: { id: laporanId },
-            data: {
-                is_approved: true,
-                admin_catatan: catatan ?? null,
-            }
-        });
-        return laporan;
-    }
-
-    async rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan> {
-        const now = new Date();
-        const laporan = await this.db.laporan_karyawan.update({
-            where: { id: laporanId },
-            data: {
-                status: LAPORAN_STATUS.DIBATALKAN,
-                ob_id: null,
-                is_approved: false,
-                admin_catatan: catatan,
-                dibatalkan_at: now,
-            }
-        });
-        return laporan;
     }
 }
