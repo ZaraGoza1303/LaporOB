@@ -1,7 +1,5 @@
 import { z } from "zod";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
-import type { Period } from "../utils/date.js";
-import type { PaginatedResponse } from "./response.js";
 import type { Kategori, Lantai, User } from "../generated/prisma/client.js";
 
 const emptyToNull = (val: unknown) => (val === "" || val === undefined ? null : val);
@@ -57,20 +55,4 @@ export interface ChecklistHarianRes {
     ob?: User | null;
 }
 
-export interface ChecklistCountsResponse {
-    total: number;
-    done: number;
-    pending: number;
-    late: number;
-}
 
-export interface ChecklistHarianGroupedByOB {
-    ob_id: string | null;
-    ob: User | null;
-    items: ChecklistHarianRes[];
-}
-
-export interface ChecklistHarianPageResponse {
-    checklist: PaginatedResponse<ChecklistHarianGroupedByOB>;
-    counts: ChecklistCountsResponse;
-}

@@ -235,7 +235,8 @@ export class ObController {
     async getTugas(req: Request, res: Response) {
         try {
             const obId = req.user?.id as string;
-            const tugas = await this.tugasService.getAvailableTugas(obId);
+            const tugas = await this.tugasService.getAllTugasForOb(obId);
+            
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan daftar tugas", tugas));
         } catch (err: unknown) {
             if (err instanceof AppError) {

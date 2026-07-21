@@ -1,6 +1,5 @@
 import type { CreateTugasReq, UpdateTugasReq } from "../dto/tugas.js";
 import type { Tugas } from "../generated/prisma/client.js";
-import type { ObTugasItem } from "../dto/ob.js";
 
 export interface ITugasService {
     getAll(kategoriId?: string): Promise<Tugas[]>
@@ -8,7 +7,8 @@ export interface ITugasService {
     create(req: CreateTugasReq): Promise<void>;
     update(tugasId: string, req: UpdateTugasReq): Promise<void>;
     delete(tugasId: string): Promise<void>;
-    getAvailableTugas(obId: string): Promise<ObTugasItem[]>;
+    
+    getAllTugasForOb(obId: string): Promise<Tugas[]>;
     claimTugas(tugasId: string, obId: string): Promise<void>;
     completeTugas(tugasId: string, obId: string): Promise<void>;
 }

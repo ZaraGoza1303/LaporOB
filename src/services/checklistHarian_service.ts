@@ -1,77 +1,24 @@
-import type { ChecklistHarianQuery, UpdateChecklistHarianReq, ChecklistHarianRes, ChecklistHarianPageResponse, ChecklistHarianGroupedByOB } from "../dto/checklist_harian.js";
+import type { UpdateChecklistHarianReq, ChecklistHarianRes } from "../dto/checklist_harian.js";
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails } from "../repositories/checklistHarian_repository.interface.js";
 import type { Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
-import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE, REF_TIPE, USER_ROLE } from "../utils/constants.js";
-import type { BulkNotificationData } from "../dto/notification.js";
-import type { INotificationService } from "./notification_service.interface.js";
-import type { IUsersService } from "./users_service.interface.js";
-import { calculatePeriodRange } from "../utils/date.js";
+import { CHECKLIST_STATUS } from "../utils/constants.js";
 
 export class ChecklistHarianService implements IChecklistHarianService {
     private checklistRepo: IChecklistHarianRepository;
-    private notificationService: INotificationService;
-    private usersService: IUsersService;
 
     constructor(
         checklistRepo: IChecklistHarianRepository,
-        notificationService: INotificationService,
-        usersService: IUsersService,
     ) {
         this.checklistRepo = checklistRepo;
-        this.notificationService = notificationService;
-        this.usersService = usersService;
     }
 
-    async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<ChecklistHarianPageResponse> {
+    async getAll(): Promise<ChecklistHarianRes[]> {
         try {
-            const dateRange = calculatePeriodRange(query.period);
-
-            const [
-                data,
-                total,
-                done,
-                pending,
-                late
-            ] = await Promise.all([
-                this.checklistRepo.getAll(page, limit, query),
-                this.checklistRepo.countTotalChecklist(dateRange),
-                this.checklistRepo.countTotalChecklistDone(dateRange),
-                this.checklistRepo.countTotalChecklistPending(dateRange),
-                this.checklistRepo.countTotalChecklistLate(dateRange)
-            ]);
-
-            const mappedItems = data.items.map(item => this.mapToResponse(item));
-            const groupedMap = new Map<string | null, ChecklistHarianGroupedByOB>();
-
-            for (const item of mappedItems) {
-                const key = item.ob_id || null;
-                if (!groupedMap.has(key)) {
-                    groupedMap.set(key, {
-                        ob_id: key,
-                        ob: item.ob || null,
-                        items: []
-                    });
-                }
-                groupedMap.get(key)!.items.push(item);
-            }
-
-            const groupedItems = Array.from(groupedMap.values());
-
-            const result: ChecklistHarianPageResponse = {
-                checklist: {
-                    ...data,
-                    items: groupedItems
-                },
-                counts: {
-                    total,
-                    done,
-                    pending,
-                    late
-                }
-            };
+            const items = await this.checklistRepo.getAll();
+            const result = items.map(item => this.mapToResponse(item));
             return result;
         } catch (err) {
             handlePrismaError(err);
