@@ -3,7 +3,6 @@ import type { Tugas } from "../generated/prisma/client.js";
 import type { TugasCreateInput, TugasUpdateInput } from "../generated/prisma/models.js";
 import type { ITugasRepository } from "./tugas_repository.interface.js";
 import { Prisma } from "../generated/prisma/client.js";
-import type { ObTugasItem } from "../dto/ob.js";
 import { TUGAS_STATUS } from "../utils/constants.js";
 
 export class TugasRepository implements ITugasRepository {
@@ -64,7 +63,7 @@ export class TugasRepository implements ITugasRepository {
         })
     }
 
-    async getAvailableForOb(obId: string): Promise<ObTugasItem[]> {
+    async getAllTugasForOb(obId: string): Promise<Tugas[]> {
         const tugas = await this.db.tugas.findMany({
             where: {
                 is_active: true,
@@ -86,18 +85,7 @@ export class TugasRepository implements ITugasRepository {
             },
         });
 
-        const result: ObTugasItem[] = tugas.map((item) => ({
-            id: item.id,
-            nama_tugas: item.nama_tugas,
-            kategori: item.kategori?.nama_kategori || "",
-            lantai_id: item.lantai_id,
-            lokasi: item.lantai?.lokasi?.nama_lokasi || "",
-            nomor_lantai: item.lantai?.nomor_lantai || 0,
-            status: item.status,
-            catatan: item.catatan,
-            created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
-        }));
-        return result;
+        return tugas;
     }
 
     async claimByOb(tugasId: string, obId: string): Promise<void> {

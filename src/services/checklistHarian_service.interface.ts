@@ -1,8 +1,8 @@
-import type { ChecklistHarianQuery, UpdateChecklistHarianReq, ChecklistHarianRes, ChecklistHarianPageResponse } from "../dto/checklist_harian.js";
+import type { UpdateChecklistHarianReq, ChecklistHarianRes } from "../dto/checklist_harian.js";
 import type { ChecklistHarianWithDetails } from "../repositories/checklistHarian_repository.interface.js";
 
 export interface IChecklistHarianService {
-    getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<ChecklistHarianPageResponse>;
+    getAll(): Promise<ChecklistHarianRes[]>;
     getByID(checklistId: string): Promise<ChecklistHarianRes | null>;
     update(checklistId: string, req: UpdateChecklistHarianReq): Promise<void>;
     delete(checklistId: string): Promise<void>;

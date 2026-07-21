@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { IChecklistHarianService } from "../services/checklistHarian_service.interface.js";
-import { ChecklistHarianQuerySchema, UpdateChecklistHarianSchema, ChecklistHarianIdParamSchema } from "../dto/checklist_harian.js";
+import { UpdateChecklistHarianSchema, ChecklistHarianIdParamSchema } from "../dto/checklist_harian.js";
 import { AppError } from "../utils/error.js";
 
 export class ChecklistHarianController {
@@ -13,16 +13,7 @@ export class ChecklistHarianController {
 
     async getAll(req: Request, res: Response) {
         try {
-            const page = parseInt(req.query.page as string) || 1;
-            const limit = parseInt(req.query.limit as string) || 10;
-
-            const validate = ChecklistHarianQuerySchema.safeParse(req.query);
-            if (!validate.success) {
-                const formattedErr = validate.error.flatten().fieldErrors;
-                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
-            }
-
-            const response = await this.checklistService.getAll(page, limit, validate.data);
+            const response = await this.checklistService.getAll();
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data checklist harian", response));
         } catch (err: unknown) {
             if (err instanceof AppError) {

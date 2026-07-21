@@ -1,6 +1,5 @@
 import type { CreateTugasReq, UpdateTugasReq } from "../dto/tugas.js";
 import type { Tugas } from "../generated/prisma/client.js";
-import type { ObTugasItem } from "../dto/ob.js";
 import type { TugasCreateInput, TugasUpdateInput } from "../generated/prisma/models.js";
 import type { ITugasRepository } from "../repositories/tugas_repository.interface.js";
 import { handlePrismaError, AppError } from "../utils/error.js";
@@ -50,7 +49,6 @@ export class TugasService implements ITugasService {
                     connect: { id: req.kategori_id }
                 },
                 nama_tugas: req.nama_tugas,
-                tanggal_mulai: new Date(req.tanggal_mulai),
                 tanggal_selesai: new Date(req.tanggal_selesai),
                 is_active: req.is_active ?? true,
             };
@@ -94,9 +92,9 @@ export class TugasService implements ITugasService {
         }
     }
 
-    async getAvailableTugas(obId: string): Promise<ObTugasItem[]> {
+    async getAllTugasForOb(obId: string): Promise<Tugas[]> {
         try {
-            const tugas = await this.tugasRepo.getAvailableForOb(obId);
+            const tugas = await this.tugasRepo.getAllTugasForOb(obId);
             return tugas;
         } catch (err) {
             throw handlePrismaError(err);

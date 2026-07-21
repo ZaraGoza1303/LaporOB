@@ -2850,7 +2850,6 @@ paths:
               required:
                 - kategori_id
                 - nama_tugas
-                - tanggal_mulai
                 - tanggal_selesai
               properties:
                 kategori_id:
@@ -2865,10 +2864,6 @@ paths:
                 catatan:
                   type: string
                   description: Catatan tambahan untuk OB (opsional)
-                tanggal_mulai:
-                  type: string
-                  format: date-time
-                  description: Awal rentang tugas (ISO 8601, wajib)
                 tanggal_selesai:
                   type: string
                   format: date-time

@@ -9,7 +9,6 @@ export const CreateTugasSchema = z.object({
     nama_tugas: z.string().trim().min(1, { message: "Nama tugas tidak boleh kosong" }).max(150, { message: "Nama tugas maksimal 150 karakter" }),
     lantai_id: z.string().uuid({ message: "Format Lantai ID harus berupa UUID yang valid" }).optional(),
     catatan: z.string().trim().optional(),
-    tanggal_mulai: z.string({ message: "tanggal_mulai wajib diisi" }),
     tanggal_selesai: z.string({ message: "tanggal_selesai wajib diisi" }),
     is_active: z.boolean().optional().default(true),
 });

@@ -158,7 +158,6 @@ model Tugas {
   lantai    Lantai?  @relation(fields: [lantai_id], references: [id])
   ob        User?    @relation("TugasOb", fields: [ob_id], references: [id])
 
-  tanggal_mulai  DateTime  @db.Timestamp(6)
   tanggal_selesai DateTime @db.Timestamp(6)
 
   @@map("tugas")
