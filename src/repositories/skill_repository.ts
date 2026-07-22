@@ -1,6 +1,6 @@
 import type { PrismaClient, Prisma } from "../generated/prisma/client.js";
 import type { SkillDefinition, ObSkill } from "../generated/prisma/client.js";
-import type { ISkillRepository } from "./skill_repository.interface.js";
+import type { ISkillRepository, ObCompletedTask } from "./skill_repository.interface.js";
 
 export class SkillRepository implements ISkillRepository {
     private db: PrismaClient;
@@ -96,6 +96,37 @@ export class SkillRepository implements ISkillRepository {
         await this.db.obSkill.update({
             where: { ob_id_skill_id: { ob_id: obId, skill_id: skillId } },
             data: { diperoleh_at: new Date() },
+        });
+    }
+
+    async getCompletedTasks(obId?: string): Promise<ObCompletedTask[]> {
+        const filter = obId ? `AND ob_id = $1::uuid` : ``;
+        const params: unknown[] = obId ? [obId] : [];
+
+        return this.db.$queryRawUnsafe<ObCompletedTask[]>(`
+            SELECT ob_id, nama_tugas, dikerjakan_at, selesai_at FROM tugas
+            WHERE status = 'SELESAI' ${filter}
+            UNION ALL
+            SELECT ob_id, nama_tugas, dikerjakan_at, selesai_at FROM checklist_harian
+            WHERE status = 'SELESAI' ${filter}
+            UNION ALL
+            SELECT ob_id, deskripsi_kendala AS nama_tugas, dikerjakan_at, selesai_at FROM laporan_karyawan
+            WHERE status = 'SELESAI' ${filter}
+        `, ...params);
+    }
+
+    async upsertSkillProgress(obId: string, skillId: string, jumlahSelesai: number): Promise<ObSkill> {
+        return this.db.obSkill.upsert({
+            where: { ob_id_skill_id: { ob_id: obId, skill_id: skillId } },
+            create: {
+                ob_id: obId,
+                skill_id: skillId,
+                jumlah_selesai: jumlahSelesai,
+                assigned_by: null,
+            },
+            update: {
+                jumlah_selesai: jumlahSelesai,
+            },
         });
     }
 }

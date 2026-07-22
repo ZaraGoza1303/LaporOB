@@ -279,3 +279,50 @@ export interface PekerjaanListResponse {
     checklist: PaginatedResponse<ChecklistHarianRes>;
     tugas: PaginatedResponse<TugasDetailRes>;
 }
+
+export const ObPerformanceDashboardQuerySchema = z.object({
+    period: z.enum(['harian', 'mingguan', 'bulanan', 'tahunan']).default('bulanan'),
+});
+export type ObPerformanceDashboardQuery = z.infer<typeof ObPerformanceDashboardQuerySchema>;
+
+export interface ObPerbandinganItem {
+    ob_id: string;
+    nama_ob: string;
+    total_tugas: number;
+    tugas_selesai: number;
+    persentase: number;
+}
+
+export interface TrenLaporanBulananItem {
+    bulan: string;
+    label: string;
+    total: number;
+    baru: number;
+    pending: number;
+    selesai: number;
+    dibatalkan: number;
+}
+
+export interface ObPerformanceDashboardResponse {
+    produktivitas: number;
+    tugas_diselesaikan: { selesai: number; total: number };
+    laporan_menunggu: number;
+    perbandingan_ob: ObPerbandinganItem[];
+    tren_laporan_bulanan: TrenLaporanBulananItem[];
+}
+
+export interface ObRankingItem {
+    ob: {
+        id: string;
+        nama_lengkap: string;
+        profile_picture: string | null;
+        skills: Array<{
+            id: string;
+            nama_skill: string;
+            diperoleh_at: Date;
+        }>;
+    };
+    total_tugas_claimed: number;
+    total_tugas_selesai: number;
+    rata_rata_kecepatan: number;
+}

@@ -1,5 +1,5 @@
 
-import { AdminLaporanHistoryQuerySchema, AdminLaporanQuerySchema, AssignObToLocationsSchema, GetDashboardQuerySchema, PatchLaporanReqSchema, StatsTugasQuerySchema, StatsLaporanQuerySchema, PekerjaanListQuerySchema } from '../dto/admin.js';
+import { AdminLaporanHistoryQuerySchema, AdminLaporanQuerySchema, AssignObToLocationsSchema, GetDashboardQuerySchema, PatchLaporanReqSchema, StatsTugasQuerySchema, StatsLaporanQuerySchema, PekerjaanListQuerySchema, ObPerformanceDashboardQuerySchema } from '../dto/admin.js';
 import { LaporanIdParamSchema } from '../dto/users.js';
 import { ChecklistHarianIdParamSchema } from '../dto/checklist_harian.js';
 import { ObTugasIdParamSchema } from '../dto/ob.js';
@@ -376,6 +376,36 @@ export class AdminController {
         } catch (err: unknown) {
             if (err instanceof AppError) return res.status(err.statusCode).json(sendErrorResponse(err.message));
             return res.status(500).json(sendErrorResponse("Gagal mengambil skill OB"));
+        }
+    }
+
+    async getObPerformanceDashboard(req: Request, res: Response) {
+        try {
+            const validate = ObPerformanceDashboardQuerySchema.safeParse(req.query);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const response = await this.adminService.getObPerformanceDashboard(validate.data);
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data performa OB", response));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data performa OB"));
+        }
+    }
+
+    async getObRanking(req: Request, res: Response) {
+        try {
+            const response = await this.adminService.getObRanking();
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data ranking OB", response));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data ranking OB"));
         }
     }
 
