@@ -261,41 +261,16 @@ export class LaporanRepository implements ILaporanRepository {
     }
 
     async getReportsForObDashboard(obId: string): Promise<LaporanKaryawanWithDetails[]> {
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-
-        const assignments = await this.db.penugasanOb.findMany({
-            where: { ob_id: obId, bulan: now.getMonth() + 1, tahun: now.getFullYear() },
-            select: { lokasi_id: true }
-        });
-        const lokasiIds = assignments.map(a => a.lokasi_id);
-
-        const ownReports = await this.db.laporan_karyawan.findMany({
+        const reports = await this.db.laporan_karyawan.findMany({
             where: {
-                OR: [
-                    { ob_id: obId },
-                    { ob_id: null, status: { not: "PENDING" } }
-                ]
+                status: { in: [LAPORAN_STATUS.BELUM_DIKERJAKAN, LAPORAN_STATUS.PENDING] },
+                prioritas: "URGENT",
             },
             include: { kategori: true, lantai: { include: { lokasi: true } } },
             orderBy: { created_at: 'desc' },
-            take: 3
         });
 
-        if (ownReports.length >= 3) {
-            return ownReports;
-        }
-
-        const backupReports = await this.db.laporan_karyawan.findMany({
-            where: { ob_id: null, lantai: { lokasi_id: { notIn: lokasiIds } } },
-            include: { kategori: true, lantai: { include: { lokasi: true } } },
-            orderBy: { created_at: 'desc' },
-            take: 3 - ownReports.length
-        });
-
-        const result = [...ownReports, ...backupReports];
-        return result;
+        return reports;
     }
 
     async ambilLaporan(laporanId: string, obId: string): Promise<void> {
