@@ -25,6 +25,18 @@ export class NotificationRepository implements INotificationRepository {
         return result;
     }
 
+    async getById(notifId: string): Promise<NotifikasiWithPengirim | null> {
+        const notif = await this.db.notifikasi.findFirst({
+            where: { id: notifId },
+            include: {
+                pengirim: {
+                    select: { id: true, nama_lengkap: true }
+                }
+            },
+        });
+        return notif;
+    }
+
     async markAsRead(notifId: string): Promise<void> {
         await this.db.notifikasi.update({
             where: { id: notifId },

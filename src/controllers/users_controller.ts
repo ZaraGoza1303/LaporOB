@@ -290,25 +290,6 @@ export class UsersController {
         }
     }
 
-    async getReportDetail(req: Request, res: Response) {
-        try {
-            const validateParams = LaporanIdParamSchema.safeParse(req.params);
-            if (!validateParams.success) {
-                const formattedErr = validateParams.error.flatten().fieldErrors;
-                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
-            }
-            const laporanId = validateParams.data.laporan_id;
-            
-            const response = await this.laporanService.getReportDetail(laporanId);
-            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan detail laporan", response));
-        } catch (err: unknown) {
-            if (err instanceof AppError) {
-                return res.status(err.statusCode).json(sendErrorResponse(err.message))
-            }
-            return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server"));
-        }
-    }
-    
     async getObPerformanceStats(req: Request, res: Response) {
         try {
             const validateParams = UserIdParamSchema.safeParse(req.params);

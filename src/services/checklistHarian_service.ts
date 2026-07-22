@@ -1,6 +1,6 @@
 import type { UpdateChecklistHarianReq, ChecklistHarianRes } from "../dto/checklist_harian.js";
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
-import { handlePrismaError } from "../utils/error.js";
+import { handlePrismaError, AppError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails, ChecklistHarianApprovalItem } from "../repositories/checklistHarian_repository.interface.js";
 import type { Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
@@ -25,10 +25,13 @@ export class ChecklistHarianService implements IChecklistHarianService {
         this.achievementService = achievementService;
     }
 
-    async getAll(): Promise<ChecklistHarianRes[]> {
+    async getAll(obId?: string): Promise<ChecklistHarianRes[]> {
         try {
             const items = await this.checklistRepo.getAll();
-            const result = items.map(item => this.mapToResponse(item));
+            const filtered = obId
+                ? items.filter(item => item.ob_id === obId)
+                : items;
+            const result = filtered.map(item => this.mapToResponse(item));
             return result;
         } catch (err) {
             handlePrismaError(err);
@@ -48,13 +51,17 @@ export class ChecklistHarianService implements IChecklistHarianService {
         }
     }
 
-    async getByID(checklistId: string): Promise<ChecklistHarianRes | null> {
+    async getByID(checklistId: string, obId?: string): Promise<ChecklistHarianRes | null> {
         try {
             const item = await this.checklistRepo.getByID(checklistId);
             if (!item) return null;
+            if (obId && item.ob_id !== obId) {
+                throw new AppError("Anda tidak memiliki akses ke checklist ini", 403);
+            }
             const result = this.mapToResponse(item);
             return result;
         } catch (err) {
+            if (err instanceof AppError) throw err;
             handlePrismaError(err);
         }
     }
@@ -113,6 +120,13 @@ export class ChecklistHarianService implements IChecklistHarianService {
     }
 
     async ambilChecklist(checklistId: string, obId: string): Promise<void> {
+        const checklist = await this.checklistRepo.getByID(checklistId);
+        if (!checklist) {
+            throw new AppError("Checklist tidak ditemukan", 404);
+        }
+        if (checklist.ob_id !== null) {
+            throw new AppError("Checklist sudah diambil oleh OB lain", 409);
+        }
         await this.checklistRepo.ambilChecklist(checklistId, obId);
     }
 

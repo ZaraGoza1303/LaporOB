@@ -121,9 +121,10 @@ export class ObService implements IObService {
             const bulan = today.getMonth() + 1;
             const tahun = today.getFullYear();
 
-            const [obStats, penugasan] = await Promise.all([
+            const [obStats, penugasan, allReports] = await Promise.all([
                 this.laporanService.getObPerformanceStats(obId),
-                this.obRepo.getActiveAssignments(obId, bulan, tahun)
+                this.obRepo.getActiveAssignments(obId, bulan, tahun),
+                this.laporanService.getReportsByObId(obId, 1)
             ]);
 
             const lokasiAktif = penugasan.map((p) => ({
@@ -139,8 +140,8 @@ export class ObService implements IObService {
                 email: user.email,
                 role: user.role?.nama_role || "OB",
                 profile_picture: resolveFileUrl(user.profile_picture),
-                laporanDiterima: obStats.laporanDiterima || 0,
-                laporanSelesai: obStats.laporanSelesai || 0,
+                laporanDiterima: allReports.meta?.total_items ?? 0,
+                laporanSelesai: obStats.total_tugas_selesai,
                 lokasiAktif: lokasiAktif,
             };
 
