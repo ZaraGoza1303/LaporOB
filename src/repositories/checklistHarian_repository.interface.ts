@@ -1,6 +1,7 @@
 import { Prisma } from "../generated/prisma/client.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import type { JadwalChecklist } from "../generated/prisma/client.js";
+import type { PaginatedResponse } from "../dto/response.js";
 
 export type ChecklistHarianWithRelations = Prisma.Checklist_harianGetPayload<{
     include: { kategori: true, lantai: true, ob: true }
@@ -27,6 +28,7 @@ export type ChecklistHarianApprovalItem = Prisma.Checklist_harianGetPayload<{
 
 export interface IChecklistHarianRepository {
     getAll(): Promise<ChecklistHarianWithRelations[]>;
+    getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<ChecklistHarianWithRelations>>;
     getByID(checklist_harianId: string): Promise<ChecklistHarianWithRelations | null>
     insert(req: Checklist_harianUncheckedCreateInput): Promise<void>;
     update(checklist_harianId: string, req: Checklist_harianUncheckedUpdateInput): Promise<void>;

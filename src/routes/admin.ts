@@ -8,6 +8,9 @@ const adminRouter = Router();
 adminRouter.use(verifyJWTToken);
 adminRouter.use(requireRole(USER_ROLE.ADMIN));
 
+//tugas-combination
+adminRouter.get("/tugas-combination", (req, res) => adminController.getListPekerjaan(req, res));
+
 //stats
 adminRouter.get("/dashboard", (req, res) => adminController.getDashboardData(req, res));
 adminRouter.get("/user-stats", (req, res) => adminController.getUserStats(req, res));

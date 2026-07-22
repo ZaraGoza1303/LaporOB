@@ -1,8 +1,10 @@
 import type { UpdateChecklistHarianReq, ChecklistHarianRes } from "../dto/checklist_harian.js";
 import type { ChecklistHarianWithDetails, ChecklistHarianApprovalItem } from "../repositories/checklistHarian_repository.interface.js";
+import type { PaginatedResponse } from "../dto/response.js";
 
 export interface IChecklistHarianService {
     getAll(): Promise<ChecklistHarianRes[]>;
+    getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<ChecklistHarianRes>>;
     getByID(checklistId: string): Promise<ChecklistHarianRes | null>;
     update(checklistId: string, req: UpdateChecklistHarianReq): Promise<void>;
     delete(checklistId: string): Promise<void>;
