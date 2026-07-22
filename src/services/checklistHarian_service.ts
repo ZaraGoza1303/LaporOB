@@ -2,9 +2,11 @@ import type { UpdateChecklistHarianReq, ChecklistHarianRes } from "../dto/checkl
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
-import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails } from "../repositories/checklistHarian_repository.interface.js";
+import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails, ChecklistHarianApprovalItem } from "../repositories/checklistHarian_repository.interface.js";
 import type { Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
+import type { PaginatedResponse } from "../dto/response.js";
+import type { JadwalChecklist } from "../generated/prisma/client.js";
 
 export class ChecklistHarianService implements IChecklistHarianService {
     private checklistRepo: IChecklistHarianRepository;
@@ -20,6 +22,19 @@ export class ChecklistHarianService implements IChecklistHarianService {
             const items = await this.checklistRepo.getAll();
             const result = items.map(item => this.mapToResponse(item));
             return result;
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
+    async getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<ChecklistHarianRes>> {
+        try {
+            const result = await this.checklistRepo.getAllPaginated(page, limit, search);
+            return {
+                items: result.items.map(item => this.mapToResponse(item)),
+                next_cursor: result.next_cursor,
+                meta: result.meta ?? { total_items: 0, current_page: page, limit, total_pages: 0 },
+            };
         } catch (err) {
             handlePrismaError(err);
         }
@@ -89,7 +104,36 @@ export class ChecklistHarianService implements IChecklistHarianService {
         return this.checklistRepo.getCompletedChecklistByOb();
     }
 
+    async getPendingApprovalChecklist(period: { start: Date; end: Date }, lokasiId?: string): Promise<ChecklistHarianApprovalItem[]> {
+        try {
+            const items = await this.checklistRepo.getPendingApproval(period, lokasiId);
+            return items;
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async approveChecklist(checklistId: string, adminId: string): Promise<void> {
+        try {
+            await this.checklistRepo.approve(checklistId, adminId);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async getExistingInstanceKeys(today: Date): Promise<Array<{ nama_tugas: string; lantai_id: string; ob_id: string | null }>> {
+        return this.checklistRepo.getExistingInstanceKeys(today);
+    }
+
+    async insertFromJadwal(jadwal: JadwalChecklist): Promise<void> {
+        await this.checklistRepo.insertFromJadwal(jadwal);
+    }
+
     private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {
+        let total_durasi: number | null = null;
+        if (item.dikerjakan_at && item.selesai_at) {
+            total_durasi = Math.floor((item.selesai_at.getTime() - item.dikerjakan_at.getTime()) / 1000);
+        }
         const response: ChecklistHarianRes = {
             id: item.id,
             nama_tugas: item.nama_tugas,
@@ -101,6 +145,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
             dikerjakan_at: item.dikerjakan_at ?? null,
             selesai_at: item.selesai_at ?? null,
             terlewat_at: item.terlewat_at ?? null,
+            total_durasi,
             tanggal: item.tanggal,
             created_at: item.created_at,
             updated_at: item.updated_at,

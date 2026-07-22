@@ -4,6 +4,7 @@ import type { AdminLaporanHistoryQuery, AdminLaporanQuery } from '../dto/admin.j
 import type { User, Kategori, Lantai, Lokasi, Laporan_karyawan, Prisma } from "../generated/prisma/client.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { PeriodRange } from "../utils/date.js";
+import type { ObPerformance } from "../dto/ob.js";
 
 export type ProfileReport = Laporan_karyawan & {
     kategori: Kategori;
@@ -93,6 +94,8 @@ export interface ILaporanRepository {
     batalkanLaporan(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void>;
     approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan>;
     rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan>;
-    getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number }>;
+    getObPerformanceStats(obId: string): Promise<ObPerformance>;
+    calculateAverageObTime(obId: string): Promise<number>;
+    getTotalDurasiObInSeconds(obId: string): Promise<number>;
 }
 

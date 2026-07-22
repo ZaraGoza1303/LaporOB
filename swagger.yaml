@@ -225,6 +225,69 @@ components:
         meta:
           $ref: '#/components/schemas/PaginationMeta'
 
+    MappedReportDetailRes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        kategori:
+          type: string
+        deskripsi_kendala:
+          type: string
+        status:
+          type: string
+        prioritas:
+          type: string
+        foto_masalah:
+          type: array
+          items:
+            type: string
+        foto_selesai:
+          type: array
+          items:
+            type: string
+        catatan:
+          type: string
+        lokasi:
+          type: string
+        nomor_lantai:
+          type: integer
+        nama_karyawan:
+          type: string
+        nama_ob:
+          type: string
+          nullable: true
+        is_kolaborasi_open:
+          type: boolean
+        catatan_kolaborasi:
+          type: string
+          nullable: true
+        dikerjakan_at:
+          type: string
+          format: date-time
+          nullable: true
+        selesai_at:
+          type: string
+          format: date-time
+          nullable: true
+        total_durasi:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    AdminProfileData:
+      type: object
+      properties:
+        total_tugas_approved:
+          type: integer
+        laporan_direview:
+          type: integer
+        hari_aktif:
+          type: integer
+
     ProfileRes:
       type: object
       properties:
@@ -254,6 +317,8 @@ components:
             rejected:
               type: integer
               nullable: true
+            admin:
+              $ref: '#/components/schemas/AdminProfileData'
         laporan:
           $ref: '#/components/schemas/PaginatedProfileReports'
     GabungResponse:
@@ -433,6 +498,38 @@ components:
             nama_lengkap:
               type: string
 
+    StatsTugasResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        diproses_ob:
+          type: integer
+        menunggu_persetujuan:
+          type: integer
+
+    ApprovalItemResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nama_tugas:
+          type: string
+        nama_ob:
+          type: string
+          nullable: true
+        lokasi:
+          type: string
+          nullable: true
+        kategori:
+          type: string
+          nullable: true
+        selesai_at:
+          type: string
+          format: date-time
+          nullable: true
+
     TugasResponse:
       type: object
       properties:
@@ -506,7 +603,7 @@ components:
           type: string
           format: date-time
 
-    ChecklistHarianResponse:
+    ChecklistHarianItem:
       type: object
       properties:
         id:
@@ -538,12 +635,54 @@ components:
         catatan:
           type: string
           nullable: true
+        dikerjakan_at:
+          type: string
+          format: date-time
+          nullable: true
+        selesai_at:
+          type: string
+          format: date-time
+          nullable: true
+        terlewat_at:
+          type: string
+          format: date-time
+          nullable: true
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
+        kategori:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            nama_kategori:
+              type: string
+        lantai:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            nomor_lantai:
+              type: integer
+            lokasi_id:
+              type: string
+              format: uuid
+        ob:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            nama_lengkap:
+              type: string
+            username:
+              type: string
 
     JadwalChecklistRequest:
       type: object
@@ -698,6 +837,95 @@ components:
         skill_id:
           type: string
           format: uuid
+
+    ChecklistHarianRes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nama_tugas:
+          type: string
+        kategori_id:
+          type: string
+          format: uuid
+        lantai_id:
+          type: string
+          format: uuid
+        ob_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+        catatan:
+          type: string
+          nullable: true
+        dikerjakan_at:
+          type: string
+          format: date-time
+          nullable: true
+        selesai_at:
+          type: string
+          format: date-time
+          nullable: true
+        terlewat_at:
+          type: string
+          format: date-time
+          nullable: true
+        total_durasi:
+          type: integer
+          nullable: true
+        tanggal:
+          type: string
+          format: date
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TugasDetailRes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nama_tugas:
+          type: string
+        status:
+          type: string
+        catatan:
+          type: string
+          nullable: true
+        dikerjakan_at:
+          type: string
+          format: date-time
+          nullable: true
+        selesai_at:
+          type: string
+          format: date-time
+          nullable: true
+        total_durasi:
+          type: integer
+          nullable: true
+        hari:
+          type: array
+          items:
+            type: string
+        is_approved:
+          type: boolean
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
 
 # AUTH
 paths:
@@ -986,24 +1214,6 @@ paths:
         '404':
           description: User tidak ditemukan
 
-  /api/user/profile/laporan/{laporan_id}:
-    get:
-      tags:
-        - User
-      summary: Detail laporan user (OB & Karyawan)
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: laporan_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Berhasil
-
 # KARYAWAN
   /api/karyawan/dashboard:
     get:
@@ -1166,6 +1376,36 @@ paths:
                               format: date-time
 
   /api/ob/laporan/{laporan_id}:
+    get:
+      tags:
+        - OB
+      summary: 'Detail laporan (OB)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detail laporan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/MappedReportDetailRes'
+        '404':
+          description: Laporan tidak ditemukan
+
     patch:
       tags:
         - OB
@@ -1677,6 +1917,33 @@ paths:
         '404':
           description: Tugas tidak ditemukan
 
+  /api/ob/laporan/checklist/{checklist_id}/claim:
+    patch:
+      tags:
+        - OB
+      summary: 'Klaim checklist harian (OB)'
+      description: |
+        OB mengklaim checklist harian yang tersedia.
+        Side effect: `status` → `SEDANG_DIKERJAKAN`, `dikerjakan_at` → sekarang, `ob_id` → OB yang login.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: checklist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Checklist berhasil diklaim
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Checklist tidak ditemukan
+
 # ADMIN
   /api/admin/role:
     get:
@@ -1802,6 +2069,70 @@ paths:
         '200':
           description: Daftar ob
 
+  /api/admin/user/assign-locations:
+    post:
+      tags:
+        - Admin
+      summary: 'Assign OB ke lokasi (Admin)'
+      description: Menugaskan OB ke satu atau lebih lokasi untuk periode bulan/tahun tertentu.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - obId
+                - lokasiIds
+                - bulan
+                - tahun
+              properties:
+                obId:
+                  type: string
+                  format: uuid
+                lokasiIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                bulan:
+                  type: integer
+                  minimum: 1
+                  maximum: 12
+                tahun:
+                  type: integer
+                  minimum: 2000
+      responses:
+        '200':
+          description: Berhasil memperbarui penugasan OB
+
+  /api/admin/user/assignments:
+    get:
+      tags:
+        - Admin
+      summary: 'Lihat penugasan OB berdasarkan periode (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: bulan
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+        - name: tahun
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 2000
+      responses:
+        '200':
+          description: Data penugasan OB
+
   /api/admin/user/all-karyawan:
     get:
       tags:
@@ -1845,6 +2176,283 @@ paths:
       responses:
         '200':
           description: Statistik user
+
+  /api/admin/tugas-combination:
+    get:
+      tags:
+        - Admin
+      summary: 'List gabungan checklist harian & tugas (Admin)'
+      description: |
+        Mengembalikan data checklist harian (instance) dan tugas dalam satu response, masing-masing dengan pagination terpisah.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Data checklist dan tugas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      checklist:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/ChecklistHarianRes'
+                          next_cursor:
+                            type: string
+                            nullable: true
+                          meta:
+                            $ref: '#/components/schemas/PaginationMeta'
+                      tugas:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/TugasDetailRes'
+                          next_cursor:
+                            type: string
+                            nullable: true
+                          meta:
+                            $ref: '#/components/schemas/PaginationMeta'
+
+  /api/admin/tugas/stats:
+    get:
+      tags:
+        - Admin
+      summary: 'Statistik tugas & checklist (Admin)'
+      description: |
+        Mengembalikan statistik gabungan tugas (non-rutin) dan checklist harian (rutin).
+        Mencakup total, yang sedang diproses OB, dan yang menunggu persetujuan admin. Bisa difilter per periode dan gedung.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: harian
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data statistik tugas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/StatsTugasResponse'
+
+  /api/admin/tugas/approval-list:
+    get:
+      tags:
+        - Admin
+      summary: 'Daftar tugas non-rutin menunggu persetujuan (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: harian
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar tugas menunggu persetujuan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApprovalItemResponse'
+
+  /api/admin/tugas/{tugas_id}/approve:
+    patch:
+      tags:
+        - Admin
+      summary: 'Setujui tugas non-rutin (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tugas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tugas berhasil disetujui
+
+  /api/admin/checklist-harian/approval-list:
+    get:
+      tags:
+        - Admin
+      summary: 'Daftar checklist harian menunggu persetujuan (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: harian
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar checklist menunggu persetujuan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApprovalItemResponse'
+
+  /api/admin/checklist-harian/{checklist_harian_id}/approve:
+    patch:
+      tags:
+        - Admin
+      summary: 'Setujui checklist harian (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: checklist_harian_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Checklist berhasil disetujui
+
+  /api/admin/ob/{ob_id}/skills:
+    get:
+      tags:
+        - Admin
+      summary: 'Skill yang sudah diperoleh OB (Admin)'
+      description: Mengembalikan daftar skill OB yang sudah diperoleh (diperoleh_at tidak null)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ob_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar skill OB
+
+  /api/admin/laporan/stats:
+    get:
+      tags:
+        - Admin
+      summary: 'Statistik laporan (Admin)'
+      description: |
+        Mengembalikan statistik laporan: baru (BELUM_DIKERJAKAN), sedang dikerjakan (PENDING), selesai dalam periode.
+        Bisa difilter per periode dan gedung.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: harian
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data statistik laporan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      laporan_baru:
+                        type: integer
+                      sedang_dikerjakan:
+                        type: integer
+                      selesai_hari_ini:
+                        type: integer
 
   /api/admin/laporan/history:
     get:
@@ -2137,6 +2745,67 @@ paths:
           description: Laporan tidak ditemukan
         '500':
           description: Gagal menghapus laporan
+
+  /api/admin/laporan/{laporan_id}/approve:
+    post:
+      tags:
+        - Admin
+      summary: 'Setujui laporan (Admin)'
+      description: Admin menyetujui laporan yang sudah selesai dikerjakan OB. Status berubah menjadi SELESAI.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                catatan:
+                  type: string
+      responses:
+        '200':
+          description: Pekerjaan berhasil disetujui
+        '404':
+          description: Laporan tidak ditemukan
+
+  /api/admin/laporan/{laporan_id}/reject:
+    post:
+      tags:
+        - Admin
+      summary: 'Tolak laporan (Admin)'
+      description: Admin menolak laporan yang sudah dikerjakan OB. Laporan dikembalikan ke antrean dengan status DIBATALKAN.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - catatan
+              properties:
+                catatan:
+                  type: string
+      responses:
+        '200':
+          description: Pekerjaan berhasil ditolak
+        '404':
+          description: Laporan tidak ditemukan
 
   /api/admin/user/{user_id}:
     get:
@@ -3115,50 +3784,26 @@ paths:
     get:
       tags:
         - Checklist Harian
-      summary: 'List checklist harian (OB, HR, Admin)'
+      summary: 'List semua checklist harian (OB, HR, Admin)'
       security:
         - BearerAuth: []
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 10
-        - name: search
-          in: query
-          schema:
-            type: string
-          description: Cari checklist berdasarkan nama tugas
-        - name: lokasi_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter checklist berdasarkan lokasi id
-        - name: lantai_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter checklist berdasarkan lantai id
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum:
-              - BELUM_DIKERJAKAN
-              - SEDANG_DIKERJAKAN
-              - SELESAI
-              - TERLEWAT
-          description: Filter checklist berdasarkan status
       responses:
         '200':
           description: Daftar checklist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChecklistHarianItem'
 
   /api/checklist-harian/{checklist_harian_id}:
     get:
@@ -3234,6 +3879,137 @@ paths:
       responses:
         '200':
           description: Checklist berhasil dihapus
+
+# SKILL
+  /api/skill/definitions:
+    get:
+      tags:
+        - Skill
+      summary: 'List definisi skill (Semua role)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar definisi skill
+    post:
+      tags:
+        - Skill
+      summary: 'Buat definisi skill baru (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillDefinitionRequest'
+      responses:
+        '201':
+          description: Skill berhasil dibuat
+
+  /api/skill/definitions/{skill_id}:
+    get:
+      tags:
+        - Skill
+      summary: 'Detail definisi skill (Semua role)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: skill_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detail definisi skill
+    patch:
+      tags:
+        - Skill
+      summary: 'Update definisi skill (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: skill_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillDefinitionRequest'
+      responses:
+        '200':
+          description: Skill berhasil diupdate
+    delete:
+      tags:
+        - Skill
+      summary: 'Hapus definisi skill (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: skill_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Skill berhasil dihapus
+
+  /api/skill/assign:
+    post:
+      tags:
+        - Skill
+      summary: 'Assign skill ke OB (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignSkillRequest'
+      responses:
+        '200':
+          description: Skill berhasil diassign
+
+  /api/skill/ob/{ob_id}:
+    get:
+      tags:
+        - Skill
+      summary: 'Skill OB (Admin & OB)'
+      description: Mengembalikan daftar skill yang sudah diperoleh seorang OB
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ob_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar skill OB
+
+  /api/skill/me:
+    get:
+      tags:
+        - Skill
+      summary: 'Skill saya sendiri (OB)'
+      description: Mengembalikan daftar skill yang sudah diperoleh OB yang login
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar skill saya
 
 # NOTIFIKASI
   /api/notifikasi:

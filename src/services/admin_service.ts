@@ -1,4 +1,4 @@
-import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse, AdminLaporanHistoryQuery } from "../dto/admin.js";
+import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse, AdminLaporanHistoryQuery, StatsTugasQuery, StatsTugasResponse, StatsLaporanQuery, StatsLaporanResponse, AdminProfileData } from "../dto/admin.js";
 import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse, DailyChecklistOBResponse } from "../dto/admin.js";
 import type { IAdminRepository, PenugasanObWithDetails } from "../repositories/admin_repository.interface.js";
 import type { AdminLaporanPayload } from "../repositories/laporan_repository.interface.js";
@@ -160,6 +160,11 @@ export class AdminService implements IAdminService {
             ? historiTerakhir.created_at.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
             : null;
 
+        let total_durasi: number | null = null;
+        if (laporan.dikerjakan_at && laporan.selesai_at) {
+            total_durasi = Math.floor((laporan.selesai_at.getTime() - laporan.dikerjakan_at.getTime()) / 1000);
+        }
+
         const detail: AdminReportDetailResponse = {
             id: laporan.id,
             status: laporan.status as LaporanStatus,
@@ -176,6 +181,8 @@ export class AdminService implements IAdminService {
             selesai_at: laporan.selesai_at,
             dibatalkan_at: laporan.dibatalkan_at,
             admin_catatan: laporan.admin_catatan,
+            catatan_ob: historiTerakhir?.catatan ?? null,
+            total_durasi,
             deskripsi_kendala: laporan.deskripsi_kendala,
             bukti_foto: {
                 urls: laporan.status === "SELESAI"
@@ -274,6 +281,41 @@ export class AdminService implements IAdminService {
         }
     }
 
+    async getAdminStats(userId: string): Promise<AdminProfileData> {
+        try {
+            const [total_tugas_approved, laporan_direview, hari_aktif] = await Promise.all([
+                this.adminRepo.getTotalApprovedTugas(),
+                this.adminRepo.getTotalReviewedLaporan(),
+                this.adminRepo.countActiveDays(userId),
+            ]);
+            return { total_tugas_approved, laporan_direview, hari_aktif };
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async getStatsLaporan(query: StatsLaporanQuery): Promise<StatsLaporanResponse> {
+        try {
+            const raw = await this.adminRepo.getStatsLaporan(query);
+            return raw;
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async getStatsTugas(query: StatsTugasQuery): Promise<StatsTugasResponse> {
+        try {
+            const raw = await this.adminRepo.getStatsTugas(query);
+            const result: StatsTugasResponse = {
+                total: raw.checklist.total + raw.tugas.total,
+                diproses_ob: raw.checklist.diproses + raw.tugas.diproses,
+                menunggu_persetujuan: raw.checklist.menunggu + raw.tugas.menunggu,
+            };
+            return result;
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
 
     private calculateBarChart(reports: ReportSummaryPayload[], period: string): BarChartResponse[] {
         const groups: Record<string, number> = {};

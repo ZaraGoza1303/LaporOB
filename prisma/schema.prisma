@@ -154,11 +154,18 @@ model Tugas {
   created_at     DateTime  @default(now()) @db.Timestamp(6)
   updated_at     DateTime  @updatedAt @db.Timestamp(6)
 
+  hari            String[]   @default([])
+  tanggal_ulang   Int?
+  tanggal_spesifik DateTime[] @default([])
+  tanggal_mulai   DateTime?  @db.Timestamp(6)
+  tanggal_selesai DateTime   @db.Timestamp(6)
+
+  is_approved    Boolean   @default(false)
+  approved_at    DateTime? @db.Timestamp(6)
+
   kategori  Kategori @relation(fields: [kategori_id], references: [id], onDelete: Cascade)
   lantai    Lantai?  @relation(fields: [lantai_id], references: [id])
   ob        User?    @relation("TugasOb", fields: [ob_id], references: [id])
-
-  tanggal_selesai DateTime @db.Timestamp(6)
 
   @@map("tugas")
 }
@@ -176,6 +183,9 @@ model Checklist_harian {
   selesai_at      DateTime? @db.Timestamp(6)
   terlewat_at     DateTime? @db.Timestamp(6)
 
+  is_approved    Boolean   @default(false)
+  approved_at    DateTime? @db.Timestamp(6)
+
   created_at      DateTime  @default(now()) @db.Timestamp(6)
   updated_at      DateTime  @updatedAt @db.Timestamp(6)
 
@@ -187,20 +197,16 @@ model Checklist_harian {
 }
 
 model JadwalChecklist {
-  id            String    @id @default(uuid()) @db.Uuid
-  nama_tugas    String    @db.VarChar(150)
-  lantai_id     String    @db.Uuid
-  kategori_id   String    @db.Uuid
-  ob_id         String?   @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
+  nama_tugas  String    @db.VarChar(150)
+  lantai_id   String    @db.Uuid
+  kategori_id String    @db.Uuid
+  ob_id       String?   @db.Uuid
 
-  hari            String[]   @default([])
-  tanggal_ulang   Int?
-  tanggal_spesifik DateTime[] @default([])
-  tanggal_mulai   DateTime   @db.Timestamp(6)
-  tanggal_selesai DateTime   @db.Timestamp(6)
+  hari String[] @default([])
 
-  created_at    DateTime  @default(now()) @db.Timestamp(6)
-  updated_at    DateTime  @updatedAt @db.Timestamp(6)
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  updated_at DateTime  @updatedAt @db.Timestamp(6)
 
   ob       User?    @relation(fields: [ob_id], references: [id])
   lantai   Lantai   @relation(fields: [lantai_id], references: [id])

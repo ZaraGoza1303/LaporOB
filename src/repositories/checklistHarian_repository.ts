@@ -1,8 +1,10 @@
-import { type PrismaClient } from "../generated/prisma/client.js";
+import { Prisma, type PrismaClient } from "../generated/prisma/client.js";
 import type { JadwalChecklist } from "../generated/prisma/client.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
-import type { IChecklistHarianRepository, ChecklistHarianWithRelations, ChecklistHarianWithDetails } from "./checklistHarian_repository.interface.js";
+import type { IChecklistHarianRepository, ChecklistHarianWithRelations, ChecklistHarianWithDetails, ChecklistHarianApprovalItem } from "./checklistHarian_repository.interface.js";
+import type { PeriodRange } from "../utils/date.js";
+import type { PaginatedResponse } from "../dto/response.js";
 
 export class ChecklistHarianRepository implements IChecklistHarianRepository {
     private db: PrismaClient;
@@ -94,6 +96,72 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
         return rows
             .filter((r): r is { ob_id: string; nama_tugas: string } => r.ob_id !== null)
             .map(r => ({ ob_id: r.ob_id, nama_tugas: r.nama_tugas }));
+    }
+
+    async getPendingApproval(period: PeriodRange, lokasiId?: string): Promise<ChecklistHarianApprovalItem[]> {
+        const where: Prisma.Checklist_harianWhereInput = {
+            status: CHECKLIST_STATUS.SELESAI,
+            is_approved: false,
+            tanggal: { gte: period.start, lte: period.end },
+        };
+
+        if (lokasiId) {
+            where.lantai = { lokasi_id: lokasiId };
+        }
+
+        const items = await this.db.checklist_harian.findMany({
+            where,
+            include: {
+                ob: { select: { id: true, nama_lengkap: true } },
+                lantai: { include: { lokasi: { select: { nama_lokasi: true } } } },
+                kategori: { select: { id: true, nama_kategori: true } },
+            },
+            orderBy: { selesai_at: 'desc' },
+        });
+
+        return items;
+    }
+
+    async approve(checklistId: string, adminId: string): Promise<void> {
+        const now = new Date();
+        await this.db.checklist_harian.update({
+            where: { id: checklistId },
+            data: {
+                is_approved: true,
+                approved_at: now,
+            },
+        });
+    }
+
+    async getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<ChecklistHarianWithRelations>> {
+        const skip = (page - 1) * limit;
+
+        const where: Prisma.Checklist_harianWhereInput = {};
+        if (search) {
+            where.nama_tugas = { contains: search, mode: 'insensitive' };
+        }
+
+        const [items, total_items] = await Promise.all([
+            this.db.checklist_harian.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { created_at: 'desc' },
+                include: { kategori: true, lantai: true, ob: true },
+            }),
+            this.db.checklist_harian.count({ where }),
+        ]);
+
+        return {
+            items,
+            next_cursor: null,
+            meta: {
+                total_items,
+                current_page: page,
+                limit,
+                total_pages: Math.ceil(total_items / limit),
+            },
+        };
     }
 
     async getAll(): Promise<ChecklistHarianWithRelations[]> {
