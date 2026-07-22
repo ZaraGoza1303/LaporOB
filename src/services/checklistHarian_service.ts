@@ -6,6 +6,7 @@ import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails, Checklis
 import type { Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
 import type { PaginatedResponse } from "../dto/response.js";
+import type { JadwalChecklist } from "../generated/prisma/client.js";
 
 export class ChecklistHarianService implements IChecklistHarianService {
     private checklistRepo: IChecklistHarianRepository;
@@ -118,6 +119,14 @@ export class ChecklistHarianService implements IChecklistHarianService {
         } catch (err) {
             throw handlePrismaError(err);
         }
+    }
+
+    async getExistingInstanceKeys(today: Date): Promise<Array<{ nama_tugas: string; lantai_id: string; ob_id: string | null }>> {
+        return this.checklistRepo.getExistingInstanceKeys(today);
+    }
+
+    async insertFromJadwal(jadwal: JadwalChecklist): Promise<void> {
+        await this.checklistRepo.insertFromJadwal(jadwal);
     }
 
     private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {

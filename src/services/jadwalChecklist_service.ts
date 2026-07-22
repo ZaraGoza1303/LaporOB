@@ -1,6 +1,6 @@
 import type { CreateJadwalChecklistReq, UpdateJadwalChecklistReq } from "../dto/jadwal_checklist.js";
 import type { IJadwalChecklistRepository } from "../repositories/jadwalChecklist_repository.interface.js";
-import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
+import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { JadwalChecklist } from "../generated/prisma/client.js";
 import type { JadwalChecklistUncheckedCreateInput, JadwalChecklistUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { handlePrismaError } from "../utils/error.js";
@@ -12,18 +12,18 @@ import type { BulkNotificationData } from "../dto/notification.js";
 
 export class JadwalChecklistService implements IJadwalChecklistService {
     private jadwalRepo: IJadwalChecklistRepository;
-    private checklistRepo: IChecklistHarianRepository;
+    private checklistHarianService: IChecklistHarianService;
     private notificationService: INotificationService;
     private usersService: IUsersService;
 
     constructor(
         jadwalRepo: IJadwalChecklistRepository,
-        checklistRepo: IChecklistHarianRepository,
+        checklistHarianService: IChecklistHarianService,
         notificationService: INotificationService,
         usersService: IUsersService,
     ) {
         this.jadwalRepo = jadwalRepo;
-        this.checklistRepo = checklistRepo;
+        this.checklistHarianService = checklistHarianService;
         this.notificationService = notificationService;
         this.usersService = usersService;
     }
@@ -118,8 +118,8 @@ export class JadwalChecklistService implements IJadwalChecklistService {
             const matching = await this.jadwalRepo.getMatchingToday(today);
             if (matching.length === 0) return 0;
 
-            const existing = await this.checklistRepo.getExistingInstanceKeys(today);
-            const toCreate = matching.filter(j =>
+            const existing = await this.checklistHarianService.getExistingInstanceKeys(today);
+            const toCreate = matching.filter((j: JadwalChecklist) =>
                 !existing.some(e =>
                     e.nama_tugas === j.nama_tugas &&
                     e.lantai_id === j.lantai_id &&
@@ -130,7 +130,7 @@ export class JadwalChecklistService implements IJadwalChecklistService {
             if (toCreate.length === 0) return 0;
 
             for (const jadwal of toCreate) {
-                await this.checklistRepo.insertFromJadwal(jadwal);
+                await this.checklistHarianService.insertFromJadwal(jadwal);
             }
 
             await this.sendNotificationToAllOb("system");
