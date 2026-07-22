@@ -79,7 +79,7 @@ export interface ILaporanRepository {
     getReportsByUserId(userId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     getReportsByObId(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<ProfileReport>>;
     getReportDetailById(reportId: string): Promise<DetailReportPayload | null>;
-    getRecentActivities(limit: number): Promise<RecentActivityPayload[]>;
+    getRecentActivities(page: number, limit: number): Promise<PaginatedResponse<RecentActivityPayload>>;
     getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]>;
     getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>>;
     getAllHistoryLaporan(page: number, limit: number, query: AdminLaporanHistoryQuery): Promise<PaginatedResponse<Laporan_karyawan>>;
@@ -93,6 +93,6 @@ export interface ILaporanRepository {
     batalkanLaporan(laporanId: string, obId: string, fotoSelesai: string[], catatan: string): Promise<void>;
     approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan>;
     rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan>;
-    getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number }>;
+    getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number;  rataRataKecepatanPengerjaan?: number }>;
 }
 
