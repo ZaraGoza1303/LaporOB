@@ -6,6 +6,7 @@ import { ObTugasIdParamSchema } from '../dto/ob.js';
 import type { IAdminService } from "../services/admin_service.interface.js";
 import type { IChecklistHarianService } from "../services/checklistHarian_service.interface.js";
 import type { ITugasService } from "../services/tugas_service.interface.js";
+import type { ISkillService } from "../services/skill_service.interface.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { Request, Response } from "express";
 import { AppError } from "../utils/error.js";
@@ -16,11 +17,13 @@ export class AdminController {
     private adminService: IAdminService;
     private checklistHarianService: IChecklistHarianService;
     private tugasService: ITugasService;
+    private skillService: ISkillService;
 
-    constructor(adminService: IAdminService, checklistHarianService: IChecklistHarianService, tugasService: ITugasService) {
+    constructor(adminService: IAdminService, checklistHarianService: IChecklistHarianService, tugasService: ITugasService, skillService: ISkillService) {
         this.adminService = adminService;
         this.checklistHarianService = checklistHarianService;
         this.tugasService = tugasService;
+        this.skillService = skillService;
     }
 
     async getDashboardData(req: Request, res: Response) {
@@ -357,6 +360,22 @@ export class AdminController {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
             return res.status(500).json(sendErrorResponse("Gagal mengambil data approval checklist"));
+        }
+    }
+
+    async getObAcquiredSkills(req: Request, res: Response) {
+        try {
+            const paramsSchema = z.object({ ob_id: z.string().uuid() });
+            const validateParams = paramsSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                return res.status(400).json(sendErrorResponse("Validation Failed", validateParams.error.flatten().fieldErrors));
+            }
+
+            const result = await this.skillService.getAcquiredObSkills(validateParams.data.ob_id);
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil skill OB", result));
+        } catch (err: unknown) {
+            if (err instanceof AppError) return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mengambil skill OB"));
         }
     }
 

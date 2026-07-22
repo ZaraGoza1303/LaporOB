@@ -17,6 +17,7 @@ adminRouter.get("/tugas/approval-list", (req, res) => adminController.getApprova
 adminRouter.patch("/tugas/:tugas_id/approve", (req, res) => adminController.approveTugas(req, res));
 adminRouter.get("/checklist-harian/approval-list", (req, res) => adminController.getApprovalListChecklist(req, res));
 adminRouter.patch("/checklist-harian/:checklist_harian_id/approve", (req, res) => adminController.approveChecklist(req, res));
+adminRouter.get("/ob/:ob_id/skills", (req, res) => adminController.getObAcquiredSkills(req, res));
 
 //penugasan ob
 adminRouter.post("/user/assign-locations", (req, res) => adminController.assignObToLocations(req, res));

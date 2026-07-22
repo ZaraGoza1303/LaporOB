@@ -104,7 +104,7 @@ const karyawanService = new KaryawanService(usersService, laporanService, katego
 const profileService = new ProfileService(usersService, karyawanService, obService, laporanService);
 
 //  CONTROLLERS 
-export const adminController = new AdminController(adminService, checklistHarianService, tugasService);
+export const adminController = new AdminController(adminService, checklistHarianService, tugasService, skillService);
 export const authController = new AuthController(authService);
 export const checklistHarianController = new ChecklistHarianController(checklistHarianService);
 export const jadwalChecklistController = new JadwalChecklistController(jadwalChecklistService);

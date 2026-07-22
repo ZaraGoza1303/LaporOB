@@ -9,6 +9,7 @@ export interface ISkillRepository {
     softDeleteDefinition(skillId: string): Promise<void>;
 
     getObSkills(obId: string): Promise<ObSkill[]>;
+    getAcquiredObSkills(obId: string): Promise<ObSkill[]>;
     getObSkill(obId: string, skillId: string): Promise<ObSkill | null>;
     assignSkill(obId: string, skillId: string, assignedBy: string | null): Promise<ObSkill>;
     incrementCounter(obId: string, skillId: string): Promise<ObSkill>;
