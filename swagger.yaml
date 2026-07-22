@@ -824,6 +824,179 @@ components:
           type: boolean
         threshold:
           type: integer
+        achievement_type:
+          type: string
+          enum: [KEYWORD, COMPLETION_COUNT, FAST_RESPONSE]
+          default: KEYWORD
+        response_time_threshold_seconds:
+          type: integer
+          nullable: true
+
+    SkillDefinitionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nama_skill:
+          type: string
+        keyword:
+          type: array
+          items:
+            type: string
+        deskripsi:
+          type: string
+          nullable: true
+        is_auto:
+          type: boolean
+        is_active:
+          type: boolean
+        threshold:
+          type: integer
+        achievement_type:
+          type: string
+          enum: [KEYWORD, COMPLETION_COUNT, FAST_RESPONSE]
+        response_time_threshold_seconds:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ObSkillResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+        nama_skill:
+          type: string
+        keyword:
+          type: array
+          items:
+            type: string
+        deskripsi:
+          type: string
+          nullable: true
+        jumlah_selesai:
+          type: integer
+        assigned_by:
+          type: string
+          format: uuid
+          nullable: true
+        diperoleh_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AchievementRequest:
+      type: object
+      properties:
+        nama:
+          type: string
+        deskripsi:
+          type: string
+        tipe:
+          type: string
+          enum: [KEYWORD, COMPLETION_COUNT, FAST_RESPONSE]
+          default: KEYWORD
+        keyword:
+          type: array
+          items:
+            type: string
+        threshold:
+          type: integer
+          default: 5
+        response_time_threshold_seconds:
+          type: integer
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+
+    AchievementResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nama:
+          type: string
+        deskripsi:
+          type: string
+          nullable: true
+        tipe:
+          type: string
+          enum: [KEYWORD, COMPLETION_COUNT, FAST_RESPONSE]
+        keyword:
+          type: array
+          items:
+            type: string
+        threshold:
+          type: integer
+        response_time_threshold_seconds:
+          type: integer
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ObAchievementResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        achievement_id:
+          type: string
+          format: uuid
+        nama:
+          type: string
+        tipe:
+          type: string
+          enum: [KEYWORD, COMPLETION_COUNT, FAST_RESPONSE]
+        keyword:
+          type: array
+          items:
+            type: string
+        deskripsi:
+          type: string
+          nullable: true
+        progress:
+          type: integer
+        diperoleh_at:
+          type: string
+          format: date-time
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
 
     AssignSkillRequest:
       type: object
@@ -837,6 +1010,92 @@ components:
         skill_id:
           type: string
           format: uuid
+
+    ObRankingItem:
+      type: object
+      properties:
+        ob:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            nama_lengkap:
+              type: string
+            profile_picture:
+              type: string
+              nullable: true
+            skills:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  nama_skill:
+                    type: string
+                  diperoleh_at:
+                    type: string
+                    format: date-time
+        total_tugas_claimed:
+          type: integer
+        total_tugas_selesai:
+          type: integer
+        rata_rata_kecepatan:
+          type: integer
+
+    ObPerformanceDashboardResponse:
+      type: object
+      properties:
+        produktivitas:
+          type: number
+          format: float
+        tugas_diselesaikan:
+          type: object
+          properties:
+            selesai:
+              type: integer
+            total:
+              type: integer
+        laporan_menunggu:
+          type: integer
+        perbandingan_ob:
+          type: array
+          items:
+            type: object
+            properties:
+              ob_id:
+                type: string
+                format: uuid
+              nama_ob:
+                type: string
+              total_tugas:
+                type: integer
+              tugas_selesai:
+                type: integer
+              persentase:
+                type: number
+                format: float
+        tren_laporan_bulanan:
+          type: array
+          items:
+            type: object
+            properties:
+              bulan:
+                type: string
+              label:
+                type: string
+              total:
+                type: integer
+              baru:
+                type: integer
+              pending:
+                type: integer
+              selesai:
+                type: integer
+              dibatalkan:
+                type: integer
 
     ChecklistHarianRes:
       type: object
@@ -2408,6 +2667,73 @@ paths:
       responses:
         '200':
           description: Daftar skill OB
+
+  /api/admin/ob/performance-dashboard:
+    get:
+      tags:
+        - Admin
+      summary: 'Dashboard performa OB (Admin)'
+      description: |
+        Mengembalikan data performa semua OB yang meliputi:
+        - `produktivitas`: persentase tugas selesai dari total diklaim
+        - `tugas_diselesaikan`: jumlah tugas selesai / total diklaim
+        - `laporan_menunggu`: laporan yang belum dikerjakan
+        - `perbandingan_ob`: perbandingan penyelesaian tugas per OB
+        - `tren_laporan_bulanan`: statistik laporan per bulan (12 bulan terakhir)
+        Dapat difilter dengan parameter `period` (harian/mingguan/bulanan/tahunan).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: bulanan
+      responses:
+        '200':
+          description: Data dashboard performa OB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ObPerformanceDashboardResponse'
+
+  /api/admin/ob/ranking:
+    get:
+      tags:
+        - Admin
+      summary: 'Ranking OB berdasarkan performa (Admin)'
+      description: |
+        Mengembalikan daftar OB diurutkan dari total tugas selesai terbanyak.
+        Setiap item mencakup data OB, skill yang diperoleh, total tugas diklaim,
+        total tugas selesai, dan rata-rata kecepatan dalam detik.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Data ranking OB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ObRankingItem'
 
   /api/admin/laporan/stats:
     get:
@@ -4010,6 +4336,125 @@ paths:
       responses:
         '200':
           description: Daftar skill saya
+
+# ACHIEVEMENT
+  /api/achievement:
+    get:
+      tags:
+        - Achievement
+      summary: 'List definisi achievement (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: include_inactive
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Daftar definisi achievement
+    post:
+      tags:
+        - Achievement
+      summary: 'Buat definisi achievement baru (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AchievementRequest'
+      responses:
+        '201':
+          description: Achievement berhasil dibuat
+
+  /api/achievement/{achievement_id}:
+    get:
+      tags:
+        - Achievement
+      summary: 'Detail definisi achievement (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detail definisi achievement
+    patch:
+      tags:
+        - Achievement
+      summary: 'Update definisi achievement (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AchievementRequest'
+      responses:
+        '200':
+          description: Achievement berhasil diupdate
+    delete:
+      tags:
+        - Achievement
+      summary: 'Hapus definisi achievement (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Achievement berhasil dihapus
+
+  /api/achievement/ob/{ob_id}:
+    get:
+      tags:
+        - Achievement
+      summary: 'Achievement OB (Admin & HR)'
+      description: Mengembalikan daftar achievement yang sudah diperoleh seorang OB
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ob_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar achievement OB
+
+  /api/achievement/me:
+    get:
+      tags:
+        - Achievement
+      summary: 'Achievement saya sendiri (OB)'
+      description: Mengembalikan daftar achievement yang sudah diperoleh OB yang login
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar achievement saya
 
 # NOTIFIKASI
   /api/notifikasi:

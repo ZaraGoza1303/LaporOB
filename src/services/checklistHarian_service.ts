@@ -7,14 +7,22 @@ import type { Checklist_harianUncheckedUpdateInput } from "../generated/prisma/m
 import { CHECKLIST_STATUS } from "../utils/constants.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { JadwalChecklist } from "../generated/prisma/client.js";
+import type { ISkillService } from "./skill_service.interface.js";
+import type { IAchievementService } from "./achievement_service.interface.js";
 
 export class ChecklistHarianService implements IChecklistHarianService {
     private checklistRepo: IChecklistHarianRepository;
+    private skillService: ISkillService;
+    private achievementService: IAchievementService;
 
     constructor(
         checklistRepo: IChecklistHarianRepository,
+        skillService: ISkillService,
+        achievementService: IAchievementService,
     ) {
         this.checklistRepo = checklistRepo;
+        this.skillService = skillService;
+        this.achievementService = achievementService;
     }
 
     async getAll(): Promise<ChecklistHarianRes[]> {
@@ -73,6 +81,14 @@ export class ChecklistHarianService implements IChecklistHarianService {
             }
 
             await this.checklistRepo.update(checklistId, dataToUpdate);
+
+            if (req.status === CHECKLIST_STATUS.SELESAI) {
+                const updated = await this.checklistRepo.getByID(checklistId);
+                if (updated?.ob_id) {
+                    await this.skillService.prosesSkillOtomatisForOb(updated.ob_id);
+                    await this.achievementService.prosesOtomatisUntukOb(updated.ob_id);
+                }
+            }
         } catch (err) {
             handlePrismaError(err);
         }

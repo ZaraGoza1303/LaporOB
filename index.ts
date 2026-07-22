@@ -16,6 +16,7 @@ import checklistHarianRouter from './src/routes/checklistHarian.js';
 import jadwalChecklistRouter from './src/routes/jadwalChecklist.js';
 import constantsRouter from './src/routes/constants.js';
 import skillRouter from './src/routes/skill.js';
+import achievementRouter from './src/routes/achievement.js';
 import lantaiRouter from './src/routes/lantai.js';
 import ruanganRouter from './src/routes/ruangan.js';
 import kategoriRouter from './src/routes/kategori.js';
@@ -29,7 +30,7 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { initWebSocket } from './src/services/websocket_service.js';
 import { setBaseUrlMiddleware } from './src/middleware/setBaseUrl.js';
-import { checklistHarianService, jadwalChecklistService, skillService } from './src/container.js';
+import { checklistHarianService, jadwalChecklistService, skillService, achievementService } from './src/container.js';
 import cron from 'node-cron';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -82,6 +83,7 @@ const initRouter = () => {
     app.use('/api/jadwal-checklist', jadwalChecklistRouter);
     app.use('/api/constants', constantsRouter);
     app.use('/api/skill', skillRouter);
+    app.use('/api/achievement', achievementRouter);
 }
 
 const startApp = async () => {
@@ -98,12 +100,10 @@ const startApp = async () => {
     });
 
     cron.schedule('0 1 * * *', async () => {
-        try {
-            const count = await skillService.prosesSkillOtomatis();
-            if (count > 0) console.log(`[CRON] Unlocked ${count} new OB skills`);
-        } catch (err) {
-            console.error('[CRON] Gagal proses skill otomatis:', err);
-        }
+        const skillCount = await skillService.prosesSkillOtomatis();
+        if (skillCount > 0) console.log(`[CRON] Unlocked ${skillCount} new OB skills`);
+        const achievementCount = await achievementService.prosesOtomatis();
+        if (achievementCount > 0) console.log(`[CRON] Unlocked ${achievementCount} new OB achievements`);
     });
 
     server.listen(process.env.APP_PORT, () => { console.log("Server Nyala cik") })
