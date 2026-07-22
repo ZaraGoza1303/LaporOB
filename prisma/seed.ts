@@ -206,6 +206,15 @@ async function main() {
       ON CONFLICT (id) DO NOTHING
     `);
 
+    // ============ ACHIEVEMENT ============
+    console.log("  Insert achievement...");
+    await client.query(`
+      INSERT INTO achievement (id, nama, deskripsi, tipe, keyword, threshold, response_time_threshold_seconds, icon, is_active, created_at, updated_at) VALUES
+        ('c1a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c01', 'Pekerja Keras', 'Menyelesaikan 50 tugas', 'COMPLETION_COUNT', ARRAY[]::text[], 50, null, null, true, now(), now()),
+        ('c2a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c02', 'Cepat Tanggap', 'Menyelesaikan 10 tugas dalam waktu 5 menit', 'FAST_RESPONSE', ARRAY[]::text[], 10, 300, null, true, now(), now())
+      ON CONFLICT (id) DO NOTHING
+    `);
+
     await client.query("COMMIT");
     console.log("✅ Seed Beres!");
   } catch (err) {
