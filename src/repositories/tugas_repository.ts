@@ -5,6 +5,7 @@ import type { ITugasRepository, TugasApprovalItem, TugasDetailPayload } from "./
 import type { PeriodRange } from "../utils/date.js";
 import { Prisma } from "../generated/prisma/client.js";
 import { TUGAS_STATUS, HARI } from "../utils/constants.js";
+import type { PaginatedResponse } from "../dto/response.js";
 
 export class TugasRepository implements ITugasRepository {
     private db: PrismaClient;
@@ -29,6 +30,43 @@ export class TugasRepository implements ITugasRepository {
             },
         });
         return data;
+    }
+
+    async getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<TugasDetailPayload>> {
+        const skip = (page - 1) * limit;
+
+        const where: Prisma.TugasWhereInput = {
+            is_active: true,
+        };
+        if (search) {
+            where.nama_tugas = { contains: search, mode: 'insensitive' };
+        }
+
+        const [items, total_items] = await Promise.all([
+            this.db.tugas.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { created_at: 'desc' },
+                include: {
+                    kategori: true,
+                    lantai: { include: { lokasi: true } },
+                    ob: true,
+                },
+            }),
+            this.db.tugas.count({ where }),
+        ]);
+
+        return {
+            items,
+            next_cursor: null,
+            meta: {
+                total_items,
+                current_page: page,
+                limit,
+                total_pages: Math.ceil(total_items / limit),
+            },
+        };
     }
 
     async getByID(tugasId: string): Promise<Tugas | null> {

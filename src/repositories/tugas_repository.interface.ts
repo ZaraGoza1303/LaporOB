@@ -1,5 +1,6 @@
 import type { Tugas, Prisma } from "../generated/prisma/client.js";
 import type { TugasCreateInput, TugasUpdateInput } from "../generated/prisma/models.js";
+import type { PaginatedResponse } from "../dto/response.js";
 
 export type TugasApprovalItem = Prisma.TugasGetPayload<{
     include: {
@@ -19,6 +20,7 @@ export type TugasDetailPayload = Prisma.TugasGetPayload<{
 
 export interface ITugasRepository {
     getAll(kategoriId?: string): Promise<Tugas[]>
+    getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<TugasDetailPayload>>;
     getByID(tugasId: string): Promise<Tugas | null>
     getDetailByID(tugasId: string): Promise<TugasDetailPayload | null>
     insert(req: TugasCreateInput): Promise<void>;

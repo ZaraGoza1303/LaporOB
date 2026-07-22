@@ -785,6 +785,95 @@ components:
           type: string
           format: uuid
 
+    ChecklistHarianRes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nama_tugas:
+          type: string
+        kategori_id:
+          type: string
+          format: uuid
+        lantai_id:
+          type: string
+          format: uuid
+        ob_id:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          type: string
+        catatan:
+          type: string
+          nullable: true
+        dikerjakan_at:
+          type: string
+          format: date-time
+          nullable: true
+        selesai_at:
+          type: string
+          format: date-time
+          nullable: true
+        terlewat_at:
+          type: string
+          format: date-time
+          nullable: true
+        total_durasi:
+          type: integer
+          nullable: true
+        tanggal:
+          type: string
+          format: date
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TugasDetailRes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nama_tugas:
+          type: string
+        status:
+          type: string
+        catatan:
+          type: string
+          nullable: true
+        dikerjakan_at:
+          type: string
+          format: date-time
+          nullable: true
+        selesai_at:
+          type: string
+          format: date-time
+          nullable: true
+        total_durasi:
+          type: integer
+          nullable: true
+        hari:
+          type: array
+          items:
+            type: string
+        is_approved:
+          type: boolean
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
 # AUTH
 paths:
   /api/auth/login:
@@ -1931,6 +2020,71 @@ paths:
       responses:
         '200':
           description: Statistik user
+
+  /api/admin/tugas-combination:
+    get:
+      tags:
+        - Admin
+      summary: 'List gabungan checklist harian & tugas (Admin)'
+      description: |
+        Mengembalikan data checklist harian (instance) dan tugas dalam satu response, masing-masing dengan pagination terpisah.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Data checklist dan tugas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      checklist:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/ChecklistHarianRes'
+                          next_cursor:
+                            type: string
+                            nullable: true
+                          meta:
+                            $ref: '#/components/schemas/PaginationMeta'
+                      tugas:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/TugasDetailRes'
+                          next_cursor:
+                            type: string
+                            nullable: true
+                          meta:
+                            $ref: '#/components/schemas/PaginationMeta'
 
   /api/admin/tugas/stats:
     get:

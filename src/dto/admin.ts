@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { LAPORAN_PRIORITY, LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from '../utils/constants.js';
 import { Prisma } from "../generated/prisma/client.js";
 import type { PaginatedResponse } from './response.js';
+import type { ChecklistHarianRes } from './checklist_harian.js';
+import type { TugasDetailRes } from './tugas.js';
 
 export const GetDashboardQuerySchema = z.object({
     period: z.enum(['harian', 'mingguan', 'bulanan', 'tahunan']).default('mingguan'),
@@ -264,4 +266,16 @@ export interface ApprovalItemResponse {
     lokasi: string | null;
     kategori: string | null;
     selesai_at: Date | null;
+}
+
+export const PekerjaanListQuerySchema = z.object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().max(100).default(10),
+    search: z.string().optional(),
+});
+export type PekerjaanListQuery = z.infer<typeof PekerjaanListQuerySchema>;
+
+export interface PekerjaanListResponse {
+    checklist: PaginatedResponse<ChecklistHarianRes>;
+    tugas: PaginatedResponse<TugasDetailRes>;
 }

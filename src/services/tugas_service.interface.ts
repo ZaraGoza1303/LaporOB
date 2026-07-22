@@ -1,9 +1,11 @@
 import type { CreateTugasReq, UpdateTugasReq, TugasDetailRes } from "../dto/tugas.js";
 import type { Tugas } from "../generated/prisma/client.js";
 import type { TugasApprovalItem } from "../repositories/tugas_repository.interface.js";
+import type { PaginatedResponse } from "../dto/response.js";
 
 export interface ITugasService {
     getAll(kategoriId?: string): Promise<Tugas[]>
+    getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<TugasDetailRes>>;
     getByID(tugasId: string): Promise<Tugas | null>
     getDetailByID(tugasId: string): Promise<TugasDetailRes | null>
     create(req: CreateTugasReq): Promise<void>;

@@ -4,6 +4,7 @@ import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpd
 import { CHECKLIST_STATUS } from "../utils/constants.js";
 import type { IChecklistHarianRepository, ChecklistHarianWithRelations, ChecklistHarianWithDetails, ChecklistHarianApprovalItem } from "./checklistHarian_repository.interface.js";
 import type { PeriodRange } from "../utils/date.js";
+import type { PaginatedResponse } from "../dto/response.js";
 
 export class ChecklistHarianRepository implements IChecklistHarianRepository {
     private db: PrismaClient;
@@ -130,6 +131,37 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
                 approved_at: now,
             },
         });
+    }
+
+    async getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<ChecklistHarianWithRelations>> {
+        const skip = (page - 1) * limit;
+
+        const where: Prisma.Checklist_harianWhereInput = {};
+        if (search) {
+            where.nama_tugas = { contains: search, mode: 'insensitive' };
+        }
+
+        const [items, total_items] = await Promise.all([
+            this.db.checklist_harian.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { created_at: 'desc' },
+                include: { kategori: true, lantai: true, ob: true },
+            }),
+            this.db.checklist_harian.count({ where }),
+        ]);
+
+        return {
+            items,
+            next_cursor: null,
+            meta: {
+                total_items,
+                current_page: page,
+                limit,
+                total_pages: Math.ceil(total_items / limit),
+            },
+        };
     }
 
     async getAll(): Promise<ChecklistHarianWithRelations[]> {

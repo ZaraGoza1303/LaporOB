@@ -1,7 +1,7 @@
 import type { CreateTugasReq, UpdateTugasReq, TugasDetailRes } from "../dto/tugas.js";
 import type { Tugas } from "../generated/prisma/client.js";
 import type { TugasCreateInput, TugasUpdateInput } from "../generated/prisma/models.js";
-import type { ITugasRepository, TugasApprovalItem } from "../repositories/tugas_repository.interface.js";
+import type { ITugasRepository, TugasApprovalItem, TugasDetailPayload } from "../repositories/tugas_repository.interface.js";
 import { handlePrismaError, AppError } from "../utils/error.js";
 import type { ITugasService } from "./tugas_service.interface.js";
 import type { IRedisClient } from "../database/redis.interface.js";
@@ -39,6 +39,38 @@ export class TugasService implements ITugasService {
             return tugas;
         } catch (err) {
             handlePrismaError(err)
+        }
+    }
+
+    async getAllPaginated(page: number, limit: number, search?: string): Promise<import("../dto/response.js").PaginatedResponse<TugasDetailRes>> {
+        try {
+            const result = await this.tugasRepo.getAllPaginated(page, limit, search);
+            const items: TugasDetailRes[] = result.items.map((tugas: TugasDetailPayload) => {
+                let total_durasi: number | null = null;
+                if (tugas.dikerjakan_at && tugas.selesai_at) {
+                    total_durasi = Math.floor((tugas.selesai_at.getTime() - tugas.dikerjakan_at.getTime()) / 1000);
+                }
+                return {
+                    id: tugas.id,
+                    nama_tugas: tugas.nama_tugas,
+                    kategori: tugas.kategori ?? null,
+                    lantai: tugas.lantai ?? null,
+                    ob: tugas.ob ?? null,
+                    status: tugas.status,
+                    catatan: tugas.catatan,
+                    dikerjakan_at: tugas.dikerjakan_at,
+                    selesai_at: tugas.selesai_at,
+                    total_durasi,
+                    hari: tugas.hari,
+                    is_approved: tugas.is_approved,
+                    approved_at: tugas.approved_at,
+                    created_at: tugas.created_at,
+                    updated_at: tugas.updated_at,
+                };
+            });
+            return { items, next_cursor: result.next_cursor, meta: result.meta ?? { total_items: 0, current_page: page, limit, total_pages: 0 } };
+        } catch (err) {
+            handlePrismaError(err);
         }
     }
 

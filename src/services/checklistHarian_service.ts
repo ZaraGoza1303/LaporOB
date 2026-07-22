@@ -5,6 +5,7 @@ import type { IChecklistHarianService } from "./checklistHarian_service.interfac
 import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails, ChecklistHarianApprovalItem } from "../repositories/checklistHarian_repository.interface.js";
 import type { Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
+import type { PaginatedResponse } from "../dto/response.js";
 
 export class ChecklistHarianService implements IChecklistHarianService {
     private checklistRepo: IChecklistHarianRepository;
@@ -20,6 +21,19 @@ export class ChecklistHarianService implements IChecklistHarianService {
             const items = await this.checklistRepo.getAll();
             const result = items.map(item => this.mapToResponse(item));
             return result;
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
+    async getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<ChecklistHarianRes>> {
+        try {
+            const result = await this.checklistRepo.getAllPaginated(page, limit, search);
+            return {
+                items: result.items.map(item => this.mapToResponse(item)),
+                next_cursor: result.next_cursor,
+                meta: result.meta ?? { total_items: 0, current_page: page, limit, total_pages: 0 },
+            };
         } catch (err) {
             handlePrismaError(err);
         }

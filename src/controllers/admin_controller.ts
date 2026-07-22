@@ -1,5 +1,5 @@
 
-import { AdminLaporanHistoryQuerySchema, AdminLaporanQuerySchema, AssignObToLocationsSchema, GetDashboardQuerySchema, PatchLaporanReqSchema, StatsTugasQuerySchema, StatsLaporanQuerySchema } from '../dto/admin.js';
+import { AdminLaporanHistoryQuerySchema, AdminLaporanQuerySchema, AssignObToLocationsSchema, GetDashboardQuerySchema, PatchLaporanReqSchema, StatsTugasQuerySchema, StatsLaporanQuerySchema, PekerjaanListQuerySchema } from '../dto/admin.js';
 import { LaporanIdParamSchema } from '../dto/users.js';
 import { ChecklistHarianIdParamSchema } from '../dto/checklist_harian.js';
 import { ObTugasIdParamSchema } from '../dto/ob.js';
@@ -376,6 +376,29 @@ export class AdminController {
         } catch (err: unknown) {
             if (err instanceof AppError) return res.status(err.statusCode).json(sendErrorResponse(err.message));
             return res.status(500).json(sendErrorResponse("Gagal mengambil skill OB"));
+        }
+    }
+
+    async getListPekerjaan(req: Request, res: Response) {
+        try {
+            const validate = PekerjaanListQuerySchema.safeParse(req.query);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const { page, limit, search } = validate.data;
+            const [checklist, tugas] = await Promise.all([
+                this.checklistHarianService.getAllPaginated(page, limit, search),
+                this.tugasService.getAllPaginated(page, limit, search),
+            ]);
+
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data pekerjaan", { checklist, tugas }));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data pekerjaan"));
         }
     }
 
