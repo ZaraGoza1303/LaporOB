@@ -6,9 +6,10 @@ import type { UserActivityRes } from '../dto/users.js';
 import type { Laporan_karyawanCreateInput } from '../generated/prisma/models.js';
 import type { Laporan_karyawan } from "../generated/prisma/client.js";
 import type { PeriodRange } from "../utils/date.js";
+import type { ObPerformance } from '../dto/ob.js';
 
 export interface ILaporanService {
-    getReportDetail(reportId: string): Promise<MappedReportDetailRes>;
+    getReportDetail(reportId: string, obId?: string): Promise<MappedReportDetailRes>;
     getReportDetailWithRelations(reportId: string): Promise<DetailReportPayload | null>;
     getRiwayat(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<MappedProfileReport>>;
     getRecentActivities(page: number, limit: number): Promise<PaginatedResponse<RecentActivityPayload>>;
@@ -31,6 +32,5 @@ export interface ILaporanService {
     batalkanLaporan(laporanId: string, fotoUrls: string[], catatan: string, obId: string): Promise<void>;
     approveLaporan(laporanId: string, catatan?: string): Promise<Laporan_karyawan>;
     rejectLaporan(laporanId: string, catatan: string): Promise<Laporan_karyawan>;
-    getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number; rataRataKecepatanPengerjaan?: number
-    }>;
+    getObPerformanceStats(obId: string): Promise<ObPerformance>;
 }

@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { LAPORAN_PRIORITY, LAPORAN_STATUS, TUGAS_STATUS, type LaporanPriority, type LaporanStatus } from '../utils/constants.js';
 import { Prisma } from "../generated/prisma/client.js";
 import type { PaginatedResponse } from './response.js';
+import type { ChecklistHarianRes } from './checklist_harian.js';
+import type { TugasDetailRes } from './tugas.js';
 
 export const GetDashboardQuerySchema = z.object({
     period: z.enum(['harian', 'mingguan', 'bulanan', 'tahunan']).default('mingguan'),
@@ -119,6 +121,8 @@ export type AdminReportDetailResponse = {
     selesai_at: Date | null;
     dibatalkan_at: Date | null;
     admin_catatan: string | null;
+    catatan_ob: string | null;
+    total_durasi: number | null;
     deskripsi_kendala: string;
     bukti_foto: {
         urls: string[];
@@ -235,3 +239,100 @@ export const AssignObToLocationsSchema = z.object({
 
 export type AssignObToLocationsReq = z.infer<typeof AssignObToLocationsSchema>;
 
+export const StatsTugasQuerySchema = z.object({
+    period: z.enum(['harian', 'mingguan', 'bulanan', 'tahunan']).default('harian'),
+    lokasi_id: z.string().uuid().optional(),
+});
+export type StatsTugasQuery = z.infer<typeof StatsTugasQuerySchema>;
+
+export interface StatsTugasResponse {
+    total: number;
+    diproses_ob: number;
+    menunggu_persetujuan: number;
+}
+
+export const StatsLaporanQuerySchema = z.object({
+    period: z.enum(['harian', 'mingguan', 'bulanan', 'tahunan']).default('harian'),
+    lokasi_id: z.string().uuid().optional(),
+});
+export type StatsLaporanQuery = z.infer<typeof StatsLaporanQuerySchema>;
+
+export interface StatsLaporanResponse {
+    laporan_baru: number;
+    sedang_dikerjakan: number;
+    selesai_hari_ini: number;
+}
+
+export interface AdminProfileData {
+    total_tugas_approved: number;
+    laporan_direview: number;
+    hari_aktif: number;
+}
+
+export interface ApprovalItemResponse {
+    id: string;
+    nama_tugas: string;
+    nama_ob: string | null;
+    lokasi: string | null;
+    kategori: string | null;
+    selesai_at: Date | null;
+}
+
+export const PekerjaanListQuerySchema = z.object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().max(100).default(10),
+    search: z.string().optional(),
+});
+export type PekerjaanListQuery = z.infer<typeof PekerjaanListQuerySchema>;
+
+export interface PekerjaanListResponse {
+    checklist: PaginatedResponse<ChecklistHarianRes>;
+    tugas: PaginatedResponse<TugasDetailRes>;
+}
+
+export const ObPerformanceDashboardQuerySchema = z.object({
+    period: z.enum(['harian', 'mingguan', 'bulanan', 'tahunan']).default('bulanan'),
+});
+export type ObPerformanceDashboardQuery = z.infer<typeof ObPerformanceDashboardQuerySchema>;
+
+export interface ObPerbandinganItem {
+    ob_id: string;
+    nama_ob: string;
+    total_tugas: number;
+    tugas_selesai: number;
+    persentase: number;
+}
+
+export interface TrenLaporanBulananItem {
+    bulan: string;
+    label: string;
+    total: number;
+    baru: number;
+    pending: number;
+    selesai: number;
+    dibatalkan: number;
+}
+
+export interface ObPerformanceDashboardResponse {
+    produktivitas: number;
+    tugas_diselesaikan: { selesai: number; total: number };
+    laporan_menunggu: number;
+    perbandingan_ob: ObPerbandinganItem[];
+    tren_laporan_bulanan: TrenLaporanBulananItem[];
+}
+
+export interface ObRankingItem {
+    ob: {
+        id: string;
+        nama_lengkap: string;
+        profile_picture: string | null;
+        skills: Array<{
+            id: string;
+            nama_skill: string;
+            diperoleh_at: Date;
+        }>;
+    };
+    total_tugas_claimed: number;
+    total_tugas_selesai: number;
+    rata_rata_kecepatan: number;
+}

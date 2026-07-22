@@ -6,6 +6,7 @@ import type { PeriodRange } from "../utils/date.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { ILaporanRepository, ProfileReport, DetailReportPayload, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, LaporanKaryawanWithDetails } from "./laporan_repository.interface.js";
 import { LAPORAN_STATUS, KOLABORASI_STATUS } from "../utils/constants.js";
+import type { ObPerformance } from "../dto/ob.js";
 
 export class LaporanRepository implements ILaporanRepository {
     private db: PrismaClient;
@@ -369,49 +370,61 @@ export class LaporanRepository implements ILaporanRepository {
         return laporan;
     }
 
-    async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number }> {
-        const dateFilter = dateRange
-            ? { created_at: { gte: dateRange.start, lte: dateRange.end } }
-            : {};
-
-        const [laporanDiterima, laporanSelesai] = await Promise.all([
-            this.db.laporan_karyawan.count({ where: { ob_id: obId, ...dateFilter } }),
-            this.db.laporan_karyawan.count({ where: { ob_id: obId, status: "SELESAI", ...dateFilter } })
+    async getObPerformanceStats(obId: string): Promise<ObPerformance> {
+        const [tugasSelesai, rataRataKecepatan] = await Promise.all([
+            this.countLaporanSelesaiOb(obId),
+            this.calculateAverageObTime(obId)
         ]);
+        
+        const res: ObPerformance = {
+            total_tugas_selesai: tugasSelesai,
+            rata_rata_kecepatan: rataRataKecepatan
+        }
 
-        const completedReports = await this.db.laporan_karyawan.findMany({
+        return res;
+    }
+
+    async calculateAverageObTime(obId: string): Promise<number> {
+        const [totalLaporanSelesai, totalDurasiWaktu] = await Promise.all([
+            this.countLaporanSelesaiOb(obId),
+            this.getTotalDurasiObInSeconds(obId),
+        ])
+
+        const averageTime = totalDurasiWaktu / totalLaporanSelesai;
+        return averageTime;
+    }
+
+    async getTotalDurasiObInSeconds(obId: string): Promise<number> {
+        const data = await this.db.laporan_karyawan.findMany({
             where: {
                 ob_id: obId,
-                status: "SELESAI",
-                dikerjakan_at: { not: null },
-                selesai_at: { not: null },
-                ...dateFilter
+                status: LAPORAN_STATUS.SELESAI,
+                selesai_at: {not: null}
             },
             select: {
                 dikerjakan_at: true,
-                selesai_at: true
+                selesai_at: true,
             }
         });
 
-        let totalDurationMinutes = 0;
-        let count = 0;
-        for (const report of completedReports) {
-            if (report.dikerjakan_at && report.selesai_at) {
-                const diffMs = report.selesai_at.getTime() - report.dikerjakan_at.getTime();
-                totalDurationMinutes += diffMs / 60000;
-                count++;
-            }
-        }
-        const rataRataKecepatanPengerjaan = count > 0 ? parseFloat((totalDurationMinutes / count).toFixed(1)) : 0;
-        
+        const totalSeconds = data.reduce((acc, item) => {
+            if (!item.selesai_at || !item.dikerjakan_at) return acc;
 
-        const result = { 
-            laporanDiterima, 
-            laporanSelesai,
-            rataRataKecepatanPengerjaan
-        };
-        return result;
+            const durasiMinutes = item.selesai_at.getTime() - item.dikerjakan_at.getTime();
+            const durasiSeconds = Math.floor(durasiMinutes / 1000);
+
+            return acc + durasiSeconds;
+        }, 0) 
+
+        return totalSeconds;
     }
+
+
+    private async countLaporanSelesaiOb(obId: string): Promise<number> {
+        const total = await this.db.laporan_karyawan.count({ where: { ob_id: obId, status: LAPORAN_STATUS.SELESAI} })
+        return total;
+    }
+
 
     private async executePaginatedReports(whereCondition: Prisma.Laporan_karyawanWhereInput, limit: number, cursor?: string | null): Promise<PaginatedResponse<ProfileReport>> {
         const [reports, total] = await Promise.all([

@@ -44,6 +44,7 @@ export const NOTIFICATION_TYPE = {
     DIKELUARKAN_KOLABORASI: "DIKELUARKAN_KOLABORASI",
     KOLABORASI_DIBUKA: "KOLABORASI_DIBUKA",
     SKILL_DI_PEROLEH: "SKILL_DI_PEROLEH",
+    ACHIEVEMENT_DI_PEROLEH: "ACHIEVEMENT_DI_PEROLEH",
 } as const;
 
 export const NOTIFICATION_TITLE = {
@@ -60,6 +61,7 @@ export const NOTIFICATION_TITLE = {
     DIKELUARKAN_KOLABORASI: "Dikeluarkan dari kolaborasi",
     KOLABORASI_DIBUKA: "Kolaborasi dibuka",
     SKILL_DI_PEROLEH: "Skill baru diperoleh",
+    ACHIEVEMENT_DI_PEROLEH: "Achievement baru diperoleh",
 } as const;
 
 export const NOTIFICATION_MESSAGE = {
@@ -72,12 +74,15 @@ export const NOTIFICATION_MESSAGE = {
     DIKELUARKAN_KOLABORASI: "Anda telah dikeluarkan dari kolaborasi laporan oleh OB utama",
     KOLABORASI_DIBUKA: "Laporan telah dibuka untuk kolaborasi",
     SKILL_DI_PEROLEH: "Selamat! Anda memperoleh skill baru",
+    ACHIEVEMENT_DI_PEROLEH: "Selamat! Anda memperoleh achievement baru",
 } as const;
 
 export const REF_TIPE = {
     LAPORAN: "LAPORAN",
     KOLABORASI: "KOLABORASI",
     CHECKLIST: "CHECKLIST",
+    TUGAS: "TUGAS",
+    SKILL: "SKILL",
 } as const;
 
 export const USER_ROLE = {

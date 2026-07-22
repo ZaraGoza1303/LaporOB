@@ -13,31 +13,49 @@ import { Prisma, type Laporan_karyawan } from "../generated/prisma/client.js";
 import type { PeriodRange } from "../utils/date.js";
 import type { INotificationService } from "./notification_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
+import type { ISkillService } from "./skill_service.interface.js";
+import type { IAchievementService } from "./achievement_service.interface.js";
 import type { NotificationData, BulkNotificationData } from "../dto/notification.js";
+import type { ObPerformance } from "../dto/ob.js";
 
 export class LaporanService implements ILaporanService {
     private laporanRepo: ILaporanRepository;
     private notificationService: INotificationService;
     private usersService: IUsersService;
+    private skillService: ISkillService;
+    private achievementService: IAchievementService;
 
     constructor(
         laporanRepo: ILaporanRepository,
         notificationService: INotificationService,
-        usersService: IUsersService
+        usersService: IUsersService,
+        skillService: ISkillService,
+        achievementService: IAchievementService,
     ) {
         this.laporanRepo = laporanRepo;
         this.notificationService = notificationService;
         this.usersService = usersService;
+        this.skillService = skillService;
+        this.achievementService = achievementService;
     }
 
-    async getReportDetail(reportId: string): Promise<MappedReportDetailRes> {
+    async getReportDetail(reportId: string, obId?: string): Promise<MappedReportDetailRes> {
         try {
             const item = await this.laporanRepo.getReportDetailById(reportId);
             if (!item) {
                 throw new AppError("Laporan tidak ditemukan", 404);
             }
 
+            if (obId && item.ob_id !== obId) {
+                throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
+            }
+
             const history = item.histori_pekerjaan?.[0];
+
+            let total_durasi: number | null = null;
+            if (item.dikerjakan_at && item.selesai_at) {
+                total_durasi = Math.floor((item.selesai_at.getTime() - item.dikerjakan_at.getTime()) / 1000);
+            }
 
             const detail: MappedReportDetailRes = {
                 id: item.id,
@@ -54,6 +72,9 @@ export class LaporanService implements ILaporanService {
                 nama_ob: item.ob?.nama_lengkap || null,
                 is_kolaborasi_open: item.is_kolaborasi_open,
                 catatan_kolaborasi: item.catatan_kolaborasi,
+                dikerjakan_at: item.dikerjakan_at ? (item.dikerjakan_at instanceof Date ? item.dikerjakan_at.toISOString() : String(item.dikerjakan_at)) : null,
+                selesai_at: item.selesai_at ? (item.selesai_at instanceof Date ? item.selesai_at.toISOString() : String(item.selesai_at)) : null,
+                total_durasi,
                 created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
             };
             return detail;
@@ -347,6 +368,9 @@ export class LaporanService implements ILaporanService {
 
             await this.laporanRepo.createHistoriSelesai(laporanId, obId, fotoUrls, catatan);
 
+            await this.skillService.prosesSkillOtomatisForOb(obId);
+            await this.achievementService.prosesOtomatisUntukOb(obId);
+
             const notifData: NotificationData = {
                 penerima_id: laporan.pelapor_id,
                 pengirim_id: obId,
@@ -403,9 +427,9 @@ export class LaporanService implements ILaporanService {
         }
     }
 
-    async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number, rataRataKecepatanPengerjaan?: number }> {
+    async getObPerformanceStats(obId: string): Promise<ObPerformance> {
         try {
-            const stats = await this.laporanRepo.getObPerformanceStats(obId, dateRange);
+            const stats = await this.laporanRepo.getObPerformanceStats(obId);
             return stats;
         } catch (err) {
             handlePrismaError(err);
