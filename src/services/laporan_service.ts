@@ -14,6 +14,7 @@ import type { PeriodRange } from "../utils/date.js";
 import type { INotificationService } from "./notification_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
 import type { NotificationData, BulkNotificationData } from "../dto/notification.js";
+import type { ObPerformance } from "../dto/ob.js";
 
 export class LaporanService implements ILaporanService {
     private laporanRepo: ILaporanRepository;
@@ -403,9 +404,9 @@ export class LaporanService implements ILaporanService {
         }
     }
 
-    async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number }> {
+    async getObPerformanceStats(obId: string): Promise<ObPerformance> {
         try {
-            const stats = await this.laporanRepo.getObPerformanceStats(obId, dateRange);
+            const stats = await this.laporanRepo.getObPerformanceStats(obId);
             return stats;
         } catch (err) {
             handlePrismaError(err);

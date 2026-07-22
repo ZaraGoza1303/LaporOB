@@ -1,5 +1,6 @@
 import type { CreateTugasReq, UpdateTugasReq } from "../dto/tugas.js";
 import type { Tugas } from "../generated/prisma/client.js";
+import type { TugasApprovalItem } from "../repositories/tugas_repository.interface.js";
 
 export interface ITugasService {
     getAll(kategoriId?: string): Promise<Tugas[]>
@@ -11,4 +12,7 @@ export interface ITugasService {
     getAllTugasForOb(obId: string): Promise<Tugas[]>;
     claimTugas(tugasId: string, obId: string): Promise<void>;
     completeTugas(tugasId: string, obId: string): Promise<void>;
+    getScheduledTugas(obId: string, today: Date): Promise<Tugas[]>;
+    getPendingApprovalTugas(period: { start: Date; end: Date }, lokasiId?: string): Promise<TugasApprovalItem[]>;
+    approveTugas(tugasId: string, adminId: string): Promise<void>;
 }

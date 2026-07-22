@@ -225,3 +225,35 @@ export const AssignObToLocationsSchema = z.object({
 
 export type AssignObToLocationsReq = z.infer<typeof AssignObToLocationsSchema>;
 
+export const StatsTugasQuerySchema = z.object({
+    period: z.enum(['harian', 'mingguan', 'bulanan', 'tahunan']).default('harian'),
+    lokasi_id: z.string().uuid().optional(),
+});
+export type StatsTugasQuery = z.infer<typeof StatsTugasQuerySchema>;
+
+export interface StatsTugasResponse {
+    total: number;
+    diproses_ob: number;
+    menunggu_persetujuan: number;
+}
+
+export const StatsLaporanQuerySchema = z.object({
+    period: z.enum(['harian', 'mingguan', 'bulanan', 'tahunan']).default('harian'),
+    lokasi_id: z.string().uuid().optional(),
+});
+export type StatsLaporanQuery = z.infer<typeof StatsLaporanQuerySchema>;
+
+export interface StatsLaporanResponse {
+    laporan_baru: number;
+    sedang_dikerjakan: number;
+    selesai_hari_ini: number;
+}
+
+export interface ApprovalItemResponse {
+    id: string;
+    nama_tugas: string;
+    nama_ob: string | null;
+    lokasi: string | null;
+    kategori: string | null;
+    selesai_at: Date | null;
+}

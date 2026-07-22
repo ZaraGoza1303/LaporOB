@@ -1,9 +1,10 @@
 import type { PrismaClient } from "../generated/prisma/client.js";
 import type { Tugas } from "../generated/prisma/client.js";
 import type { TugasCreateInput, TugasUpdateInput } from "../generated/prisma/models.js";
-import type { ITugasRepository } from "./tugas_repository.interface.js";
+import type { ITugasRepository, TugasApprovalItem } from "./tugas_repository.interface.js";
+import type { PeriodRange } from "../utils/date.js";
 import { Prisma } from "../generated/prisma/client.js";
-import { TUGAS_STATUS } from "../utils/constants.js";
+import { TUGAS_STATUS, HARI } from "../utils/constants.js";
 
 export class TugasRepository implements ITugasRepository {
     private db: PrismaClient;
@@ -107,6 +108,73 @@ export class TugasRepository implements ITugasRepository {
             data: {
                 status: TUGAS_STATUS.SELESAI,
                 selesai_at: now,
+            },
+        });
+    }
+
+    async getMatchingToday(today: Date): Promise<Tugas[]> {
+        const todayName = HARI[today.getDay()] ?? '';
+        const todayDateNum = today.getDate();
+
+        const tugasList = await this.db.tugas.findMany({
+            where: {
+                is_active: true,
+                tanggal_selesai: { gte: today },
+            },
+        });
+
+        return tugasList.filter(t => {
+            const hasHari = t.hari.length > 0;
+            const hasUlang = t.tanggal_ulang !== null;
+            const hasSpesifik = t.tanggal_spesifik.length > 0;
+
+            if (t.tanggal_mulai && t.tanggal_mulai > today) return false;
+
+            if (!hasHari && !hasUlang && !hasSpesifik) return true;
+
+            const hariOk = hasHari && t.hari.includes(todayName);
+            const ulangOk = hasUlang && t.tanggal_ulang === todayDateNum;
+            const spesifikOk = hasSpesifik && t.tanggal_spesifik.some(d =>
+                d.getFullYear() === today.getFullYear() &&
+                d.getMonth() === today.getMonth() &&
+                d.getDate() === today.getDate()
+            );
+
+            return hariOk || ulangOk || spesifikOk;
+        });
+    }
+
+    async getPendingApproval(period: PeriodRange, lokasiId?: string): Promise<TugasApprovalItem[]> {
+        const where: Prisma.TugasWhereInput = {
+            status: TUGAS_STATUS.SELESAI,
+            is_approved: false,
+            created_at: { gte: period.start, lte: period.end },
+        };
+
+        if (lokasiId) {
+            where.lantai = { lokasi_id: lokasiId };
+        }
+
+        const items = await this.db.tugas.findMany({
+            where,
+            include: {
+                ob: { select: { id: true, nama_lengkap: true } },
+                lantai: { include: { lokasi: { select: { nama_lokasi: true } } } },
+                kategori: { select: { id: true, nama_kategori: true } },
+            },
+            orderBy: { selesai_at: 'desc' },
+        });
+
+        return items;
+    }
+
+    async approve(tugasId: string, adminId: string): Promise<void> {
+        const now = new Date();
+        await this.db.tugas.update({
+            where: { id: tugasId },
+            data: {
+                is_approved: true,
+                approved_at: now,
             },
         });
     }

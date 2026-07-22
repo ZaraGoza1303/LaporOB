@@ -2,7 +2,7 @@ import type { UpdateChecklistHarianReq, ChecklistHarianRes } from "../dto/checkl
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
-import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails } from "../repositories/checklistHarian_repository.interface.js";
+import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails, ChecklistHarianApprovalItem } from "../repositories/checklistHarian_repository.interface.js";
 import type { Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
 
@@ -87,6 +87,23 @@ export class ChecklistHarianService implements IChecklistHarianService {
 
     async getCompletedByOb(): Promise<Array<{ ob_id: string; nama_tugas: string }>> {
         return this.checklistRepo.getCompletedChecklistByOb();
+    }
+
+    async getPendingApprovalChecklist(period: { start: Date; end: Date }, lokasiId?: string): Promise<ChecklistHarianApprovalItem[]> {
+        try {
+            const items = await this.checklistRepo.getPendingApproval(period, lokasiId);
+            return items;
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async approveChecklist(checklistId: string, adminId: string): Promise<void> {
+        try {
+            await this.checklistRepo.approve(checklistId, adminId);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
     }
 
     private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {

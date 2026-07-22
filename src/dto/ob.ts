@@ -54,6 +54,11 @@ export const ChecklistIdParamSchema = z.object({
 //     created_at: string;
 // }
 
+export interface ObPerformance {
+    total_tugas_selesai: number;
+    rata_rata_kecepatan: number;
+}
+
 export const ObTugasIdParamSchema = z.object({
     tugas_id: z.string().uuid({ message: "Format tugas_id harus UUID yang valid" }),
 });

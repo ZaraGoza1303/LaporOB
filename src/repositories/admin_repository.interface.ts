@@ -1,5 +1,5 @@
 import type { Prisma } from "../generated/prisma/client.js";
-import type { AdminLaporanQuery, UserStatsRes, DailyChecklistObPayload } from "../dto/admin.js";
+import type { UserStatsRes, StatsTugasQuery } from "../dto/admin.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { AssignObRepoArgs } from "../dto/admin.js";
 
@@ -64,9 +64,16 @@ export interface DailyChecklistObReport {
     persentase: number;
 }
 
+export interface StatsTugasResult {
+    checklist: { total: number; diproses: number; menunggu: number };
+    tugas: { total: number; diproses: number; menunggu: number };
+}
+
 export interface IAdminRepository {
     assignObToLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number): Promise<void>;
     getUserStats(): Promise<UserStatsRes>;
     getDailyChecklistOB(tanggal: Date): Promise<DailyChecklistObReport[]>;
     getPenugasanByPeriode(bulan: number, tahun: number): Promise<PenugasanObWithDetails[]>;
+    getStatsTugas(query: StatsTugasQuery): Promise<StatsTugasResult>;
+    getStatsLaporan(query: StatsTugasQuery): Promise<{ laporan_baru: number; sedang_dikerjakan: number; selesai_hari_ini: number }>;
 }

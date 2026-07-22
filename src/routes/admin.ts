@@ -11,6 +11,12 @@ adminRouter.use(requireRole(USER_ROLE.ADMIN));
 //stats
 adminRouter.get("/dashboard", (req, res) => adminController.getDashboardData(req, res));
 adminRouter.get("/user-stats", (req, res) => adminController.getUserStats(req, res));
+adminRouter.get("/tugas/stats", (req, res) => adminController.getStatsTugas(req, res));
+adminRouter.get("/laporan/stats", (req, res) => adminController.getStatsLaporan(req, res));
+adminRouter.get("/tugas/approval-list", (req, res) => adminController.getApprovalListTugas(req, res));
+adminRouter.patch("/tugas/:tugas_id/approve", (req, res) => adminController.approveTugas(req, res));
+adminRouter.get("/checklist-harian/approval-list", (req, res) => adminController.getApprovalListChecklist(req, res));
+adminRouter.patch("/checklist-harian/:checklist_harian_id/approve", (req, res) => adminController.approveChecklist(req, res));
 
 //penugasan ob
 adminRouter.post("/user/assign-locations", (req, res) => adminController.assignObToLocations(req, res));
