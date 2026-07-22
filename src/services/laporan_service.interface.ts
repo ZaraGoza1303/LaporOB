@@ -9,7 +9,7 @@ import type { PeriodRange } from "../utils/date.js";
 import type { ObPerformance } from '../dto/ob.js';
 
 export interface ILaporanService {
-    getReportDetail(reportId: string): Promise<MappedReportDetailRes>;
+    getReportDetail(reportId: string, obId?: string): Promise<MappedReportDetailRes>;
     getReportDetailWithRelations(reportId: string): Promise<DetailReportPayload | null>;
     getRiwayat(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<MappedProfileReport>>;
     getRecentActivities(limit: number): Promise<RecentActivityPayload[]>;
