@@ -1,4 +1,4 @@
-import type { AdminLaporanHistoryQuery, AdminLaporanPageResponse, AdminLaporanQuery, AdminReportDetailResponse, PatchLaporanReq, UserSearchQuery, UserStatsRes, StatsTugasQuery, StatsTugasResponse, StatsLaporanQuery, StatsLaporanResponse } from '../dto/admin.js';
+import type { AdminLaporanHistoryQuery, AdminLaporanPageResponse, AdminLaporanQuery, AdminReportDetailResponse, PatchLaporanReq, UserSearchQuery, UserStatsRes, StatsTugasQuery, StatsTugasResponse, StatsLaporanQuery, StatsLaporanResponse, AdminProfileData } from '../dto/admin.js';
 import type { GetDashboardQuery, DashboardMainResponse } from '../dto/admin.js';
 import type { PenugasanObWithDetails } from '../repositories/admin_repository.interface.js';
 import type { Laporan_karyawan } from '../generated/prisma/client.js';
@@ -18,5 +18,6 @@ export interface IAdminService {
     deleteLaporan(laporanId: string): Promise<void>;
     getStatsTugas(query: StatsTugasQuery): Promise<StatsTugasResponse>;
     getStatsLaporan(query: StatsLaporanQuery): Promise<StatsLaporanResponse>;
+    getAdminStats(userId: string): Promise<AdminProfileData>;
 }
 

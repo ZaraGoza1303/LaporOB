@@ -225,6 +225,16 @@ components:
         meta:
           $ref: '#/components/schemas/PaginationMeta'
 
+    AdminProfileData:
+      type: object
+      properties:
+        total_tugas_approved:
+          type: integer
+        laporan_direview:
+          type: integer
+        hari_aktif:
+          type: integer
+
     ProfileRes:
       type: object
       properties:
@@ -254,6 +264,8 @@ components:
             rejected:
               type: integer
               nullable: true
+            admin:
+              $ref: '#/components/schemas/AdminProfileData'
         laporan:
           $ref: '#/components/schemas/PaginatedProfileReports'
     GabungResponse:
