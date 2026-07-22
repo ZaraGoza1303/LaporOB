@@ -2068,6 +2068,25 @@ paths:
         '200':
           description: Checklist berhasil disetujui
 
+  /api/admin/ob/{ob_id}/skills:
+    get:
+      tags:
+        - Admin
+      summary: 'Skill yang sudah diperoleh OB (Admin)'
+      description: Mengembalikan daftar skill OB yang sudah diperoleh (diperoleh_at tidak null)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ob_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar skill OB
+
   /api/admin/laporan/stats:
     get:
       tags:

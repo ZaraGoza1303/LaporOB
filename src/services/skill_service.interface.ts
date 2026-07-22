@@ -8,5 +8,6 @@ export interface ISkillService {
     deleteDefinition(skillId: string): Promise<void>;
     assignSkillToOb(req: AssignSkillReq, adminId: string): Promise<ObSkillRes>;
     getObSkills(obId: string): Promise<ObSkillRes[]>;
+    getAcquiredObSkills(obId: string): Promise<ObSkillRes[]>;
     prosesSkillOtomatis(): Promise<number>;
 }

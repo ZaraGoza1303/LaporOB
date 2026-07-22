@@ -49,6 +49,14 @@ export class SkillRepository implements ISkillRepository {
         });
     }
 
+    async getAcquiredObSkills(obId: string): Promise<ObSkill[]> {
+        return this.db.obSkill.findMany({
+            where: { ob_id: obId, diperoleh_at: { not: null } },
+            include: { skill: true },
+            orderBy: { diperoleh_at: "desc" },
+        });
+    }
+
     async getObSkill(obId: string, skillId: string): Promise<ObSkill | null> {
         return this.db.obSkill.findFirst({ where: { ob_id: obId, skill_id: skillId } });
     }
