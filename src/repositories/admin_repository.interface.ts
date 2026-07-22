@@ -69,7 +69,34 @@ export interface StatsTugasResult {
     tugas: { total: number; diproses: number; menunggu: number };
 }
 
+export interface ObRankingRawData {
+    ob_id: string;
+    nama_lengkap: string;
+    profile_picture: string | null;
+    skills: Array<{
+        skill_id: string;
+        nama_skill: string;
+        diperoleh_at: Date;
+    }>;
+    total_tugas_claimed: number;
+    total_tugas_selesai: number;
+    rata_rata_kecepatan: number;
+}
+
+export interface TrenLaporanBulananRaw {
+    bulan: string;
+    total: number;
+    baru: number;
+    pending: number;
+    selesai: number;
+    dibatalkan: number;
+}
+
 export interface IAdminRepository {
+    getObRanking(): Promise<ObRankingRawData[]>;
+    getObStatsByPeriod(startDate: Date, endDate: Date): Promise<ObRankingRawData[]>;
+    getLaporanMenungguInRange(startDate: Date, endDate: Date): Promise<number>;
+    getTrenLaporanBulanan(startDate: Date): Promise<TrenLaporanBulananRaw[]>;
     assignObToLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number): Promise<void>;
     getUserStats(): Promise<UserStatsRes>;
     getDailyChecklistOB(tanggal: Date): Promise<DailyChecklistObReport[]>;

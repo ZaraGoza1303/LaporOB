@@ -5,14 +5,20 @@ import type { ITugasRepository, TugasApprovalItem, TugasDetailPayload } from "..
 import { handlePrismaError, AppError } from "../utils/error.js";
 import type { ITugasService } from "./tugas_service.interface.js";
 import type { IRedisClient } from "../database/redis.interface.js";
+import type { ISkillService } from "./skill_service.interface.js";
+import type { IAchievementService } from "./achievement_service.interface.js";
 
 export class TugasService implements ITugasService {
     private tugasRepo: ITugasRepository;
     private redis: IRedisClient;
+    private skillService: ISkillService;
+    private achievementService: IAchievementService;
 
-    constructor(tugasRepo: ITugasRepository, redis: IRedisClient) {
+    constructor(tugasRepo: ITugasRepository, redis: IRedisClient, skillService: ISkillService, achievementService: IAchievementService) {
         this.tugasRepo = tugasRepo;
         this.redis = redis;
+        this.skillService = skillService;
+        this.achievementService = achievementService;
     }
 
     async getAll(kategoriId?: string): Promise<Tugas[]> {
@@ -185,6 +191,8 @@ export class TugasService implements ITugasService {
     async completeTugas(tugasId: string, obId: string): Promise<void> {
         try {
             await this.tugasRepo.completeByOb(tugasId, obId);
+            await this.skillService.prosesSkillOtomatisForOb(obId);
+            await this.achievementService.prosesOtomatisUntukOb(obId);
         } catch (err) {
             throw handlePrismaError(err);
         }

@@ -1,11 +1,11 @@
-import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse, AdminLaporanHistoryQuery, StatsTugasQuery, StatsTugasResponse, StatsLaporanQuery, StatsLaporanResponse, AdminProfileData } from "../dto/admin.js";
+import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse, AdminLaporanHistoryQuery, StatsTugasQuery, StatsTugasResponse, StatsLaporanQuery, StatsLaporanResponse, AdminProfileData, ObRankingItem, ObPerformanceDashboardResponse, ObPerformanceDashboardQuery, ObPerbandinganItem, TrenLaporanBulananItem } from "../dto/admin.js";
 import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse, DailyChecklistOBResponse } from "../dto/admin.js";
-import type { IAdminRepository, PenugasanObWithDetails } from "../repositories/admin_repository.interface.js";
+import type { IAdminRepository, PenugasanObWithDetails, ObRankingRawData, TrenLaporanBulananRaw } from "../repositories/admin_repository.interface.js";
 import type { AdminLaporanPayload } from "../repositories/laporan_repository.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
 import type { IUsersService } from "../services/users_service.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
-import { calculateDateRanges } from "../utils/date.js"
+import { calculateDateRanges, calculatePeriodRange } from "../utils/date.js"
 import { LAPORAN_STATUS, USER_ROLE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { resolveFileUrl } from "../utils/url.js";
 import type { IAdminService } from "./admin_service.interface.js";
@@ -431,5 +431,84 @@ export class AdminService implements IAdminService {
             return mapped;
         });
         return result;
+    }
+
+    async getObPerformanceDashboard(query: ObPerformanceDashboardQuery): Promise<ObPerformanceDashboardResponse> {
+        try {
+            const dateRange = calculatePeriodRange(query.period);
+            const bulanAwal = new Date();
+            bulanAwal.setFullYear(bulanAwal.getFullYear() - 1);
+            bulanAwal.setDate(1);
+            bulanAwal.setHours(0, 0, 0, 0);
+
+            const [obStats, laporanMenunggu, trenBulanan] = await Promise.all([
+                this.adminRepo.getObStatsByPeriod(dateRange.start, dateRange.end),
+                this.adminRepo.getLaporanMenungguInRange(dateRange.start, dateRange.end),
+                this.adminRepo.getTrenLaporanBulanan(bulanAwal),
+            ]);
+
+            const totalClaimed = obStats.reduce((sum, o) => sum + o.total_tugas_claimed, 0);
+            const totalSelesai = obStats.reduce((sum, o) => sum + o.total_tugas_selesai, 0);
+            const produktivitas = totalClaimed > 0 ? Math.round((totalSelesai / totalClaimed) * 100 * 10) / 10 : 0;
+
+            const bulanNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+            const response: ObPerformanceDashboardResponse = {
+                produktivitas,
+                tugas_diselesaikan: { selesai: totalSelesai, total: totalClaimed },
+                laporan_menunggu: laporanMenunggu,
+                perbandingan_ob: obStats.map((o: ObRankingRawData) => ({
+                    ob_id: o.ob_id,
+                    nama_ob: o.nama_lengkap,
+                    total_tugas: o.total_tugas_claimed,
+                    tugas_selesai: o.total_tugas_selesai,
+                    persentase: o.total_tugas_claimed > 0
+                        ? Math.round((o.total_tugas_selesai / o.total_tugas_claimed) * 100 * 10) / 10
+                        : 0,
+                })),
+                tren_laporan_bulanan: trenBulanan.map((t: TrenLaporanBulananRaw) => {
+                    const parts = (t.bulan ?? '').split('-');
+                    const tahun = parts[0] ?? '';
+                    const bulan = parts[1] ?? '';
+                    const bulanIdx = parseInt(bulan, 10) - 1;
+                    return {
+                        bulan: t.bulan,
+                        label: `${bulanNames[bulanIdx] ?? ''} ${tahun}`,
+                        total: t.total,
+                        baru: t.baru,
+                        pending: t.pending,
+                        selesai: t.selesai,
+                        dibatalkan: t.dibatalkan,
+                    };
+                }),
+            };
+
+            return response;
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async getObRanking(): Promise<ObRankingItem[]> {
+        try {
+            const data = await this.adminRepo.getObRanking();
+            return data.map((item: ObRankingRawData) => ({
+                ob: {
+                    id: item.ob_id,
+                    nama_lengkap: item.nama_lengkap,
+                    profile_picture: item.profile_picture,
+                    skills: item.skills.map(sk => ({
+                        id: sk.skill_id,
+                        nama_skill: sk.nama_skill,
+                        diperoleh_at: sk.diperoleh_at,
+                    })),
+                },
+                total_tugas_claimed: item.total_tugas_claimed,
+                total_tugas_selesai: item.total_tugas_selesai,
+                rata_rata_kecepatan: item.rata_rata_kecepatan,
+            }));
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
     }
 }

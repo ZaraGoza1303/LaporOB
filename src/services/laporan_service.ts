@@ -13,6 +13,8 @@ import { Prisma, type Laporan_karyawan } from "../generated/prisma/client.js";
 import type { PeriodRange } from "../utils/date.js";
 import type { INotificationService } from "./notification_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
+import type { ISkillService } from "./skill_service.interface.js";
+import type { IAchievementService } from "./achievement_service.interface.js";
 import type { NotificationData, BulkNotificationData } from "../dto/notification.js";
 import type { ObPerformance } from "../dto/ob.js";
 
@@ -20,15 +22,21 @@ export class LaporanService implements ILaporanService {
     private laporanRepo: ILaporanRepository;
     private notificationService: INotificationService;
     private usersService: IUsersService;
+    private skillService: ISkillService;
+    private achievementService: IAchievementService;
 
     constructor(
         laporanRepo: ILaporanRepository,
         notificationService: INotificationService,
-        usersService: IUsersService
+        usersService: IUsersService,
+        skillService: ISkillService,
+        achievementService: IAchievementService,
     ) {
         this.laporanRepo = laporanRepo;
         this.notificationService = notificationService;
         this.usersService = usersService;
+        this.skillService = skillService;
+        this.achievementService = achievementService;
     }
 
     async getReportDetail(reportId: string): Promise<MappedReportDetailRes> {
@@ -355,6 +363,9 @@ export class LaporanService implements ILaporanService {
             if (laporan.ob_id !== obId) throw new AppError("Hanya OB utama yang bisa menyelesaikan laporan", 403);
 
             await this.laporanRepo.createHistoriSelesai(laporanId, obId, fotoUrls, catatan);
+
+            await this.skillService.prosesSkillOtomatisForOb(obId);
+            await this.achievementService.prosesOtomatisUntukOb(obId);
 
             const notifData: NotificationData = {
                 penerima_id: laporan.pelapor_id,

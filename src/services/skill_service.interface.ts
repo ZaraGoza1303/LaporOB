@@ -10,4 +10,5 @@ export interface ISkillService {
     getObSkills(obId: string): Promise<ObSkillRes[]>;
     getAcquiredObSkills(obId: string): Promise<ObSkillRes[]>;
     prosesSkillOtomatis(): Promise<number>;
+    prosesSkillOtomatisForOb(obId: string): Promise<number>;
 }
