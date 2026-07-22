@@ -225,6 +225,59 @@ components:
         meta:
           $ref: '#/components/schemas/PaginationMeta'
 
+    MappedReportDetailRes:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        kategori:
+          type: string
+        deskripsi_kendala:
+          type: string
+        status:
+          type: string
+        prioritas:
+          type: string
+        foto_masalah:
+          type: array
+          items:
+            type: string
+        foto_selesai:
+          type: array
+          items:
+            type: string
+        catatan:
+          type: string
+        lokasi:
+          type: string
+        nomor_lantai:
+          type: integer
+        nama_karyawan:
+          type: string
+        nama_ob:
+          type: string
+          nullable: true
+        is_kolaborasi_open:
+          type: boolean
+        catatan_kolaborasi:
+          type: string
+          nullable: true
+        dikerjakan_at:
+          type: string
+          format: date-time
+          nullable: true
+        selesai_at:
+          type: string
+          format: date-time
+          nullable: true
+        total_durasi:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
     AdminProfileData:
       type: object
       properties:
@@ -1161,24 +1214,6 @@ paths:
         '404':
           description: User tidak ditemukan
 
-  /api/user/profile/laporan/{laporan_id}:
-    get:
-      tags:
-        - User
-      summary: Detail laporan user (OB & Karyawan)
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: laporan_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Berhasil
-
 # KARYAWAN
   /api/karyawan/dashboard:
     get:
@@ -1341,6 +1376,36 @@ paths:
                               format: date-time
 
   /api/ob/laporan/{laporan_id}:
+    get:
+      tags:
+        - OB
+      summary: 'Detail laporan (OB)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detail laporan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/MappedReportDetailRes'
+        '404':
+          description: Laporan tidak ditemukan
+
     patch:
       tags:
         - OB
@@ -1852,6 +1917,33 @@ paths:
         '404':
           description: Tugas tidak ditemukan
 
+  /api/ob/laporan/checklist/{checklist_id}/claim:
+    patch:
+      tags:
+        - OB
+      summary: 'Klaim checklist harian (OB)'
+      description: |
+        OB mengklaim checklist harian yang tersedia.
+        Side effect: `status` → `SEDANG_DIKERJAKAN`, `dikerjakan_at` → sekarang, `ob_id` → OB yang login.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: checklist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Checklist berhasil diklaim
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Checklist tidak ditemukan
+
 # ADMIN
   /api/admin/role:
     get:
@@ -1976,6 +2068,70 @@ paths:
       responses:
         '200':
           description: Daftar ob
+
+  /api/admin/user/assign-locations:
+    post:
+      tags:
+        - Admin
+      summary: 'Assign OB ke lokasi (Admin)'
+      description: Menugaskan OB ke satu atau lebih lokasi untuk periode bulan/tahun tertentu.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - obId
+                - lokasiIds
+                - bulan
+                - tahun
+              properties:
+                obId:
+                  type: string
+                  format: uuid
+                lokasiIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                bulan:
+                  type: integer
+                  minimum: 1
+                  maximum: 12
+                tahun:
+                  type: integer
+                  minimum: 2000
+      responses:
+        '200':
+          description: Berhasil memperbarui penugasan OB
+
+  /api/admin/user/assignments:
+    get:
+      tags:
+        - Admin
+      summary: 'Lihat penugasan OB berdasarkan periode (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: bulan
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+        - name: tahun
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 2000
+      responses:
+        '200':
+          description: Data penugasan OB
 
   /api/admin/user/all-karyawan:
     get:
@@ -2589,6 +2745,67 @@ paths:
           description: Laporan tidak ditemukan
         '500':
           description: Gagal menghapus laporan
+
+  /api/admin/laporan/{laporan_id}/approve:
+    post:
+      tags:
+        - Admin
+      summary: 'Setujui laporan (Admin)'
+      description: Admin menyetujui laporan yang sudah selesai dikerjakan OB. Status berubah menjadi SELESAI.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                catatan:
+                  type: string
+      responses:
+        '200':
+          description: Pekerjaan berhasil disetujui
+        '404':
+          description: Laporan tidak ditemukan
+
+  /api/admin/laporan/{laporan_id}/reject:
+    post:
+      tags:
+        - Admin
+      summary: 'Tolak laporan (Admin)'
+      description: Admin menolak laporan yang sudah dikerjakan OB. Laporan dikembalikan ke antrean dengan status DIBATALKAN.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - catatan
+              properties:
+                catatan:
+                  type: string
+      responses:
+        '200':
+          description: Pekerjaan berhasil ditolak
+        '404':
+          description: Laporan tidak ditemukan
 
   /api/admin/user/{user_id}:
     get:
@@ -3662,6 +3879,137 @@ paths:
       responses:
         '200':
           description: Checklist berhasil dihapus
+
+# SKILL
+  /api/skill/definitions:
+    get:
+      tags:
+        - Skill
+      summary: 'List definisi skill (Semua role)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar definisi skill
+    post:
+      tags:
+        - Skill
+      summary: 'Buat definisi skill baru (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillDefinitionRequest'
+      responses:
+        '201':
+          description: Skill berhasil dibuat
+
+  /api/skill/definitions/{skill_id}:
+    get:
+      tags:
+        - Skill
+      summary: 'Detail definisi skill (Semua role)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: skill_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detail definisi skill
+    patch:
+      tags:
+        - Skill
+      summary: 'Update definisi skill (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: skill_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillDefinitionRequest'
+      responses:
+        '200':
+          description: Skill berhasil diupdate
+    delete:
+      tags:
+        - Skill
+      summary: 'Hapus definisi skill (Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: skill_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Skill berhasil dihapus
+
+  /api/skill/assign:
+    post:
+      tags:
+        - Skill
+      summary: 'Assign skill ke OB (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignSkillRequest'
+      responses:
+        '200':
+          description: Skill berhasil diassign
+
+  /api/skill/ob/{ob_id}:
+    get:
+      tags:
+        - Skill
+      summary: 'Skill OB (Admin & OB)'
+      description: Mengembalikan daftar skill yang sudah diperoleh seorang OB
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ob_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar skill OB
+
+  /api/skill/me:
+    get:
+      tags:
+        - Skill
+      summary: 'Skill saya sendiri (OB)'
+      description: Mengembalikan daftar skill yang sudah diperoleh OB yang login
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar skill saya
 
 # NOTIFIKASI
   /api/notifikasi:
