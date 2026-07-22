@@ -76,4 +76,7 @@ export interface IAdminRepository {
     getPenugasanByPeriode(bulan: number, tahun: number): Promise<PenugasanObWithDetails[]>;
     getStatsTugas(query: StatsTugasQuery): Promise<StatsTugasResult>;
     getStatsLaporan(query: StatsTugasQuery): Promise<{ laporan_baru: number; sedang_dikerjakan: number; selesai_hari_ini: number }>;
+    getTotalApprovedTugas(): Promise<number>;
+    getTotalReviewedLaporan(): Promise<number>;
+    countActiveDays(userId: string): Promise<number>;
 }

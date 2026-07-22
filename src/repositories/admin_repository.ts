@@ -238,4 +238,32 @@ export class AdminRepository implements IAdminRepository {
             selesai_hari_ini: selesaiHariIni,
         };
     }
+
+    async getTotalApprovedTugas(): Promise<number> {
+        const [checklist, tugas] = await Promise.all([
+            this.db.checklist_harian.count({ where: { is_approved: true } }),
+            this.db.tugas.count({ where: { is_approved: true } }),
+        ]);
+        return checklist + tugas;
+    }
+
+    async getTotalReviewedLaporan(): Promise<number> {
+        return this.db.laporan_karyawan.count({
+            where: {
+                OR: [
+                    { is_approved: true },
+                    { status: LAPORAN_STATUS.DIBATALKAN },
+                ],
+            },
+        });
+    }
+
+    async countActiveDays(userId: string): Promise<number> {
+        const result = await this.db.$queryRaw<Array<{ count: bigint }>>`
+            SELECT COUNT(DISTINCT DATE(created_at)) as count
+            FROM user_session
+            WHERE user_id = ${userId}::uuid
+        `;
+        return Number(result[0]?.count ?? 0);
+    }
 }

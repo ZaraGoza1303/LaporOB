@@ -249,6 +249,12 @@ export interface StatsLaporanResponse {
     selesai_hari_ini: number;
 }
 
+export interface AdminProfileData {
+    total_tugas_approved: number;
+    laporan_direview: number;
+    hari_aktif: number;
+}
+
 export interface ApprovalItemResponse {
     id: string;
     nama_tugas: string;

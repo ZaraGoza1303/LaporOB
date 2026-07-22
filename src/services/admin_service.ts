@@ -1,4 +1,4 @@
-import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse, AdminLaporanHistoryQuery, StatsTugasQuery, StatsTugasResponse, StatsLaporanQuery, StatsLaporanResponse } from "../dto/admin.js";
+import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse, AdminLaporanHistoryQuery, StatsTugasQuery, StatsTugasResponse, StatsLaporanQuery, StatsLaporanResponse, AdminProfileData } from "../dto/admin.js";
 import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse, DailyChecklistOBResponse } from "../dto/admin.js";
 import type { IAdminRepository, PenugasanObWithDetails } from "../repositories/admin_repository.interface.js";
 import type { AdminLaporanPayload } from "../repositories/laporan_repository.interface.js";
@@ -269,6 +269,19 @@ export class AdminService implements IAdminService {
             if (!laporan) throw new AppError("Laporan tidak ditemukan", 404);
 
             await this.laporanService.deleteLaporan(laporanId);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async getAdminStats(userId: string): Promise<AdminProfileData> {
+        try {
+            const [total_tugas_approved, laporan_direview, hari_aktif] = await Promise.all([
+                this.adminRepo.getTotalApprovedTugas(),
+                this.adminRepo.getTotalReviewedLaporan(),
+                this.adminRepo.countActiveDays(userId),
+            ]);
+            return { total_tugas_approved, laporan_direview, hari_aktif };
         } catch (err) {
             throw handlePrismaError(err);
         }
