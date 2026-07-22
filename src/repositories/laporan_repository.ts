@@ -106,21 +106,42 @@ export class LaporanRepository implements ILaporanRepository {
         return report;
     }
 
-    async getRecentActivities(limit: number): Promise<RecentActivityPayload[]> {
-        const activities = await this.db.laporan_karyawan.findMany({
-            include: {
-                lantai: {
-                    include: { lokasi: true }
-                },
-                ob: true
-            },
-            orderBy: {
-                updated_at: 'desc'
-            },
-            take: limit
-        });
+    async getRecentActivities(page: number, limit: number): Promise<PaginatedResponse<RecentActivityPayload>> {
+        const offset = (page - 1) * limit;
 
-        return activities;
+        const where = {
+            prioritas: "URGENT",
+            status: { in: ["BELUM_DIKERJAKAN", "PENDING"] }
+        };
+
+        const [activities, total] = await Promise.all([
+            this.db.laporan_karyawan.findMany({
+                where,
+                include: {
+                    lantai: {
+                        include: { lokasi: true }
+                    },
+                    ob: true
+                },
+                orderBy: {
+                    created_at: 'desc'
+                },
+                skip: offset,
+                take: limit
+            }),
+            this.db.laporan_karyawan.count({ where })
+        ]);
+
+        return {
+            items: activities,
+            next_cursor: null,
+            meta: {
+                total_items: total,
+                current_page: page,
+                limit,
+                total_pages: Math.ceil(total / limit)
+            }
+        };
     }
 
     async getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]> {
@@ -273,9 +294,11 @@ export class LaporanRepository implements ILaporanRepository {
 
         const ownReports = await this.db.laporan_karyawan.findMany({
             where: {
+                status: { in: ["BELUM_DIKERJAKAN", "PENDING"] },
+                prioritas: "URGENT",
                 OR: [
                     { ob_id: obId },
-                    { ob_id: null, status: { not: "PENDING" } }
+                    { ob_id: null }
                 ]
             },
             include: { kategori: true, lantai: { include: { lokasi: true } } },
@@ -288,7 +311,12 @@ export class LaporanRepository implements ILaporanRepository {
         }
 
         const backupReports = await this.db.laporan_karyawan.findMany({
-            where: { ob_id: null, lantai: { lokasi_id: { notIn: lokasiIds } } },
+            where: { 
+                ob_id: null, 
+                status: { in: ["BELUM_DIKERJAKAN", "PENDING"] },
+                prioritas: "URGENT",
+                lantai: { lokasi_id: { notIn: lokasiIds } } 
+            },
             include: { kategori: true, lantai: { include: { lokasi: true } } },
             orderBy: { created_at: 'desc' },
             take: 3 - ownReports.length
@@ -383,7 +411,37 @@ export class LaporanRepository implements ILaporanRepository {
             this.db.laporan_karyawan.count({ where: { ob_id: obId, status: "SELESAI", ...dateFilter } })
         ]);
 
-        const result = { laporanDiterima, laporanSelesai };
+        const completedReports = await this.db.laporan_karyawan.findMany({
+            where: {
+                ob_id: obId,
+                status: "SELESAI",
+                dikerjakan_at: { not: null },
+                selesai_at: { not: null },
+                ...dateFilter
+            },
+            select: {
+                dikerjakan_at: true,
+                selesai_at: true
+            }
+        });
+
+        let totalDurationMinutes = 0;
+        let count = 0;
+        for (const report of completedReports) {
+            if (report.dikerjakan_at && report.selesai_at) {
+                const diffMs = report.selesai_at.getTime() - report.dikerjakan_at.getTime();
+                totalDurationMinutes += diffMs / 60000;
+                count++;
+            }
+        }
+        const rataRataKecepatanPengerjaan = count > 0 ? parseFloat((totalDurationMinutes / count).toFixed(1)) : 0;
+        
+
+        const result = { 
+            laporanDiterima, 
+            laporanSelesai,
+            rataRataKecepatanPengerjaan
+        };
         return result;
     }
 

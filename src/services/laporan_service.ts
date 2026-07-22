@@ -108,9 +108,9 @@ export class LaporanService implements ILaporanService {
         }
     }
 
-    async getRecentActivities(limit: number): Promise<RecentActivityPayload[]> {
+    async getRecentActivities(page: number, limit: number): Promise<PaginatedResponse<RecentActivityPayload>> {
         try {
-            const activities = await this.laporanRepo.getRecentActivities(limit);
+            const activities = await this.laporanRepo.getRecentActivities(page, limit);
             return activities;
         } catch (err) {
             handlePrismaError(err);
@@ -403,7 +403,7 @@ export class LaporanService implements ILaporanService {
         }
     }
 
-    async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number }> {
+    async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number, rataRataKecepatanPengerjaan?: number }> {
         try {
             const stats = await this.laporanRepo.getObPerformanceStats(obId, dateRange);
             return stats;
