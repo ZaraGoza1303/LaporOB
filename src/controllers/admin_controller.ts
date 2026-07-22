@@ -1,17 +1,29 @@
 
-import { AdminLaporanHistoryQuerySchema, AdminLaporanQuerySchema, AssignObToLocationsSchema, GetDashboardQuerySchema, PatchLaporanReqSchema } from '../dto/admin.js';
+import { AdminLaporanHistoryQuerySchema, AdminLaporanQuerySchema, AssignObToLocationsSchema, GetDashboardQuerySchema, PatchLaporanReqSchema, StatsTugasQuerySchema, StatsLaporanQuerySchema, PekerjaanListQuerySchema } from '../dto/admin.js';
 import { LaporanIdParamSchema } from '../dto/users.js';
+import { ChecklistHarianIdParamSchema } from '../dto/checklist_harian.js';
+import { ObTugasIdParamSchema } from '../dto/ob.js';
 import type { IAdminService } from "../services/admin_service.interface.js";
+import type { IChecklistHarianService } from "../services/checklistHarian_service.interface.js";
+import type { ITugasService } from "../services/tugas_service.interface.js";
+import type { ISkillService } from "../services/skill_service.interface.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { Request, Response } from "express";
 import { AppError } from "../utils/error.js";
 import { z } from "zod";
+import { calculatePeriodRange } from "../utils/date.js";
 
 export class AdminController {
     private adminService: IAdminService;
+    private checklistHarianService: IChecklistHarianService;
+    private tugasService: ITugasService;
+    private skillService: ISkillService;
 
-    constructor(adminService: IAdminService) {
+    constructor(adminService: IAdminService, checklistHarianService: IChecklistHarianService, tugasService: ITugasService, skillService: ISkillService) {
         this.adminService = adminService;
+        this.checklistHarianService = checklistHarianService;
+        this.tugasService = tugasService;
+        this.skillService = skillService;
     }
 
     async getDashboardData(req: Request, res: Response) {
@@ -255,6 +267,157 @@ export class AdminController {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));
             }
             return res.status(500).json(sendErrorResponse("Gagal menghapus laporan"));
+        }
+    }
+
+    async getStatsLaporan(req: Request, res: Response) {
+        try {
+            const validate = StatsLaporanQuerySchema.safeParse(req.query);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const response = await this.adminService.getStatsLaporan(validate.data);
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data statistik laporan", response));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data statistik laporan"));
+        }
+    }
+
+    async getStatsTugas(req: Request, res: Response) {
+        try {
+            const validate = StatsTugasQuerySchema.safeParse(req.query);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const response = await this.adminService.getStatsTugas(validate.data);
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data statistik tugas", response));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data statistik tugas"));
+        }
+    }
+
+    async getApprovalListTugas(req: Request, res: Response) {
+        try {
+            const validate = StatsTugasQuerySchema.safeParse(req.query);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const dateRange = calculatePeriodRange(validate.data.period);
+            const response = await this.tugasService.getPendingApprovalTugas(dateRange, validate.data.lokasi_id);
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data approval tugas", response));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data approval tugas"));
+        }
+    }
+
+    async approveTugas(req: Request, res: Response) {
+        try {
+            const validateParams = ObTugasIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const adminId = req.user?.id ?? '';
+            await this.tugasService.approveTugas(validateParams.data.tugas_id, adminId);
+            return res.status(200).json(sendSuccessfullResponse("Tugas berhasil disetujui"));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal menyetujui tugas"));
+        }
+    }
+
+    async getApprovalListChecklist(req: Request, res: Response) {
+        try {
+            const validate = StatsTugasQuerySchema.safeParse(req.query);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const dateRange = calculatePeriodRange(validate.data.period);
+            const response = await this.checklistHarianService.getPendingApprovalChecklist(dateRange, validate.data.lokasi_id);
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data approval checklist", response));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data approval checklist"));
+        }
+    }
+
+    async getObAcquiredSkills(req: Request, res: Response) {
+        try {
+            const paramsSchema = z.object({ ob_id: z.string().uuid() });
+            const validateParams = paramsSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                return res.status(400).json(sendErrorResponse("Validation Failed", validateParams.error.flatten().fieldErrors));
+            }
+
+            const result = await this.skillService.getAcquiredObSkills(validateParams.data.ob_id);
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil skill OB", result));
+        } catch (err: unknown) {
+            if (err instanceof AppError) return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            return res.status(500).json(sendErrorResponse("Gagal mengambil skill OB"));
+        }
+    }
+
+    async getListPekerjaan(req: Request, res: Response) {
+        try {
+            const validate = PekerjaanListQuerySchema.safeParse(req.query);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const { page, limit, search } = validate.data;
+            const [checklist, tugas] = await Promise.all([
+                this.checklistHarianService.getAllPaginated(page, limit, search),
+                this.tugasService.getAllPaginated(page, limit, search),
+            ]);
+
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data pekerjaan", { checklist, tugas }));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengambil data pekerjaan"));
+        }
+    }
+
+    async approveChecklist(req: Request, res: Response) {
+        try {
+            const validateParams = ChecklistHarianIdParamSchema.safeParse(req.params);
+            if (!validateParams.success) {
+                const formattedErr = validateParams.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const adminId = req.user?.id ?? '';
+            await this.checklistHarianService.approveChecklist(validateParams.data.checklist_harian_id, adminId);
+            return res.status(200).json(sendSuccessfullResponse("Checklist berhasil disetujui"));
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal menyetujui checklist"));
         }
     }
 }

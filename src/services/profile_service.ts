@@ -3,6 +3,7 @@ import type { IUsersService } from "./users_service.interface.js";
 import type { IKaryawanService } from "./karyawan_service.interface.js";
 import type { IObService } from "./ob_service.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
+import type { IAdminService } from "./admin_service.interface.js";
 import type { ProfileLaporanQuery, ProfileRes, ObProfileResponse, UserProfileResponse, MappedProfileReport } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import { USER_ROLE } from "../utils/constants.js";
@@ -13,10 +14,21 @@ export class ProfileService implements IProfileService {
     private karyawanService: IKaryawanService,
     private obService: IObService,
     private laporanService: ILaporanService,
+    private adminService: IAdminService,
   ) {}
 
   async getProfile(userId: string, role: string, query: ProfileLaporanQuery): Promise<ProfileRes> {
+    const isAdmin = role.toLowerCase() === USER_ROLE.ADMIN;
     const isOb = role.toLowerCase() === USER_ROLE.OB;
+
+    if (isAdmin) {
+      const userProfile = await this.usersService.getProfile(userId);
+      const adminData = await this.adminService.getAdminStats(userId);
+      return {
+        user: { ...userProfile, admin: adminData },
+      };
+    }
+
     const { search, status, cursor, limit } = query;
 
     const userProfile = isOb

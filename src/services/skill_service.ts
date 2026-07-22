@@ -132,6 +132,21 @@ export class SkillService implements ISkillService {
         }
     }
 
+    async getAcquiredObSkills(obId: string): Promise<ObSkillRes[]> {
+        try {
+            const skills = await this.skillRepo.getAcquiredObSkills(obId);
+            const result: ObSkillRes[] = [];
+            for (const s of skills) {
+                const def = await this.skillRepo.getDefinitionByID(s.skill_id);
+                if (!def) continue;
+                result.push(this.mapObSkill(s, def));
+            }
+            return result;
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
     async getObSkills(obId: string): Promise<ObSkillRes[]> {
         try {
             const skills = await this.skillRepo.getObSkills(obId);

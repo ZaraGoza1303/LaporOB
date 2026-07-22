@@ -2,25 +2,6 @@ import { z } from "zod";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
 import type { Kategori, Lantai, User } from "../generated/prisma/client.js";
 
-const emptyToNull = (val: unknown) => (val === "" || val === undefined ? null : val);
-
-const checklistStatusValues = [
-    CHECKLIST_STATUS.BELUM_DIKERJAKAN,
-    CHECKLIST_STATUS.SEDANG_DIKERJAKAN,
-    CHECKLIST_STATUS.SELESAI,
-    CHECKLIST_STATUS.TERLEWAT,
-] as const;
-
-export const ChecklistHarianQuerySchema = z.object({
-    search: z.preprocess(emptyToNull, z.string().nullable()),
-    lokasi_id: z.preprocess(emptyToNull, z.string().uuid().nullable()),
-    lantai_id: z.preprocess(emptyToNull, z.string().uuid().nullable()),
-    status: z.preprocess(emptyToNull, z.enum(checklistStatusValues).nullable()),
-    period: z.enum(['harian', 'mingguan', 'bulanan', 'tahunan']).default('harian'),
-});
-
-export type ChecklistHarianQuery = z.infer<typeof ChecklistHarianQuerySchema>;
-
 export const ChecklistHarianIdParamSchema = z.object({
     checklist_harian_id: z.string().trim().uuid({ message: "Format checklist_harian_id harus UUID yang valid" })
 });
@@ -47,6 +28,7 @@ export interface ChecklistHarianRes {
     dikerjakan_at?: Date | null;
     selesai_at?: Date | null;
     terlewat_at?: Date | null;
+    total_durasi?: number | null;
     tanggal: Date;
     created_at: Date;
     updated_at: Date;

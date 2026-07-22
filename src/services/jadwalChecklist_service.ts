@@ -1,6 +1,6 @@
 import type { CreateJadwalChecklistReq, UpdateJadwalChecklistReq } from "../dto/jadwal_checklist.js";
 import type { IJadwalChecklistRepository } from "../repositories/jadwalChecklist_repository.interface.js";
-import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
+import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { JadwalChecklist } from "../generated/prisma/client.js";
 import type { JadwalChecklistUncheckedCreateInput, JadwalChecklistUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { handlePrismaError } from "../utils/error.js";
@@ -12,18 +12,18 @@ import type { BulkNotificationData } from "../dto/notification.js";
 
 export class JadwalChecklistService implements IJadwalChecklistService {
     private jadwalRepo: IJadwalChecklistRepository;
-    private checklistRepo: IChecklistHarianRepository;
+    private checklistHarianService: IChecklistHarianService;
     private notificationService: INotificationService;
     private usersService: IUsersService;
 
     constructor(
         jadwalRepo: IJadwalChecklistRepository,
-        checklistRepo: IChecklistHarianRepository,
+        checklistHarianService: IChecklistHarianService,
         notificationService: INotificationService,
         usersService: IUsersService,
     ) {
         this.jadwalRepo = jadwalRepo;
-        this.checklistRepo = checklistRepo;
+        this.checklistHarianService = checklistHarianService;
         this.notificationService = notificationService;
         this.usersService = usersService;
     }
@@ -36,27 +36,14 @@ export class JadwalChecklistService implements IJadwalChecklistService {
                 lantai_id: req.lantai_id,
                 ob_id: req.ob_id ?? null,
                 hari: req.hari ?? [],
-                tanggal_ulang: req.tanggal_ulang ?? null,
-                tanggal_spesifik: req.tanggal_spesifik ?? [],
-                tanggal_mulai: new Date(req.tanggal_mulai),
-                tanggal_selesai: new Date(req.tanggal_selesai),
             };
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            const tanggalMulai: Date = new Date(req.tanggal_mulai);
-            const tanggalSelesai: Date = new Date(req.tanggal_selesai);
+            const todayName = HARI[today.getDay()] ?? '';
             const hari: string[] = req.hari ?? [];
-            const tanggalSpesifik: Date[] = (req.tanggal_spesifik ?? []).map(d => new Date(d));
-            const matching = await this.getMatchingTodayForJadwal(
-                tanggalMulai,
-                tanggalSelesai,
-                hari,
-                tanggalSpesifik,
-                req.tanggal_ulang ?? null,
-                today,
-            );
+            const matching = hari.length === 0 || hari.includes(todayName);
 
             await this.jadwalRepo.transaction(async (tx) => {
                 await tx.jadwalChecklist.create({ data: dataToInsert });
@@ -108,10 +95,6 @@ export class JadwalChecklistService implements IJadwalChecklistService {
             if (req.lantai_id !== undefined) dataToUpdate.lantai_id = req.lantai_id;
             if (req.ob_id !== undefined) dataToUpdate.ob_id = req.ob_id ?? null;
             if (req.hari !== undefined) dataToUpdate.hari = req.hari;
-            if (req.tanggal_ulang !== undefined) dataToUpdate.tanggal_ulang = req.tanggal_ulang ?? null;
-            if (req.tanggal_spesifik !== undefined) dataToUpdate.tanggal_spesifik = req.tanggal_spesifik;
-            if (req.tanggal_mulai !== undefined) dataToUpdate.tanggal_mulai = new Date(req.tanggal_mulai);
-            if (req.tanggal_selesai !== undefined) dataToUpdate.tanggal_selesai = new Date(req.tanggal_selesai);
 
             await this.jadwalRepo.update(jadwalId, dataToUpdate);
         } catch (err) {
@@ -135,8 +118,8 @@ export class JadwalChecklistService implements IJadwalChecklistService {
             const matching = await this.jadwalRepo.getMatchingToday(today);
             if (matching.length === 0) return 0;
 
-            const existing = await this.checklistRepo.getExistingInstanceKeys(today);
-            const toCreate = matching.filter(j =>
+            const existing = await this.checklistHarianService.getExistingInstanceKeys(today);
+            const toCreate = matching.filter((j: JadwalChecklist) =>
                 !existing.some(e =>
                     e.nama_tugas === j.nama_tugas &&
                     e.lantai_id === j.lantai_id &&
@@ -147,7 +130,7 @@ export class JadwalChecklistService implements IJadwalChecklistService {
             if (toCreate.length === 0) return 0;
 
             for (const jadwal of toCreate) {
-                await this.checklistRepo.insertFromJadwal(jadwal);
+                await this.checklistHarianService.insertFromJadwal(jadwal);
             }
 
             await this.sendNotificationToAllOb("system");
@@ -155,37 +138,6 @@ export class JadwalChecklistService implements IJadwalChecklistService {
         } catch (err) {
             handlePrismaError(err);
         }
-    }
-
-    private async getMatchingTodayForJadwal(
-        tanggalMulai: Date,
-        tanggalSelesai: Date,
-        hari: string[],
-        tanggalSpesifik: Date[],
-        tanggalUlang: number | null,
-        today: Date,
-    ): Promise<boolean> {
-        if (tanggalMulai > today) return false;
-        if (tanggalSelesai < today) return false;
-
-        const todayName = HARI[today.getDay()] ?? '';
-        const todayDateNum = today.getDate();
-
-        const hasHari = hari.length > 0;
-        const hasUlang = tanggalUlang !== null && tanggalUlang !== undefined;
-        const hasSpesifik = tanggalSpesifik.length > 0;
-
-        if (!hasHari && !hasUlang && !hasSpesifik) return true;
-
-        const hariOk = hasHari && hari.includes(todayName);
-        const ulangOk = hasUlang && tanggalUlang === todayDateNum;
-        const spesifikOk = hasSpesifik && tanggalSpesifik.some(d =>
-            d.getFullYear() === today.getFullYear() &&
-            d.getMonth() === today.getMonth() &&
-            d.getDate() === today.getDate()
-        );
-
-        return hariOk || ulangOk || spesifikOk;
     }
 
     private async sendNotificationToAllOb(pengirimId: string): Promise<void> {

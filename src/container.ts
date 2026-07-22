@@ -91,8 +91,8 @@ const lokasiService = new LokasiService(lokasiRepository, redisClient as unknown
 const ruanganService = new RuanganService(ruanganRepository, redisClient as unknown as IRedisClient);
 export const tugasService = new TugasService(tugasRepository, redisClient as unknown as IRedisClient);
 const laporanService = new LaporanService(laporanRepository, notificationService, usersService);
-export const jadwalChecklistService = new JadwalChecklistService(jadwalChecklistRepository, checklistHarianRepository, notificationService, usersService);
-export const checklistHarianService = new ChecklistHarianService(checklistHarianRepository, notificationService, usersService);
+export const checklistHarianService = new ChecklistHarianService(checklistHarianRepository);
+export const jadwalChecklistService = new JadwalChecklistService(jadwalChecklistRepository, checklistHarianService, notificationService, usersService);
 export const constantsService = new ConstantsService();
 export const skillService = new SkillService(skillRepository, checklistHarianService, notificationService, usersService);
 const sessionService = new UserSessionService(userSessionRepository, redisClient as unknown as IRedisClient);
@@ -101,10 +101,10 @@ const obService = new ObService(obRepository, laporanService, usersService);
 const kolaborasiService = new KolaborasiService(kolaborasiRepository, laporanService, notificationService);
 const adminService = new AdminService(adminRepository, laporanService, usersService, redisClient as unknown as IRedisClient);
 const karyawanService = new KaryawanService(usersService, laporanService, kategoriService, notificationService);
-const profileService = new ProfileService(usersService, karyawanService, obService, laporanService);
+const profileService = new ProfileService(usersService, karyawanService, obService, laporanService, adminService);
 
 //  CONTROLLERS 
-export const adminController = new AdminController(adminService);
+export const adminController = new AdminController(adminService, checklistHarianService, tugasService, skillService);
 export const authController = new AuthController(authService);
 export const checklistHarianController = new ChecklistHarianController(checklistHarianService);
 export const jadwalChecklistController = new JadwalChecklistController(jadwalChecklistService);
