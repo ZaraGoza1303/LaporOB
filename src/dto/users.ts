@@ -2,6 +2,7 @@ import z from "zod";
 import type { Laporan_karyawanGetPayload } from "../generated/prisma/models.js";
 import { LAPORAN_PRIORITY, LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import type { PaginatedResponse } from "./response.js";
+import type { AdminProfileData } from "./admin.js";
 
 export const UserIdParamSchema = z.object({
   user_id: z.string().trim().uuid({ message: "Format user_id harus UUID yang valid" }),
@@ -136,11 +137,12 @@ export interface ProfileRes {
     email: string;
     role: string;
     profile_picture: string | null;
-    total_laporan?: number; //Karyawan
-    tasksCompleted?: number; // OB
-    rejected?: number; // OB
+    total_laporan?: number;
+    tasksCompleted?: number;
+    rejected?: number;
+    admin?: AdminProfileData;
   };
-  laporan: PaginatedResponse<MappedProfileReport>;
+  laporan?: PaginatedResponse<MappedProfileReport>;
 }
 
 export interface MappedReportDetailRes {
@@ -158,6 +160,9 @@ export interface MappedReportDetailRes {
   nama_ob: string | null;
   is_kolaborasi_open: boolean;
   catatan_kolaborasi: string | null;
+  dikerjakan_at: string | null;
+  selesai_at: string | null;
+  total_durasi: number | null;
   created_at: string;
 }
 
