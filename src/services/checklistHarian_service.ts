@@ -107,6 +107,10 @@ export class ChecklistHarianService implements IChecklistHarianService {
     }
 
     private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {
+        let total_durasi: number | null = null;
+        if (item.dikerjakan_at && item.selesai_at) {
+            total_durasi = Math.floor((item.selesai_at.getTime() - item.dikerjakan_at.getTime()) / 1000);
+        }
         const response: ChecklistHarianRes = {
             id: item.id,
             nama_tugas: item.nama_tugas,
@@ -118,6 +122,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
             dikerjakan_at: item.dikerjakan_at ?? null,
             selesai_at: item.selesai_at ?? null,
             terlewat_at: item.terlewat_at ?? null,
+            total_durasi,
             tanggal: item.tanggal,
             created_at: item.created_at,
             updated_at: item.updated_at,

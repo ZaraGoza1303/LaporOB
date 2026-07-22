@@ -160,6 +160,11 @@ export class AdminService implements IAdminService {
             ? historiTerakhir.created_at.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB"
             : null;
 
+        let total_durasi: number | null = null;
+        if (laporan.dikerjakan_at && laporan.selesai_at) {
+            total_durasi = Math.floor((laporan.selesai_at.getTime() - laporan.dikerjakan_at.getTime()) / 1000);
+        }
+
         const detail: AdminReportDetailResponse = {
             id: laporan.id,
             status: laporan.status as LaporanStatus,
@@ -176,6 +181,8 @@ export class AdminService implements IAdminService {
             selesai_at: laporan.selesai_at,
             dibatalkan_at: laporan.dibatalkan_at,
             admin_catatan: laporan.admin_catatan,
+            catatan_ob: historiTerakhir?.catatan ?? null,
+            total_durasi,
             deskripsi_kendala: laporan.deskripsi_kendala,
             bukti_foto: {
                 urls: laporan.status === "SELESAI"

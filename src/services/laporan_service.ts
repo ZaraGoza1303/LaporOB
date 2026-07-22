@@ -40,6 +40,11 @@ export class LaporanService implements ILaporanService {
 
             const history = item.histori_pekerjaan?.[0];
 
+            let total_durasi: number | null = null;
+            if (item.dikerjakan_at && item.selesai_at) {
+                total_durasi = Math.floor((item.selesai_at.getTime() - item.dikerjakan_at.getTime()) / 1000);
+            }
+
             const detail: MappedReportDetailRes = {
                 id: item.id,
                 kategori: item.kategori?.nama_kategori || "",
@@ -55,6 +60,9 @@ export class LaporanService implements ILaporanService {
                 nama_ob: item.ob?.nama_lengkap || null,
                 is_kolaborasi_open: item.is_kolaborasi_open,
                 catatan_kolaborasi: item.catatan_kolaborasi,
+                dikerjakan_at: item.dikerjakan_at ? (item.dikerjakan_at instanceof Date ? item.dikerjakan_at.toISOString() : String(item.dikerjakan_at)) : null,
+                selesai_at: item.selesai_at ? (item.selesai_at instanceof Date ? item.selesai_at.toISOString() : String(item.selesai_at)) : null,
+                total_durasi,
                 created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at),
             };
             return detail;

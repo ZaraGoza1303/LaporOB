@@ -109,6 +109,8 @@ export type AdminReportDetailResponse = {
     selesai_at: Date | null;
     dibatalkan_at: Date | null;
     admin_catatan: string | null;
+    catatan_ob: string | null;
+    total_durasi: number | null;
     deskripsi_kendala: string;
     bukti_foto: {
         urls: string[];

@@ -1,4 +1,4 @@
-import type { CreateTugasReq, UpdateTugasReq } from "../dto/tugas.js";
+import type { CreateTugasReq, UpdateTugasReq, TugasDetailRes } from "../dto/tugas.js";
 import type { Tugas } from "../generated/prisma/client.js";
 import type { TugasCreateInput, TugasUpdateInput } from "../generated/prisma/models.js";
 import type { ITugasRepository, TugasApprovalItem } from "../repositories/tugas_repository.interface.js";
@@ -37,6 +37,38 @@ export class TugasService implements ITugasService {
         try {
             const tugas = await this.tugasRepo.getByID(tugasId);
             return tugas;
+        } catch (err) {
+            handlePrismaError(err)
+        }
+    }
+
+    async getDetailByID(tugasId: string): Promise<TugasDetailRes | null> {
+        try {
+            const tugas = await this.tugasRepo.getDetailByID(tugasId);
+            if (!tugas) return null;
+
+            let total_durasi: number | null = null;
+            if (tugas.dikerjakan_at && tugas.selesai_at) {
+                total_durasi = Math.floor((tugas.selesai_at.getTime() - tugas.dikerjakan_at.getTime()) / 1000);
+            }
+
+            return {
+                id: tugas.id,
+                nama_tugas: tugas.nama_tugas,
+                kategori: tugas.kategori ?? null,
+                lantai: tugas.lantai ?? null,
+                ob: tugas.ob ?? null,
+                status: tugas.status,
+                catatan: tugas.catatan,
+                dikerjakan_at: tugas.dikerjakan_at,
+                selesai_at: tugas.selesai_at,
+                total_durasi,
+                hari: tugas.hari,
+                is_approved: tugas.is_approved,
+                approved_at: tugas.approved_at,
+                created_at: tugas.created_at,
+                updated_at: tugas.updated_at,
+            };
         } catch (err) {
             handlePrismaError(err)
         }

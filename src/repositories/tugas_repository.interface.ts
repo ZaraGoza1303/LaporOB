@@ -9,9 +9,18 @@ export type TugasApprovalItem = Prisma.TugasGetPayload<{
     };
 }>;
 
+export type TugasDetailPayload = Prisma.TugasGetPayload<{
+    include: {
+        kategori: true;
+        lantai: { include: { lokasi: true } };
+        ob: true;
+    };
+}>;
+
 export interface ITugasRepository {
     getAll(kategoriId?: string): Promise<Tugas[]>
     getByID(tugasId: string): Promise<Tugas | null>
+    getDetailByID(tugasId: string): Promise<TugasDetailPayload | null>
     insert(req: TugasCreateInput): Promise<void>;
     update(tugasId: string, req: TugasUpdateInput): Promise<void>;
     delete(tugasId: string): Promise<void>;
