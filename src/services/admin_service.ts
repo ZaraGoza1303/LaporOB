@@ -1,4 +1,4 @@
-import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse, AdminLaporanHistoryQuery } from "../dto/admin.js";
+import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse, AdminLaporanHistoryQuery, StatsTugasQuery, StatsTugasResponse, StatsLaporanQuery, StatsLaporanResponse } from "../dto/admin.js";
 import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse, DailyChecklistOBResponse } from "../dto/admin.js";
 import type { IAdminRepository, PenugasanObWithDetails } from "../repositories/admin_repository.interface.js";
 import type { AdminLaporanPayload } from "../repositories/laporan_repository.interface.js";
@@ -274,6 +274,28 @@ export class AdminService implements IAdminService {
         }
     }
 
+    async getStatsLaporan(query: StatsLaporanQuery): Promise<StatsLaporanResponse> {
+        try {
+            const raw = await this.adminRepo.getStatsLaporan(query);
+            return raw;
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async getStatsTugas(query: StatsTugasQuery): Promise<StatsTugasResponse> {
+        try {
+            const raw = await this.adminRepo.getStatsTugas(query);
+            const result: StatsTugasResponse = {
+                total: raw.checklist.total + raw.tugas.total,
+                diproses_ob: raw.checklist.diproses + raw.tugas.diproses,
+                menunggu_persetujuan: raw.checklist.menunggu + raw.tugas.menunggu,
+            };
+            return result;
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
 
     private calculateBarChart(reports: ReportSummaryPayload[], period: string): BarChartResponse[] {
         const groups: Record<string, number> = {};

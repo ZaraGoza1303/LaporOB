@@ -316,16 +316,9 @@ export class UsersController {
                 const formatedErr = validateParams.error.flatten().fieldErrors;
                 return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
             }
+            
             const obId = validateParams.data.user_id;
-
-            const validateQuery = GetDashboardQuerySchema.safeParse(req.query);
-            if (!validateQuery.success) {
-                const formatedErr = validateQuery.error.flatten().fieldErrors;
-                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
-            }
-
-            const dateRange = calculatePeriodRange(validateQuery.data.period);
-            const response = await this.laporanService.getObPerformanceStats(obId, dateRange);
+            const response = await this.laporanService.getObPerformanceStats(obId);
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan statistik performa OB", response));
         } catch (err: unknown) {

@@ -1,7 +1,8 @@
-import type { UserStatsRes, AdminLaporanQuery } from "../dto/admin.js";
-import { PrismaClient } from "../generated/prisma/client.js";
-import type { IAdminRepository, DailyChecklistObReport, PenugasanObWithDetails } from "./admin_repository.interface.js";
+import type { UserStatsRes, AdminLaporanQuery, StatsTugasQuery } from "../dto/admin.js";
+import { Prisma, PrismaClient } from "../generated/prisma/client.js";
+import type { IAdminRepository, DailyChecklistObReport, PenugasanObWithDetails, StatsTugasResult } from "./admin_repository.interface.js";
 import { CHECKLIST_STATUS, LAPORAN_STATUS, USER_ROLE } from "../utils/constants.js";
+import { calculatePeriodRange } from "../utils/date.js";
 
 export class AdminRepository implements IAdminRepository {
     private db: PrismaClient;
@@ -151,5 +152,90 @@ export class AdminRepository implements IAdminRepository {
             }
         });
         return penugasan;
+    }
+
+    async getStatsTugas(query: StatsTugasQuery): Promise<StatsTugasResult> {
+        const { period, lokasi_id } = query;
+        const dateRange = calculatePeriodRange(period);
+
+        const checklistWhere: Prisma.Checklist_harianWhereInput = {
+            tanggal: { gte: dateRange.start, lte: dateRange.end },
+        };
+        const tugasWhere: Prisma.TugasWhereInput = {
+            created_at: { gte: dateRange.start, lte: dateRange.end },
+        };
+
+        if (lokasi_id) {
+            checklistWhere.lantai = { lokasi_id };
+            tugasWhere.lantai = { lokasi_id };
+        }
+
+        const [
+            checklistTotal,
+            checklistDiproses,
+            checklistMenunggu,
+            tugasTotal,
+            tugasDiproses,
+            tugasMenunggu,
+        ] = await Promise.all([
+            this.db.checklist_harian.count({ where: checklistWhere }),
+            this.db.checklist_harian.count({
+                where: { ...checklistWhere, status: CHECKLIST_STATUS.SEDANG_DIKERJAKAN },
+            }),
+            this.db.checklist_harian.count({
+                where: { ...checklistWhere, status: CHECKLIST_STATUS.SELESAI, is_approved: false },
+            }),
+            this.db.tugas.count({ where: tugasWhere }),
+            this.db.tugas.count({
+                where: { ...tugasWhere, status: CHECKLIST_STATUS.SEDANG_DIKERJAKAN },
+            }),
+            this.db.tugas.count({
+                where: { ...tugasWhere, status: CHECKLIST_STATUS.SELESAI, is_approved: false },
+            }),
+        ]);
+
+        const result: StatsTugasResult = {
+            checklist: { total: checklistTotal, diproses: checklistDiproses, menunggu: checklistMenunggu },
+            tugas: { total: tugasTotal, diproses: tugasDiproses, menunggu: tugasMenunggu },
+        };
+
+        return result;
+    }
+
+    async getStatsLaporan(query: StatsTugasQuery): Promise<{ laporan_baru: number; sedang_dikerjakan: number; selesai_hari_ini: number }> {
+        const { period, lokasi_id } = query;
+        const dateRange = calculatePeriodRange(period);
+
+        const where: Prisma.Laporan_karyawanWhereInput = {
+            created_at: { gte: dateRange.start, lte: dateRange.end },
+        };
+
+        if (lokasi_id) {
+            where.lantai = { lokasi_id };
+        }
+
+        const selesaiWhere: Prisma.Laporan_karyawanWhereInput = {
+            ...where,
+            status: LAPORAN_STATUS.SELESAI,
+            selesai_at: { gte: dateRange.start, lte: dateRange.end },
+        };
+
+        const [laporanBaru, sedangDikerjakan, selesaiHariIni] = await Promise.all([
+            this.db.laporan_karyawan.count({
+                where: { ...where, status: LAPORAN_STATUS.BELUM_DIKERJAKAN },
+            }),
+            this.db.laporan_karyawan.count({
+                where: { ...where, status: LAPORAN_STATUS.PENDING },
+            }),
+            this.db.laporan_karyawan.count({
+                where: selesaiWhere,
+            }),
+        ]);
+
+        return {
+            laporan_baru: laporanBaru,
+            sedang_dikerjakan: sedangDikerjakan,
+            selesai_hari_ini: selesaiHariIni,
+        };
     }
 }

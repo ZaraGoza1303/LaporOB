@@ -92,7 +92,7 @@ const ruanganService = new RuanganService(ruanganRepository, redisClient as unkn
 export const tugasService = new TugasService(tugasRepository, redisClient as unknown as IRedisClient);
 const laporanService = new LaporanService(laporanRepository, notificationService, usersService);
 export const jadwalChecklistService = new JadwalChecklistService(jadwalChecklistRepository, checklistHarianRepository, notificationService, usersService);
-export const checklistHarianService = new ChecklistHarianService(checklistHarianRepository, notificationService, usersService);
+export const checklistHarianService = new ChecklistHarianService(checklistHarianRepository);
 export const constantsService = new ConstantsService();
 export const skillService = new SkillService(skillRepository, checklistHarianService, notificationService, usersService);
 const sessionService = new UserSessionService(userSessionRepository, redisClient as unknown as IRedisClient);
@@ -104,7 +104,7 @@ const karyawanService = new KaryawanService(usersService, laporanService, katego
 const profileService = new ProfileService(usersService, karyawanService, obService, laporanService);
 
 //  CONTROLLERS 
-export const adminController = new AdminController(adminService);
+export const adminController = new AdminController(adminService, checklistHarianService, tugasService);
 export const authController = new AuthController(authService);
 export const checklistHarianController = new ChecklistHarianController(checklistHarianService);
 export const jadwalChecklistController = new JadwalChecklistController(jadwalChecklistService);
