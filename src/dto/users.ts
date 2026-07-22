@@ -160,6 +160,9 @@ export interface MappedReportDetailRes {
   nama_ob: string | null;
   is_kolaborasi_open: boolean;
   catatan_kolaborasi: string | null;
+  dikerjakan_at: string | null;
+  selesai_at: string | null;
+  total_durasi: number | null;
   created_at: string;
 }
 

@@ -1,7 +1,7 @@
 import type { PrismaClient } from "../generated/prisma/client.js";
 import type { Tugas } from "../generated/prisma/client.js";
 import type { TugasCreateInput, TugasUpdateInput } from "../generated/prisma/models.js";
-import type { ITugasRepository, TugasApprovalItem } from "./tugas_repository.interface.js";
+import type { ITugasRepository, TugasApprovalItem, TugasDetailPayload } from "./tugas_repository.interface.js";
 import type { PeriodRange } from "../utils/date.js";
 import { Prisma } from "../generated/prisma/client.js";
 import { TUGAS_STATUS, HARI } from "../utils/constants.js";
@@ -38,6 +38,18 @@ export class TugasRepository implements ITugasRepository {
             }
         })
 
+        return tugas;
+    }
+
+    async getDetailByID(tugasId: string): Promise<TugasDetailPayload | null> {
+        const tugas = await this.db.tugas.findFirst({
+            where: { id: tugasId },
+            include: {
+                kategori: true,
+                lantai: { include: { lokasi: true } },
+                ob: true,
+            },
+        });
         return tugas;
     }
 
