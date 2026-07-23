@@ -34,7 +34,12 @@ export class AdminController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
 
-            const dashboardData = await this.adminService.getDashboardData(parsedQuery.data);
+            const page_laporan = parseInt(String(req.query.page_laporan), 10) || 1;
+            const limit_laporan = parseInt(String(req.query.limit_laporan), 10) || 4;
+            const page_tugas = parseInt(String(req.query.page_tugas), 10) || 1;
+            const limit_tugas = parseInt(String(req.query.limit_tugas), 10) || 4;
+
+            const dashboardData = await this.adminService.getDashboardData(parsedQuery.data, page_laporan, limit_laporan, page_tugas, limit_tugas);
 
             return res.status(200).json(
                 sendSuccessfullResponse("Berhasil mengambil data dashboard admin", dashboardData)

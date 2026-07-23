@@ -129,9 +129,9 @@ export class LaporanService implements ILaporanService {
         }
     }
 
-    async getRecentActivities(limit: number): Promise<RecentActivityPayload[]> {
+    async getRecentActivities(page: number, limit: number): Promise<PaginatedResponse<RecentActivityPayload>> {
         try {
-            const activities = await this.laporanRepo.getRecentActivities(limit);
+            const activities = await this.laporanRepo.getRecentActivities(page, limit);
             return activities;
         } catch (err) {
             handlePrismaError(err);

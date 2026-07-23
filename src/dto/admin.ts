@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LAPORAN_PRIORITY, LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from '../utils/constants.js';
+import { LAPORAN_PRIORITY, LAPORAN_STATUS, TUGAS_STATUS, type LaporanPriority, type LaporanStatus } from '../utils/constants.js';
 import { Prisma } from "../generated/prisma/client.js";
 import type { PaginatedResponse } from './response.js';
 import type { ChecklistHarianRes } from './checklist_harian.js';
@@ -43,6 +43,7 @@ export interface KpiResponse {
     laporan_selesai: StatDetail;
     laporan_berjalan: StatDetail;
     laporan_dibatalkan: StatDetail;
+    tugas_belum_dikerjakan: StatDetail;
 }
 
 export interface BarChartResponse {
@@ -83,12 +84,21 @@ export interface DailyChecklistOBResponse {
     persentase: number;
 }
 
+export interface RiwayatTugasOBResponse {
+    nama_ob: string;
+    nama_tugas: string;
+    kategori: string;
+    durasi: string;
+    status: string;
+}
+
 export interface DashboardMainResponse {
     kpi: KpiResponse;
     bar_chart: BarChartResponse[];
     pie_chart: PieChartResponse[];
-    recent_activities: RecentActivityResponse[];
+    recent_activities: PaginatedResponse<RecentActivityResponse>;
     daily_checklist_ob: DailyChecklistOBResponse[];
+    riwayat_tugas_ob: PaginatedResponse<RiwayatTugasOBResponse>;
 }
 
 export interface UserStatsRes {
