@@ -100,9 +100,9 @@ export class AdminService implements IAdminService {
         }
     }
 
-    async getDashboardData(query: GetDashboardQuery): Promise<DashboardMainResponse> {
+    async getDashboardData(query: GetDashboardQuery, page_laporan: number, limit_laporan: number, page_tugas: number, limit_tugas: number): Promise<DashboardMainResponse> {
         const { period } = query;
-        const cacheKey = `admin:dashboard:${period}`
+        const cacheKey = `admin:dashboard:${period}:${page_laporan}:${limit_laporan}:${page_tugas}:${limit_tugas}`
         const cachedData = await this.redis.get(cacheKey)
         if (cachedData) {
             const parsedData = JSON.parse(cachedData)
@@ -111,19 +111,22 @@ export class AdminService implements IAdminService {
 
         const { current_start, current_end, previous_start, previous_end } = calculateDateRanges(period);
 
-        const [rawActivities, currentReports, previousReports, daily_checklist_ob] = await Promise.all([
-            this.laporanService.getRecentActivities(5),
+        const [rawActivities, currentReports, previousReports, daily_checklist_ob, currTugasBelumDikerjakan, prevTugasBelumDikerjakan, riwayatTugasRaw] = await Promise.all([
+            this.laporanService.getRecentActivities(page_laporan, limit_laporan),
             this.laporanService.getReportsByDateRange(current_start, current_end),
             this.laporanService.getReportsByDateRange(previous_start, previous_end),
-            this.adminRepo.getDailyChecklistOB(new Date())
+            this.adminRepo.getDailyChecklistOB(new Date()),
+            this.adminRepo.countTugasBelumDikerjakan(current_start, current_end),
+            this.adminRepo.countTugasBelumDikerjakan(previous_start, previous_end),
+            this.adminRepo.getRiwayatTugasOB(page_tugas, limit_tugas)
         ]);
 
-        const kpi = this.calculateKpi(currentReports, previousReports);
+        const kpi = this.calculateKpi(currentReports, previousReports, currTugasBelumDikerjakan, prevTugasBelumDikerjakan);
         const pie_chart = this.calculatePieChart(currentReports);
         const bar_chart = this.calculateBarChart(currentReports, period);
 
-        const recent_activities: RecentActivityResponse[] = rawActivities.map(
-            (activity: RecentActivityPayload) => ({
+        const recent_activities: PaginatedResponse<RecentActivityResponse> = {
+            items: rawActivities.items.map((activity: RecentActivityPayload) => ({
                 id: activity.id,
                 title: activity.deskripsi_kendala,
                 location: activity.lantai?.lokasi?.nama_lokasi
@@ -132,8 +135,15 @@ export class AdminService implements IAdminService {
                 status: activity.status as LaporanStatus,
                 assignee_name: activity.ob?.nama_lengkap || null,
                 timestamp: activity.updated_at
-            })
-        );
+            })),
+            next_cursor: rawActivities.next_cursor,
+            meta: rawActivities.meta ?? {
+                total_items: 0,
+                current_page: 1,
+                limit: limit_laporan,
+                total_pages: 0
+            }
+        };
 
         const daily_checklist_ob_mapped: DailyChecklistOBResponse[] = daily_checklist_ob.map((item: DailyChecklistObReport) => ({
             nama_ob: item.nama_ob,
@@ -142,7 +152,14 @@ export class AdminService implements IAdminService {
             persentase: item.persentase
         }));
 
-        const dashboard: DashboardMainResponse = { kpi, bar_chart, pie_chart, recent_activities, daily_checklist_ob: daily_checklist_ob_mapped };
+        const dashboard: DashboardMainResponse = { 
+            kpi, 
+            bar_chart, 
+            pie_chart, 
+            recent_activities, 
+            daily_checklist_ob: daily_checklist_ob_mapped,
+            riwayat_tugas_ob: riwayatTugasRaw,
+        };
         await this.redis.setEx(cacheKey, 300, JSON.stringify(dashboard))
         return dashboard;
     }
@@ -195,7 +212,7 @@ export class AdminService implements IAdminService {
 
         return detail;
     }
-
+    
     async assignObToLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number): Promise<void> {
         try {
             const obUser = await this.usersService.getByID(obId);
@@ -358,7 +375,7 @@ export class AdminService implements IAdminService {
     }
 
 
-    private calculateKpi(current: ReportSummaryPayload[], previous: ReportSummaryPayload[]): DashboardMainResponse['kpi'] {
+    private calculateKpi(current: ReportSummaryPayload[], previous: ReportSummaryPayload[], currTugasBelumDikerjakan: number, prevTugasBelumDikerjakan: number): DashboardMainResponse['kpi'] {
         const calculateTrend = (currCount: number, prevCount: number): StatDetail => {
             if (prevCount === 0) {
                 const trendDetail = { count: currCount, trend_value: currCount > 0 ? 100 : 0, is_positive: currCount > 0 };
@@ -390,7 +407,9 @@ export class AdminService implements IAdminService {
             total_laporan: calculateTrend(currTotal, prevTotal),
             laporan_selesai: calculateTrend(currDone, prevDone),
             laporan_berjalan: calculateTrend(currOngoing, prevOngoing),
-            laporan_dibatalkan: calculateTrend(currDibatalkan, prevDibatalkan)
+            laporan_dibatalkan: calculateTrend(currDibatalkan, prevDibatalkan),
+            tugas_belum_dikerjakan: calculateTrend(currTugasBelumDikerjakan, prevTugasBelumDikerjakan)
+            
         };
 
         return kpi;

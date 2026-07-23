@@ -12,7 +12,7 @@ export interface ILaporanService {
     getReportDetail(reportId: string, obId?: string): Promise<MappedReportDetailRes>;
     getReportDetailWithRelations(reportId: string): Promise<DetailReportPayload | null>;
     getRiwayat(obId: string, limit: number, cursor?: string | null, search?: string | null, status?: string | null): Promise<PaginatedResponse<MappedProfileReport>>;
-    getRecentActivities(limit: number): Promise<RecentActivityPayload[]>;
+    getRecentActivities(page: number, limit: number): Promise<PaginatedResponse<RecentActivityPayload>>;
     getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]>;
     getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>>;
     getAllHistoryLaporan(page: number, limit: number, query: AdminLaporanHistoryQuery): Promise<PaginatedResponse<Laporan_karyawan>>;

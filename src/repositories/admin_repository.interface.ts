@@ -64,6 +64,14 @@ export interface DailyChecklistObReport {
     persentase: number;
 }
 
+export interface RiwayatTugasObReport {
+    nama_ob: string;
+    nama_tugas: string;
+    kategori: string;
+    durasi: string;
+    status: string;
+}
+
 export interface StatsTugasResult {
     checklist: { total: number; diproses: number; menunggu: number };
     tugas: { total: number; diproses: number; menunggu: number };
@@ -100,7 +108,9 @@ export interface IAdminRepository {
     assignObToLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number): Promise<void>;
     getUserStats(): Promise<UserStatsRes>;
     getDailyChecklistOB(tanggal: Date): Promise<DailyChecklistObReport[]>;
+    getRiwayatTugasOB(page: number, limit: number): Promise<PaginatedResponse<RiwayatTugasObReport>>
     getPenugasanByPeriode(bulan: number, tahun: number): Promise<PenugasanObWithDetails[]>;
+    countTugasBelumDikerjakan(startDate: Date, endDate: Date): Promise<number>;
     getStatsTugas(query: StatsTugasQuery): Promise<StatsTugasResult>;
     getStatsLaporan(query: StatsTugasQuery): Promise<{ laporan_baru: number; sedang_dikerjakan: number; selesai_hari_ini: number }>;
     getTotalApprovedTugas(): Promise<number>;

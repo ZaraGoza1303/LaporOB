@@ -107,21 +107,42 @@ export class LaporanRepository implements ILaporanRepository {
         return report;
     }
 
-    async getRecentActivities(limit: number): Promise<RecentActivityPayload[]> {
-        const activities = await this.db.laporan_karyawan.findMany({
-            include: {
-                lantai: {
-                    include: { lokasi: true }
-                },
-                ob: true
-            },
-            orderBy: {
-                updated_at: 'desc'
-            },
-            take: limit
-        });
+    async getRecentActivities(page: number, limit: number): Promise<PaginatedResponse<RecentActivityPayload>> {
+        const offset = (page - 1) * limit;
 
-        return activities;
+        const where = {
+            prioritas: "URGENT",
+            status: { in: ["BELUM_DIKERJAKAN", "PENDING"] }
+        };
+
+        const [activities, total] = await Promise.all([
+            this.db.laporan_karyawan.findMany({
+                where,
+                include: {
+                    lantai: {
+                        include: { lokasi: true }
+                    },
+                    ob: true
+                },
+                orderBy: {
+                    created_at: 'desc'
+                },
+                skip: offset,
+                take: limit
+            }),
+            this.db.laporan_karyawan.count({ where })
+        ]);
+
+        return {
+            items: activities,
+            next_cursor: null,
+            meta: {
+                total_items: total,
+                current_page: page,
+                limit,
+                total_pages: Math.ceil(total / limit)
+            }
+        };
     }
 
     async getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]> {
