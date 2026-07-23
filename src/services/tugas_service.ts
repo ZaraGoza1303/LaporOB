@@ -182,8 +182,16 @@ export class TugasService implements ITugasService {
 
     async claimTugas(tugasId: string, obId: string): Promise<void> {
         try {
+            const tugas = await this.tugasRepo.getByID(tugasId);
+            if (!tugas) {
+                throw new AppError("Tugas tidak ditemukan", 404);
+            }
+            if (tugas.ob_id !== null) {
+                throw new AppError("Tugas sudah diambil oleh OB lain", 409);
+            }
             await this.tugasRepo.claimByOb(tugasId, obId);
         } catch (err) {
+            if (err instanceof AppError) throw err;
             throw handlePrismaError(err);
         }
     }

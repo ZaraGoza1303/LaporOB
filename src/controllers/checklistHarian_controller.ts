@@ -13,7 +13,8 @@ export class ChecklistHarianController {
 
     async getAll(req: Request, res: Response) {
         try {
-            const response = await this.checklistService.getAll();
+            const obId = req.user?.role === "OB" ? req.user?.id as string : undefined;
+            const response = await this.checklistService.getAll(obId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil data checklist harian", response));
         } catch (err: unknown) {
             if (err instanceof AppError) {
@@ -31,7 +32,8 @@ export class ChecklistHarianController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
             const checklistId = validateParams.data.checklist_harian_id;
-            const response = await this.checklistService.getByID(checklistId);
+            const obId = req.user?.role === "OB" ? req.user?.id as string : undefined;
+            const response = await this.checklistService.getByID(checklistId, obId);
 
             if (!response) {
                 return res.status(404).json(sendErrorResponse("Data checklist harian tidak ditemukan"));

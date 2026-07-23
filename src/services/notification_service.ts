@@ -2,7 +2,7 @@ import type { NotificationData, BulkNotificationData, NotifikasiGroupedResponse 
 import type { NotifikasiCreateInput } from "../generated/prisma/models.js";
 import type { INotificationRepository } from "../repositories/notification_repository.interface.js";
 import { USER_ROLE, NOTIFICATION_TYPE } from "../utils/constants.js";
-import { handlePrismaError } from "../utils/error.js";
+import { handlePrismaError, AppError } from "../utils/error.js";
 import type { INotificationService } from "./notification_service.interface.js";
 import { sendToUser } from "./websocket_service.js";
 
@@ -52,10 +52,18 @@ export class NotificationService implements INotificationService {
         notifications.forEach(notif => sendToUser(notif.penerima_id, notif));
     }
 
-    async markAsRead(notifId: string): Promise<void> {
+    async markAsRead(notifId: string, userId: string): Promise<void> {
         try {
+            const notif = await this.notifRepo.getById(notifId);
+            if (!notif) {
+                throw new AppError("Notifikasi tidak ditemukan", 404);
+            }
+            if (notif.penerima_id !== userId) {
+                throw new AppError("Anda tidak memiliki akses ke notifikasi ini", 403);
+            }
             await this.notifRepo.markAsRead(notifId);
         } catch (err) {
+            if (err instanceof AppError) throw err;
             handlePrismaError(err)
         }
     }

@@ -221,8 +221,9 @@ export class ObController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
             const laporanId = validateParams.data.laporan_id;
+            const obId = req.user?.id as string;
 
-            const detail = await this.laporanService.getReportDetail(laporanId);
+            const detail = await this.laporanService.getReportDetail(laporanId, obId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan detail riwayat", detail));
         } catch (err) {
             if (err instanceof AppError) {
