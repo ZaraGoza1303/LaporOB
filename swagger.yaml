@@ -1174,6 +1174,148 @@ components:
           type: string
           format: date-time
 
+    AdminDashboardResponse:
+      type: object
+      properties:
+        kpi:
+          type: object
+          properties:
+            total_laporan:
+              $ref: '#/components/schemas/StatDetail'
+            laporan_selesai:
+              $ref: '#/components/schemas/StatDetail'
+            laporan_berjalan:
+              $ref: '#/components/schemas/StatDetail'
+            laporan_dibatalkan:
+              $ref: '#/components/schemas/StatDetail'
+            tugas_belum_dikerjakan:
+              $ref: '#/components/schemas/StatDetail'
+            menunggu_persetujuan:
+              $ref: '#/components/schemas/StatDetail'
+        bar_chart:
+          type: array
+          items:
+            $ref: '#/components/schemas/BarChartItem'
+        pie_chart:
+          type: array
+          items:
+            $ref: '#/components/schemas/PieChartItem'
+        recent_activities:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/RecentActivityItem'
+            next_cursor:
+              type: string
+              nullable: true
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+        daily_checklist_ob:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyChecklistObItem'
+        riwayat_tugas_ob:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/RiwayatTugasObItem'
+            next_cursor:
+              type: string
+              nullable: true
+            meta:
+              $ref: '#/components/schemas/PaginationMeta'
+
+    StatDetail:
+      type: object
+      properties:
+        count:
+          type: integer
+        trend_value:
+          type: integer
+        is_positive:
+          type: boolean
+
+    BarChartItem:
+      type: object
+      properties:
+        label:
+          type: string
+        count:
+          type: integer
+
+    PieChartItem:
+      type: object
+      properties:
+        status:
+          type: string
+        label:
+          type: string
+        percentage:
+          type: integer
+        count:
+          type: integer
+
+    RecentActivityItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        location:
+          type: string
+        status:
+          type: string
+        assignee_name:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+
+    DailyChecklistObItem:
+      type: object
+      properties:
+        nama_ob:
+          type: string
+        total_tugas:
+          type: integer
+        tugas_selesai:
+          type: integer
+        persentase:
+          type: integer
+
+    RiwayatTugasObItem:
+      type: object
+      properties:
+        nama_ob:
+          type: string
+        nama_tugas:
+          type: string
+        kategori:
+          type: string
+        durasi:
+          type: string
+        status:
+          type: string
+
+    PaginationMeta:
+      type: object
+      properties:
+        total_items:
+          type: integer
+        current_page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+
 # AUTH
 paths:
   /api/auth/login:
@@ -2409,9 +2551,41 @@ paths:
               - bulanan
               - tahunan
             default: mingguan
+        - name: page_laporan
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit_laporan
+          in: query
+          schema:
+            type: integer
+            default: 4
+        - name: page_tugas
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit_tugas
+          in: query
+          schema:
+            type: integer
+            default: 4
       responses:
         '200':
           description: Data dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/AdminDashboardResponse'
 
   /api/admin/user-stats:
     get:

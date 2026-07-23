@@ -111,6 +111,7 @@ export interface IAdminRepository {
     getRiwayatTugasOB(page: number, limit: number): Promise<PaginatedResponse<RiwayatTugasObReport>>
     getPenugasanByPeriode(bulan: number, tahun: number): Promise<PenugasanObWithDetails[]>;
     countTugasBelumDikerjakan(startDate: Date, endDate: Date): Promise<number>;
+    countMenungguPersetujuan(startDate: Date, endDate: Date): Promise<number>;
     getStatsTugas(query: StatsTugasQuery): Promise<StatsTugasResult>;
     getStatsLaporan(query: StatsTugasQuery): Promise<{ laporan_baru: number; sedang_dikerjakan: number; selesai_hari_ini: number }>;
     getTotalApprovedTugas(): Promise<number>;
