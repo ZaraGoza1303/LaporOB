@@ -39,11 +39,15 @@ export class LaporanService implements ILaporanService {
         this.achievementService = achievementService;
     }
 
-    async getReportDetail(reportId: string): Promise<MappedReportDetailRes> {
+    async getReportDetail(reportId: string, obId?: string): Promise<MappedReportDetailRes> {
         try {
             const item = await this.laporanRepo.getReportDetailById(reportId);
             if (!item) {
                 throw new AppError("Laporan tidak ditemukan", 404);
+            }
+
+            if (obId && item.ob_id !== obId) {
+                throw new AppError("Anda tidak memiliki akses ke laporan ini", 403);
             }
 
             const history = item.histori_pekerjaan?.[0];

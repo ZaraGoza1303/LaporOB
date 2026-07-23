@@ -4,9 +4,9 @@ import type { PaginatedResponse } from "../dto/response.js";
 import type { JadwalChecklist } from "../generated/prisma/client.js";
 
 export interface IChecklistHarianService {
-    getAll(): Promise<ChecklistHarianRes[]>;
+    getAll(obId?: string): Promise<ChecklistHarianRes[]>;
     getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<ChecklistHarianRes>>;
-    getByID(checklistId: string): Promise<ChecklistHarianRes | null>;
+    getByID(checklistId: string, obId?: string): Promise<ChecklistHarianRes | null>;
     update(checklistId: string, req: UpdateChecklistHarianReq): Promise<void>;
     delete(checklistId: string): Promise<void>;
 

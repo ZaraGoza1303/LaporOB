@@ -690,8 +690,6 @@ components:
         - nama_tugas
         - kategori_id
         - lantai_id
-        - tanggal_mulai
-        - tanggal_selesai
       properties:
         nama_tugas:
           type: string
@@ -711,24 +709,6 @@ components:
           items:
             type: string
           description: Hari pengulangan ["senin","rabu"] atau [] = tiap hari
-        tanggal_ulang:
-          type: integer
-          nullable: true
-          description: Tanggal ulang tiap bulan (1-31)
-        tanggal_spesifik:
-          type: array
-          items:
-            type: string
-            format: date
-          description: Tanggal-tanggal spesifik
-        tanggal_mulai:
-          type: string
-          format: date-time
-          description: Awal rentang jadwal (ISO 8601)
-        tanggal_selesai:
-          type: string
-          format: date-time
-          description: Akhir rentang jadwal (ISO 8601)
 
     JadwalChecklistResponse:
       type: object
@@ -752,20 +732,6 @@ components:
           type: array
           items:
             type: string
-        tanggal_ulang:
-          type: integer
-          nullable: true
-        tanggal_spesifik:
-          type: array
-          items:
-            type: string
-            format: date
-        tanggal_mulai:
-          type: string
-          format: date-time
-        tanggal_selesai:
-          type: string
-          format: date-time
         created_at:
           type: string
           format: date-time
@@ -824,13 +790,6 @@ components:
           type: boolean
         threshold:
           type: integer
-        achievement_type:
-          type: string
-          enum: [KEYWORD, COMPLETION_COUNT, FAST_RESPONSE]
-          default: KEYWORD
-        response_time_threshold_seconds:
-          type: integer
-          nullable: true
 
     SkillDefinitionResponse:
       type: object
@@ -853,12 +812,6 @@ components:
           type: boolean
         threshold:
           type: integer
-        achievement_type:
-          type: string
-          enum: [KEYWORD, COMPLETION_COUNT, FAST_RESPONSE]
-        response_time_threshold_seconds:
-          type: integer
-          nullable: true
         created_at:
           type: string
           format: date-time
@@ -1153,6 +1106,41 @@ components:
           format: uuid
         nama_tugas:
           type: string
+        kategori:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            nama_kategori:
+              type: string
+        lantai:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            nomor_lantai:
+              type: integer
+            lokasi:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                nama_lokasi:
+                  type: string
+        ob:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            nama_lengkap:
+              type: string
         status:
           type: string
         catatan:
@@ -4211,12 +4199,25 @@ paths:
     get:
       tags:
         - Skill
-      summary: 'List definisi skill (Semua role)'
+      summary: 'List definisi skill (Admin)'
       security:
         - BearerAuth: []
       responses:
         '200':
           description: Daftar definisi skill
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SkillDefinitionResponse'
     post:
       tags:
         - Skill
@@ -4232,12 +4233,23 @@ paths:
       responses:
         '201':
           description: Skill berhasil dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/SkillDefinitionResponse'
 
   /api/skill/definitions/{skill_id}:
     get:
       tags:
         - Skill
-      summary: 'Detail definisi skill (Semua role)'
+      summary: 'Detail definisi skill (Admin)'
       security:
         - BearerAuth: []
       parameters:
@@ -4250,6 +4262,17 @@ paths:
       responses:
         '200':
           description: Detail definisi skill
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/SkillDefinitionResponse'
     patch:
       tags:
         - Skill
@@ -4305,6 +4328,17 @@ paths:
       responses:
         '200':
           description: Skill berhasil diassign
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ObSkillResponse'
 
   /api/skill/ob/{ob_id}:
     get:
@@ -4324,6 +4358,19 @@ paths:
       responses:
         '200':
           description: Daftar skill OB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ObSkillResponse'
 
   /api/skill/me:
     get:
@@ -4336,6 +4383,19 @@ paths:
       responses:
         '200':
           description: Daftar skill saya
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ObSkillResponse'
 
 # ACHIEVEMENT
   /api/achievement:
@@ -4353,6 +4413,19 @@ paths:
       responses:
         '200':
           description: Daftar definisi achievement
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AchievementResponse'
     post:
       tags:
         - Achievement
@@ -4368,6 +4441,17 @@ paths:
       responses:
         '201':
           description: Achievement berhasil dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/AchievementResponse'
 
   /api/achievement/{achievement_id}:
     get:
@@ -4386,6 +4470,17 @@ paths:
       responses:
         '200':
           description: Detail definisi achievement
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/AchievementResponse'
     patch:
       tags:
         - Achievement
@@ -4443,6 +4538,19 @@ paths:
       responses:
         '200':
           description: Daftar achievement OB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ObAchievementResponse'
 
   /api/achievement/me:
     get:
@@ -4455,6 +4563,19 @@ paths:
       responses:
         '200':
           description: Daftar achievement saya
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ObAchievementResponse'
 
 # NOTIFIKASI
   /api/notifikasi:
