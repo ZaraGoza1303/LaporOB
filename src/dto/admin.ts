@@ -44,6 +44,7 @@ export interface KpiResponse {
     laporan_berjalan: StatDetail;
     laporan_dibatalkan: StatDetail;
     tugas_belum_dikerjakan: StatDetail;
+    menunggu_persetujuan: StatDetail;
 }
 
 export interface BarChartResponse {

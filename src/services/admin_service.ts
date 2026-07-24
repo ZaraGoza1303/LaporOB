@@ -111,17 +111,19 @@ export class AdminService implements IAdminService {
 
         const { current_start, current_end, previous_start, previous_end } = calculateDateRanges(period);
 
-        const [rawActivities, currentReports, previousReports, daily_checklist_ob, currTugasBelumDikerjakan, prevTugasBelumDikerjakan, riwayatTugasRaw] = await Promise.all([
+        const [rawActivities, currentReports, previousReports, daily_checklist_ob, currTugasBelumDikerjakan, prevTugasBelumDikerjakan, currMenungguPersetujuan, prevMenungguPersetujuan, riwayatTugasRaw] = await Promise.all([
             this.laporanService.getRecentActivities(page_laporan, limit_laporan),
             this.laporanService.getReportsByDateRange(current_start, current_end),
             this.laporanService.getReportsByDateRange(previous_start, previous_end),
             this.adminRepo.getDailyChecklistOB(new Date()),
             this.adminRepo.countTugasBelumDikerjakan(current_start, current_end),
             this.adminRepo.countTugasBelumDikerjakan(previous_start, previous_end),
+            this.adminRepo.countMenungguPersetujuan(current_start, current_end),
+            this.adminRepo.countMenungguPersetujuan(previous_start, previous_end),
             this.adminRepo.getRiwayatTugasOB(page_tugas, limit_tugas)
         ]);
 
-        const kpi = this.calculateKpi(currentReports, previousReports, currTugasBelumDikerjakan, prevTugasBelumDikerjakan);
+        const kpi = this.calculateKpi(currentReports, previousReports, currTugasBelumDikerjakan, prevTugasBelumDikerjakan, currMenungguPersetujuan, prevMenungguPersetujuan);
         const pie_chart = this.calculatePieChart(currentReports);
         const bar_chart = this.calculateBarChart(currentReports, period);
 
@@ -375,7 +377,7 @@ export class AdminService implements IAdminService {
     }
 
 
-    private calculateKpi(current: ReportSummaryPayload[], previous: ReportSummaryPayload[], currTugasBelumDikerjakan: number, prevTugasBelumDikerjakan: number): DashboardMainResponse['kpi'] {
+    private calculateKpi(current: ReportSummaryPayload[], previous: ReportSummaryPayload[], currTugasBelumDikerjakan: number, prevTugasBelumDikerjakan: number, currMenungguPersetujuan: number, prevMenungguPersetujuan: number): DashboardMainResponse['kpi'] {
         const calculateTrend = (currCount: number, prevCount: number): StatDetail => {
             if (prevCount === 0) {
                 const trendDetail = { count: currCount, trend_value: currCount > 0 ? 100 : 0, is_positive: currCount > 0 };
@@ -408,8 +410,8 @@ export class AdminService implements IAdminService {
             laporan_selesai: calculateTrend(currDone, prevDone),
             laporan_berjalan: calculateTrend(currOngoing, prevOngoing),
             laporan_dibatalkan: calculateTrend(currDibatalkan, prevDibatalkan),
-            tugas_belum_dikerjakan: calculateTrend(currTugasBelumDikerjakan, prevTugasBelumDikerjakan)
-            
+            tugas_belum_dikerjakan: calculateTrend(currTugasBelumDikerjakan, prevTugasBelumDikerjakan),
+            menunggu_persetujuan: calculateTrend(currMenungguPersetujuan, prevMenungguPersetujuan)
         };
 
         return kpi;
