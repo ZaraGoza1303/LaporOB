@@ -18,6 +18,7 @@ export class LokasiService implements ILokasiService {
         const response: LokasiRes = {
             id: item.id,
             nama_lokasi: item.nama_lokasi,
+            alamat: item.alamat || null,
             jumlah_lantai: item.lantai ? item.lantai.length : 0,
             lantai: (item.lantai || []).map((floor: Lantai) => ({
                 id: floor.id,
