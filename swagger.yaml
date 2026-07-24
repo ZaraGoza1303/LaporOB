@@ -3552,6 +3552,9 @@ paths:
                 jumlah_lantai:
                   type: integer
                   minimum: 1
+                alamat:
+                  type: string
+                  description: Alamat lengkap lokasi (opsional)
       responses:
         '201':
           description: Lokasi berhasil dibuat
@@ -3598,6 +3601,9 @@ paths:
                 jumlah_lantai:
                   type: integer
                   minimum: 1
+                alamat:
+                  type: string
+                  description: Alamat lengkap lokasi (opsional)
       responses:
         '200':
           description: Lokasi berhasil diupdate

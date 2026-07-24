@@ -13,12 +13,14 @@ export const LokasiIdParamSchema = z.object({
 
 export const CreateLokasiSchema = z.object({
     nama_lokasi: z.string().trim().min(1, { message: "Nama lokasi tidak boleh kosong" }).max(100, { message: "Nama lokasi maksimal 100 karakter" }),
-    jumlah_lantai: z.number().int().min(1, { message: "Jumlah lantai minimal 1" })
+    jumlah_lantai: z.number().int().min(1, { message: "Jumlah lantai minimal 1" }),
+    alamat: z.string().trim().max(255, { message: "Alamat maksimal 255 karakter" }).optional()
 });
 
 export const UpdateLokasiSchema = z.object({
     nama_lokasi: z.string().trim().min(1, { message: "Nama lokasi tidak boleh kosong" }).max(100, { message: "Nama lokasi maksimal 100 karakter" }).optional(),
-    jumlah_lantai: z.number().int().min(1, { message: "Jumlah lantai minimal 1" }).optional()
+    jumlah_lantai: z.number().int().min(1, { message: "Jumlah lantai minimal 1" }).optional(),
+    alamat: z.string().trim().max(255, { message: "Alamat maksimal 255 karakter" }).optional()
 });
 
 export type CreateLokasiReq = z.infer<typeof CreateLokasiSchema>;
@@ -32,6 +34,7 @@ export interface LantaiRes {
 export interface LokasiRes {
     id: string;
     nama_lokasi: string;
+    alamat: string | null;
     jumlah_lantai: number;
     lantai: LantaiRes[];
     created_at: Date;
