@@ -2182,6 +2182,10 @@ paths:
                 is_open:
                   type: boolean
                   description: true = buka kolaborasi, false = tutup kolaborasi
+                catatan:
+                  type: string
+                  description: Catatan kolaborasi (opsional). Diisi saat membuka kolaborasi, di-clear saat menutup.
+                  nullable: true
       responses:
         '200':
           description: Status kolaborasi berhasil diubah
