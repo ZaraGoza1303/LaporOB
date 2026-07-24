@@ -141,6 +141,11 @@ export interface ProfileRes {
     tasksCompleted?: number;
     rejected?: number;
     admin?: AdminProfileData;
+    lokasiAktif?: Array<{
+      id: string;
+      nama_lokasi: string;
+      status: string;
+    }>;
   };
   laporan?: PaginatedResponse<MappedProfileReport>;
 }
