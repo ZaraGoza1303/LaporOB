@@ -53,6 +53,7 @@ export class ProfileService implements IProfileService {
     isOb: boolean,
     laporan: PaginatedResponse<MappedProfileReport>
   ): ProfileRes {
+    const obProfile = userProfile as ObProfileResponse;
     const user: ProfileRes['user'] = {
       id: userProfile.id,
       nama_lengkap: userProfile.nama_lengkap,
@@ -61,8 +62,9 @@ export class ProfileService implements IProfileService {
       role: userProfile.role,
       profile_picture: userProfile.profile_picture,
       ...(isOb ? {
-        total_laporan: (userProfile as ObProfileResponse).laporanDiterima ?? 0,
-        tasksCompleted: (userProfile as ObProfileResponse).laporanSelesai ?? 0,
+        total_laporan: obProfile.laporanDiterima ?? 0,
+        tasksCompleted: obProfile.laporanSelesai ?? 0,
+        lokasiAktif: obProfile.lokasiAktif,
       } : {
         total_laporan: (userProfile as UserProfileResponse).total_laporan ?? 0,
       }),
