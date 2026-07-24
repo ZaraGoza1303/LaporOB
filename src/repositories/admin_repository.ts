@@ -518,4 +518,32 @@ export class AdminRepository implements IAdminRepository {
             }
         });
     }
+
+    async countMenungguPersetujuan(startDate: Date, endDate: Date): Promise<number> {
+        const [laporan, tugas, checklist] = await Promise.all([
+            this.db.laporan_karyawan.count({
+                where: {
+                    status: LAPORAN_STATUS.SELESAI,
+                    is_approved: false,
+                    updated_at: { gte: startDate, lte: endDate }
+                }
+            }),
+            this.db.tugas.count({
+                where: {
+                    is_active: true,
+                    status: TUGAS_STATUS.SELESAI,
+                    is_approved: false,
+                    updated_at: { gte: startDate, lte: endDate }
+                }
+            }),
+            this.db.checklist_harian.count({
+                where: {
+                    status: CHECKLIST_STATUS.SELESAI,
+                    is_approved: false,
+                    updated_at: { gte: startDate, lte: endDate }
+                }
+            })
+        ]);
+        return laporan + tugas + checklist;
+    }
 }
