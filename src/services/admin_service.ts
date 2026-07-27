@@ -39,9 +39,9 @@ export class AdminService implements IAdminService {
 
     async getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<AdminLaporanPageResponse> {
         try {
-            const [laporanData, ruanganTerpopuler, totalLaporanAktif] = await Promise.all([
+            const [laporanData, informasiStatus, totalLaporanAktif] = await Promise.all([
                 this.laporanService.getAllLaporan(page, limit, query),
-                this.laporanService.getRuanganTerpopuler(6, query),
+                this.laporanService.getStatusInfo(query),
                 this.laporanService.countLaporanAktif(query)
             ]);
 
@@ -79,7 +79,7 @@ export class AdminService implements IAdminService {
                         total_pages: 0
                     }
                 },
-                ruangan_terpopuler: ruanganTerpopuler,
+                informasi_status: informasiStatus,
                 laporan_aktif: {
                     total_laporan: totalLaporanAktif
                 }
@@ -399,8 +399,8 @@ export class AdminService implements IAdminService {
         const currDone = current.filter(r => r.status === LAPORAN_STATUS.SELESAI).length;
         const prevDone = previous.filter(r => r.status === LAPORAN_STATUS.SELESAI).length;
 
-        const currOngoing = current.filter(r => r.status === LAPORAN_STATUS.BELUM_DIKERJAKAN || r.status === LAPORAN_STATUS.PENDING).length;
-        const prevOngoing = previous.filter(r => r.status === LAPORAN_STATUS.BELUM_DIKERJAKAN || r.status === LAPORAN_STATUS.PENDING).length;
+        const currOngoing = current.filter(r => r.status === LAPORAN_STATUS.BELUM_DIKERJAKAN || r.status === LAPORAN_STATUS.SEDANG_DIKERJAKAN || r.status === LAPORAN_STATUS.PENDING).length;
+        const prevOngoing = previous.filter(r => r.status === LAPORAN_STATUS.BELUM_DIKERJAKAN || r.status === LAPORAN_STATUS.SEDANG_DIKERJAKAN || r.status === LAPORAN_STATUS.PENDING).length;
 
         const currDibatalkan = current.filter(r => r.status === LAPORAN_STATUS.DIBATALKAN).length;
         const prevDibatalkan = previous.filter(r => r.status === LAPORAN_STATUS.DIBATALKAN).length;
@@ -422,13 +422,15 @@ export class AdminService implements IAdminService {
 
         const STATUS_LABEL_MAP: Record<LaporanStatus, string> = {
             [LAPORAN_STATUS.BELUM_DIKERJAKAN]: "Masuk",
-            [LAPORAN_STATUS.SELESAI]: "Selesai",
+            [LAPORAN_STATUS.SEDANG_DIKERJAKAN]: "Dikerjakan",
             [LAPORAN_STATUS.PENDING]: "Menunggu",
+            [LAPORAN_STATUS.SELESAI]: "Selesai",
             [LAPORAN_STATUS.DIBATALKAN]: "Dibatalkan",
         };
 
         const counts: Record<LaporanStatus, number> = {
             [LAPORAN_STATUS.BELUM_DIKERJAKAN]: 0,
+            [LAPORAN_STATUS.SEDANG_DIKERJAKAN]: 0,
             [LAPORAN_STATUS.PENDING]: 0,
             [LAPORAN_STATUS.SELESAI]: 0,
             [LAPORAN_STATUS.DIBATALKAN]: 0,
@@ -497,6 +499,7 @@ export class AdminService implements IAdminService {
                         label: `${bulanNames[bulanIdx] ?? ''} ${tahun}`,
                         total: t.total,
                         baru: t.baru,
+                        sedang_dikerjakan: t.sedang_dikerjakan,
                         pending: t.pending,
                         selesai: t.selesai,
                         dibatalkan: t.dibatalkan,

@@ -92,10 +92,27 @@ export class UsersController {
             }
 
             const userId = validate.data.user_id;
-            const response = await this.usersService.getByID(userId);
-            if (!response) {
+            const user = await this.usersService.getByID(userId);
+            if (!user) {
                 return res.status(404).json(sendErrorResponse("User tidak ditemukan"));
             }
+
+            const isOb = user.role?.nama_role?.toLowerCase() === USER_ROLE.OB;
+
+            let penugasan: import("../repositories/ob_repository.interface.js").PenugasanWithLokasi[] = [];
+            if (isOb) {
+                const today = new Date();
+                penugasan = await this.obService.getActiveAssignments(
+                    userId,
+                    today.getMonth() + 1,
+                    today.getFullYear()
+                );
+            }
+
+            const response = {
+                ...user,
+                penugasan,
+            };
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data user", response))
         } catch (err: unknown) {

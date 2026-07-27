@@ -164,7 +164,9 @@ export class AdminController {
             const { obId, lokasiIds, bulan, tahun } = validateBody.data;
             await this.adminService.assignObToLocations(obId, lokasiIds, bulan, tahun);
 
-            return res.status(200).json(sendSuccessfullResponse("Berhasil memperbarui penugasan OB", null));
+            const assignments = await this.adminService.getPenugasanByPeriode(bulan, tahun);
+
+            return res.status(200).json(sendSuccessfullResponse("Berhasil memperbarui penugasan OB", assignments));
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message));

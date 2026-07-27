@@ -1,7 +1,7 @@
 import type { MappedReportDetailRes, MappedProfileReport } from '../dto/users.js';
 import type { PaginatedResponse } from '../dto/response.js';
 import type { AdminLaporanHistoryQuery, AdminLaporanQuery, PatchLaporanReq } from '../dto/admin.js';
-import type { RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, DetailReportPayload, ProfileReport, LaporanKaryawanWithDetails } from '../repositories/laporan_repository.interface.js';
+import type { RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, StatusInfoPayload, DetailReportPayload, ProfileReport, LaporanKaryawanWithDetails } from '../repositories/laporan_repository.interface.js';
 import type { UserActivityRes } from '../dto/users.js';
 import type { Laporan_karyawanCreateInput } from '../generated/prisma/models.js';
 import type { Laporan_karyawan } from "../generated/prisma/client.js";
@@ -16,7 +16,7 @@ export interface ILaporanService {
     getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]>;
     getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>>;
     getAllHistoryLaporan(page: number, limit: number, query: AdminLaporanHistoryQuery): Promise<PaginatedResponse<Laporan_karyawan>>;
-    getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<RuanganTerpopulerPayload[]>;
+    getStatusInfo(query: AdminLaporanQuery): Promise<StatusInfoPayload>;
     countLaporanAktif(query: AdminLaporanQuery): Promise<number>;
     getActivity(userId: string): Promise<UserActivityRes[]>;
     insertReport(req: Laporan_karyawanCreateInput): Promise<string>;
