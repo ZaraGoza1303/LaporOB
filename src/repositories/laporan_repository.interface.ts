@@ -53,12 +53,13 @@ export type AdminLaporanPayload = Prisma.Laporan_karyawanGetPayload<{
     };
 }>;
 
-export interface RuanganTerpopulerPayload {
-    ruangan_id: string | null;
-    nama_ruangan: string;
-    nama_lantai: string;
-    nama_lokasi: string;
-    total_laporan: number;
+export interface StatusInfoPayload {
+    mendesak: number;
+    standar: number;
+    dibatalkan: number;
+    menunggu: number;
+    sedang_dikerjakan: number;
+    selesai: number;
 }
 
 export type LaporanKaryawanWithDetails = Prisma.Laporan_karyawanGetPayload<{
@@ -84,7 +85,7 @@ export interface ILaporanRepository {
     getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]>;
     getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<PaginatedResponse<AdminLaporanPayload>>;
     getAllHistoryLaporan(page: number, limit: number, query: AdminLaporanHistoryQuery): Promise<PaginatedResponse<Laporan_karyawan>>;
-    getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<any[]>;
+    getStatusInfo(query: AdminLaporanQuery): Promise<StatusInfoPayload>;
     countLaporanAktif(query: AdminLaporanQuery): Promise<number>;
     getLaporanCountByUserId(userId: string): Promise<number>;
     deleteLaporan(laporanId: string): Promise<void>;

@@ -148,12 +148,13 @@ export interface AdminLaporanItemResponse {
     updated_at: string;
 }
 
-export interface RuanganTerpopulerResponse {
-    ruangan_id: string | null;
-    nama_ruangan: string;
-    nama_lantai: string;
-    nama_lokasi: string;
-    total_laporan: number;
+export interface InformasiStatusResponse {
+    mendesak: number;
+    standar: number;
+    dibatalkan: number;
+    menunggu: number;
+    sedang_dikerjakan: number;
+    selesai: number;
 }
 
 export interface LaporanAktifResponse {
@@ -162,7 +163,7 @@ export interface LaporanAktifResponse {
 
 export interface AdminLaporanPageResponse {
     laporan: PaginatedResponse<AdminLaporanItemResponse>;
-    ruangan_terpopuler: RuanganTerpopulerResponse[];
+    informasi_status: InformasiStatusResponse;
     laporan_aktif: LaporanAktifResponse;
 }
 
@@ -234,8 +235,8 @@ export type PatchLaporanReq = z.infer<typeof PatchLaporanReqSchema>;
 export const AssignObToLocationsSchema = z.object({
     obId: z.string().uuid({ message: "Format obId harus UUID yang valid" }),
     lokasiIds: z.array(z.string().uuid({ message: "Format lokasiId harus UUID yang valid" })),
-    bulan: z.number().int().min(1).max(12),
-    tahun: z.number().int().min(2000).max(2100),
+    bulan: z.coerce.number().int().min(1).max(12),
+    tahun: z.coerce.number().int().min(2000).max(2100),
 });
 
 export type AssignObToLocationsReq = z.infer<typeof AssignObToLocationsSchema>;
@@ -309,6 +310,7 @@ export interface TrenLaporanBulananItem {
     label: string;
     total: number;
     baru: number;
+    sedang_dikerjakan: number;
     pending: number;
     selesai: number;
     dibatalkan: number;

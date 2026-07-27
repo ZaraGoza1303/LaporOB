@@ -1,5 +1,5 @@
 import type { IObService } from "./ob_service.interface.js";
-import type { IObRepository } from "../repositories/ob_repository.interface.js";
+import type { IObRepository, PenugasanWithLokasi } from "../repositories/ob_repository.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
 import type { ObHomeRes } from "../dto/ob.js";
@@ -105,6 +105,15 @@ export class ObService implements IObService {
             };
 
             return profile;
+        } catch (err: unknown) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async getActiveAssignments(obId: string, bulan: number, tahun: number): Promise<PenugasanWithLokasi[]> {
+        try {
+            const assignments = await this.obRepo.getActiveAssignments(obId, bulan, tahun);
+            return assignments;
         } catch (err: unknown) {
             throw handlePrismaError(err);
         }

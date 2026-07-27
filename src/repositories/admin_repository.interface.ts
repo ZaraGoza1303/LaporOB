@@ -16,13 +16,6 @@ export type RecentLaporanPayload = {
     } | null;
 };
 
-export interface ReportSummaryPayload {
-    id: string;
-    status: string;
-    prioritas: string;
-    created_at: Date;
-}
-
 export type LaporanDetailPayload = Prisma.Laporan_karyawanGetPayload<{
     include: {
         pelapor: true;
@@ -95,6 +88,7 @@ export interface TrenLaporanBulananRaw {
     bulan: string;
     total: number;
     baru: number;
+    sedang_dikerjakan: number;
     pending: number;
     selesai: number;
     dibatalkan: number;

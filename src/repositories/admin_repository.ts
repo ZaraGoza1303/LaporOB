@@ -312,7 +312,7 @@ export class AdminRepository implements IAdminRepository {
                 where: { ...where, status: LAPORAN_STATUS.BELUM_DIKERJAKAN },
             }),
             this.db.laporan_karyawan.count({
-                where: { ...where, status: LAPORAN_STATUS.PENDING },
+                where: { ...where, status: LAPORAN_STATUS.SEDANG_DIKERJAKAN },
             }),
             this.db.laporan_karyawan.count({
                 where: selesaiWhere,
@@ -475,7 +475,7 @@ export class AdminRepository implements IAdminRepository {
     async getLaporanMenungguInRange(startDate: Date, endDate: Date): Promise<number> {
         return this.db.laporan_karyawan.count({
             where: {
-                status: LAPORAN_STATUS.BELUM_DIKERJAKAN,
+                status: { in: [LAPORAN_STATUS.BELUM_DIKERJAKAN, LAPORAN_STATUS.PENDING] },
                 created_at: { gte: startDate, lte: endDate },
             },
         });
@@ -487,6 +487,7 @@ export class AdminRepository implements IAdminRepository {
                 to_char(created_at, 'YYYY-MM') as bulan,
                 COUNT(*)::int as total,
                 COUNT(*) FILTER (WHERE status = 'BELUM_DIKERJAKAN')::int as baru,
+                COUNT(*) FILTER (WHERE status = 'SEDANG_DIKERJAKAN')::int as sedang_dikerjakan,
                 COUNT(*) FILTER (WHERE status = 'PENDING')::int as pending,
                 COUNT(*) FILTER (WHERE status = 'SELESAI')::int as selesai,
                 COUNT(*) FILTER (WHERE status = 'DIBATALKAN')::int as dibatalkan
@@ -523,7 +524,7 @@ export class AdminRepository implements IAdminRepository {
         const [laporan, tugas, checklist] = await Promise.all([
             this.db.laporan_karyawan.count({
                 where: {
-                    status: LAPORAN_STATUS.SELESAI,
+                    status: { in: [LAPORAN_STATUS.PENDING, LAPORAN_STATUS.SELESAI] },
                     is_approved: false,
                     updated_at: { gte: startDate, lte: endDate }
                 }

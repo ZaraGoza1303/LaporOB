@@ -1,7 +1,7 @@
 import type { MappedReportDetailRes, MappedProfileReport } from "../dto/users.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { AdminLaporanHistoryQuery, AdminLaporanQuery, PatchLaporanReq } from "../dto/admin.js";
-import type { ILaporanRepository, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, DetailReportPayload, ProfileReport, LaporanKaryawanWithDetails } from "../repositories/laporan_repository.interface.js";
+import type { ILaporanRepository, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, StatusInfoPayload, DetailReportPayload, ProfileReport, LaporanKaryawanWithDetails } from "../repositories/laporan_repository.interface.js";
 import type { UserActivityRes } from "../dto/users.js";
 import { USER_ROLE, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, REF_TIPE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { handlePrismaError } from "../utils/error.js";
@@ -165,32 +165,9 @@ export class LaporanService implements ILaporanService {
         }
     }
 
-    async getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<RuanganTerpopulerPayload[]> {
+    async getStatusInfo(query: AdminLaporanQuery): Promise<StatusInfoPayload> {
         try {
-            const laporan = await this.laporanRepo.getRuanganTerpopuler(limit, query);
-            const ruanganMap = new Map<string, RuanganTerpopulerPayload>();
-
-            laporan.forEach((item: any) => {
-                const ruanganId = item.ruangan?.id ?? null;
-                const namaRuangan = item.ruangan?.nama ?? "Ruangan tidak diketahui";
-                const nomorLantai = item.ruangan?.lantai?.nomor_lantai;
-                const namaLantai = nomorLantai !== undefined ? `Lantai ${nomorLantai}` : "Lantai tidak diketahui";
-                const namaLokasi = item.ruangan?.lantai?.lokasi?.nama_lokasi ?? "Lokasi tidak diketahui";
-                const key = ruanganId ?? namaRuangan;
-                const current = ruanganMap.get(key);
-
-                ruanganMap.set(key, {
-                    ruangan_id: ruanganId,
-                    nama_ruangan: namaRuangan,
-                    nama_lantai: namaLantai,
-                    nama_lokasi: namaLokasi,
-                    total_laporan: (current?.total_laporan ?? 0) + 1
-                });
-            });
-
-            const result = Array.from(ruanganMap.values())
-                .sort((a, b) => b.total_laporan - a.total_laporan)
-                .slice(0, limit);
+            const result = await this.laporanRepo.getStatusInfo(query);
             return result;
         } catch (err) {
             handlePrismaError(err);
@@ -250,7 +227,9 @@ export class LaporanService implements ILaporanService {
             if (dto.status != null) {
                 data.status = dto.status;
 
-                if (dto.status === LAPORAN_STATUS.PENDING) {
+                if (dto.status === LAPORAN_STATUS.SEDANG_DIKERJAKAN) {
+                    data.dikerjakan_at = now;
+                } else if (dto.status === LAPORAN_STATUS.PENDING) {
                     data.dikerjakan_at = now;
                 } else if (dto.status === LAPORAN_STATUS.SELESAI) {
                     data.selesai_at = now;
