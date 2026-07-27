@@ -3,7 +3,7 @@ import type { CreateUserReq, UpdateProfileReq, UpdateUserReq, UserProfileRespons
 import type { PaginatedResponse } from "../dto/response.js";
 import type { User, Role } from "../generated/prisma/client.js";
 import type { UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
-import type { IUsersRepository, UserWithRoleAndToken } from "../repositories/users_repository.interface.js";
+import type { IUsersRepository, UserWithRoleAndToken, UserDetailWithPenugasan } from "../repositories/users_repository.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { generateActivationToken } from "../utils/token.js";
 import { buildActivationUrl, resolveFileUrl } from "../utils/url.js";
@@ -12,6 +12,7 @@ import bcrypt from 'bcrypt';
 import type { IRedisClient } from "../database/redis.interface.js";
 import type { IEmailService } from "./email_service.interface.js";
 import { sendRenderedEmail } from "../utils/email.js";
+import { USER_ROLE } from "../utils/constants.js";
 
 export class UsersService implements IUsersService {
     private usersRepo: IUsersRepository;
@@ -42,14 +43,28 @@ export class UsersService implements IUsersService {
         }
     }
 
-    async getByID(userId: string): Promise<UserWithRoleAndToken | null> {
+    async getByID(userId: string): Promise<UserDetailWithPenugasan | null> {
         try {
-            const user = await this.usersRepo.getByID(userId)
+            const user = await this.usersRepo.getByID(userId);
             if (!user) return null;
 
-            return user;
+            let penugasan: import("../repositories/ob_repository.interface.js").PenugasanWithLokasi[] = [];
+            const isOb = user.role?.nama_role?.toLowerCase() === USER_ROLE.OB;
+            if (isOb) {
+                const today = new Date();
+                penugasan = await this.usersRepo.getObActiveAssignments(
+                    userId,
+                    today.getMonth() + 1,
+                    today.getFullYear()
+                );
+            }
+
+            return {
+                ...user,
+                penugasan,
+            };
         } catch (err) {
-            throw handlePrismaError(err)
+            throw handlePrismaError(err);
         }
     }
 
@@ -96,7 +111,7 @@ export class UsersService implements IUsersService {
         try {
             const activationToken = generateActivationToken(5);
 
-            const createdUser = await this.usersRepo.transaction(async (tx) => {
+            await this.usersRepo.transaction(async (tx) => {
                 const user = await tx.user.create({
                     data: {
                         role: { connect: { id: req.role_id } },
@@ -104,6 +119,7 @@ export class UsersService implements IUsersService {
                         email: req.email,
                         nama_lengkap: req.nama_lengkap,
                     },
+                    include: { role: true },
                 });
 
                 await tx.userToken.create({
@@ -114,6 +130,18 @@ export class UsersService implements IUsersService {
                         expired_at: activationToken.expiredAt,
                     },
                 });
+
+                const isOb = user.role?.nama_role?.toLowerCase() === USER_ROLE.OB;
+                if (isOb && req.lokasi_ids && req.lokasi_ids.length >= 0) {
+                    const today = new Date();
+                    await this.usersRepo.syncObLocations(
+                        user.id,
+                        req.lokasi_ids,
+                        today.getMonth() + 1,
+                        today.getFullYear(),
+                        tx
+                    );
+                }
 
                 return user;
             });
@@ -143,7 +171,30 @@ export class UsersService implements IUsersService {
             if (req.is_active !== undefined) updateData.is_active = req.is_active;
             if (req.is_active === false) updateData.is_deleted = true;
 
-            await this.usersRepo.update(userId, updateData);
+            await this.usersRepo.transaction(async (tx) => {
+                await tx.user.update({
+                    where: { id: userId },
+                    data: updateData,
+                });
+
+                if (req.lokasi_ids !== undefined) {
+                    const targetUser = await tx.user.findUnique({
+                        where: { id: userId },
+                        include: { role: true },
+                    });
+                    if (targetUser && targetUser.role?.nama_role?.toLowerCase() === USER_ROLE.OB) {
+                        const today = new Date();
+                        await this.usersRepo.syncObLocations(
+                            userId,
+                            req.lokasi_ids,
+                            today.getMonth() + 1,
+                            today.getFullYear(),
+                            tx
+                        );
+                    }
+                }
+            });
+
             await this.redis.del("users:all:*");
         } catch (err) {
             throw handlePrismaError(err);

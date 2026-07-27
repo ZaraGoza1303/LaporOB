@@ -8,11 +8,29 @@ export const UserIdParamSchema = z.object({
   user_id: z.string().trim().uuid({ message: "Format user_id harus UUID yang valid" }),
 });
 
+const emptyToUndefined = (val: unknown) => {
+  if (val === "" || val === null || val === undefined) return undefined;
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+      return [val];
+    } catch {
+      return [val];
+    }
+  }
+  return val;
+};
+
 export const CreateUserSchema = z.object({
   nama_lengkap: z.string().trim().min(1, { message: 'Nama lengkap wajib diisi' }),
   username: z.string().trim().min(3, { message: 'Username minimal 3 karakter' }).max(50, { message: 'Username maksimal 50 karakter' }),
   email: z.string().trim().email(),
   role_id: z.string().trim().uuid({ message: 'Format role_id harus UUID yang valid' }),
+  lokasi_ids: z.preprocess(
+    emptyToUndefined,
+    z.array(z.string().trim().uuid({ message: 'Format lokasi_id harus UUID yang valid' })).optional()
+  ),
 });
 
 export const UpdateUserSchema = CreateUserSchema.extend({
