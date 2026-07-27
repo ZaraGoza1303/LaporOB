@@ -2,11 +2,11 @@ import type { CreateUserReq, UpdateProfileReq, UpdateUserReq, UserProfileRespons
 import type { PaginatedResponse } from "../dto/response.js";
 import type { UserSearchQuery } from "../dto/admin.js";
 import type { User, Role } from "../generated/prisma/client.js";
-import type { UserWithRoleAndToken } from "../repositories/users_repository.interface.js";
+import type { UserWithRoleAndToken, UserDetailWithPenugasan } from "../repositories/users_repository.interface.js";
 
 export interface IUsersService {
     getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>>;
-    getByID(userId: string): Promise<UserWithRoleAndToken | null>;
+    getByID(userId: string): Promise<UserDetailWithPenugasan | null>;
     getByEmail(email: string): Promise<User | null>;
     getByRole(nama_role: string): Promise<User[]>;
     create(req: CreateUserReq): Promise<void>;

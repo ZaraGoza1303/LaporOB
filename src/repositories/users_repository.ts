@@ -141,6 +141,40 @@ export class UsersRepository implements IUsersRepository {
        });
    }
 
+   async syncObLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number, tx?: Prisma.TransactionClient): Promise<void> {
+       const client = tx || this.db;
+       await client.penugasanOb.deleteMany({
+           where: {
+               ob_id: obId,
+               bulan,
+               tahun,
+           }
+       });
+       if (lokasiIds.length > 0) {
+           await client.penugasanOb.createMany({
+               data: lokasiIds.map((lokasiId) => ({
+                   ob_id: obId,
+                   lokasi_id: lokasiId,
+                   bulan,
+                   tahun,
+               }))
+           });
+       }
+   }
+
+   async getObActiveAssignments(obId: string, bulan: number, tahun: number) {
+       return this.db.penugasanOb.findMany({
+           where: {
+               ob_id: obId,
+               bulan,
+               tahun,
+           },
+           include: {
+               lokasi: true,
+           }
+       });
+   }
+
    async transaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
        return this.db.$transaction(fn);
    }

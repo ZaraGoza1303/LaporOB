@@ -97,24 +97,7 @@ export class UsersController {
                 return res.status(404).json(sendErrorResponse("User tidak ditemukan"));
             }
 
-            const isOb = user.role?.nama_role?.toLowerCase() === USER_ROLE.OB;
-
-            let penugasan: import("../repositories/ob_repository.interface.js").PenugasanWithLokasi[] = [];
-            if (isOb) {
-                const today = new Date();
-                penugasan = await this.obService.getActiveAssignments(
-                    userId,
-                    today.getMonth() + 1,
-                    today.getFullYear()
-                );
-            }
-
-            const response = {
-                ...user,
-                penugasan,
-            };
-
-            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data user", response))
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data user", user));
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))

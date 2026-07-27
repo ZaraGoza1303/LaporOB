@@ -2435,6 +2435,12 @@ paths:
                 role_id:
                   type: string
                   format: uuid
+                lokasi_ids:
+                  type: array
+                  description: 'Daftar ID lokasi aktif untuk user dengan role OB'
+                  items:
+                    type: string
+                    format: uuid
       responses:
         '201':
           description: User berhasil dibuat
@@ -3353,6 +3359,12 @@ paths:
                   format: binary
                 is_active:
                   type: boolean
+                lokasi_ids:
+                  type: array
+                  description: 'Daftar ID lokasi aktif untuk user dengan role OB'
+                  items:
+                    type: string
+                    format: uuid
       responses:
         '200':
           description: User berhasil diupdate

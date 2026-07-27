@@ -2,6 +2,7 @@ import type { UserSearchQuery } from "../dto/admin.js";
 import type { PaginatedResponse } from "../dto/response.js";
 import type { User, Role, Prisma } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
+import type { PenugasanWithLokasi } from "./ob_repository.interface.js";
 
 export type ProfileUser = User & {
     role: {
@@ -14,6 +15,9 @@ export type UserWithRoleAndToken = User & {
     tokens: { id: string; token_hash: string; type: string; expired_at: Date; created_at: Date; used_at: Date | null }[];
 };
 
+export type UserDetailWithPenugasan = UserWithRoleAndToken & {
+    penugasan: PenugasanWithLokasi[];
+};
 
 
 export interface IUsersRepository {
@@ -28,5 +32,7 @@ export interface IUsersRepository {
     getUserWithRoleById(userId: string): Promise<ProfileUser | null>;
     getByRole(nama_role: string): Promise<User[]>;
     getRoles(): Promise<Role[]>;
+    syncObLocations(obId: string, lokasiIds: string[], bulan: number, tahun: number, tx?: Prisma.TransactionClient): Promise<void>;
+    getObActiveAssignments(obId: string, bulan: number, tahun: number): Promise<PenugasanWithLokasi[]>;
     transaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }
