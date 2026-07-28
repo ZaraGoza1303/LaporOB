@@ -7,6 +7,7 @@ import type { ITugasService } from "./tugas_service.interface.js";
 import type { IRedisClient } from "../database/redis.interface.js";
 import type { ISkillService } from "./skill_service.interface.js";
 import type { IAchievementService } from "./achievement_service.interface.js";
+import { resolveFileUrl } from "../utils/url.js";
 
 export class TugasService implements ITugasService {
     private tugasRepo: ITugasRepository;
@@ -64,6 +65,8 @@ export class TugasService implements ITugasService {
                     ob: tugas.ob ?? null,
                     status: tugas.status,
                     catatan: tugas.catatan,
+                    foto_awal: (tugas.foto_awal ?? []).map((f: string) => resolveFileUrl(f)).filter((url: string | null): url is string => url !== null),
+                    foto_akhir: (tugas.foto_akhir ?? []).map((f: string) => resolveFileUrl(f)).filter((url: string | null): url is string => url !== null),
                     dikerjakan_at: tugas.dikerjakan_at,
                     selesai_at: tugas.selesai_at,
                     total_durasi,
@@ -98,6 +101,8 @@ export class TugasService implements ITugasService {
                 ob: tugas.ob ?? null,
                 status: tugas.status,
                 catatan: tugas.catatan,
+                foto_awal: (tugas.foto_awal ?? []).map((f: string) => resolveFileUrl(f)).filter((url: string | null): url is string => url !== null),
+                foto_akhir: (tugas.foto_akhir ?? []).map((f: string) => resolveFileUrl(f)).filter((url: string | null): url is string => url !== null),
                 dikerjakan_at: tugas.dikerjakan_at,
                 selesai_at: tugas.selesai_at,
                 total_durasi,
@@ -180,7 +185,7 @@ export class TugasService implements ITugasService {
         }
     }
 
-    async claimTugas(tugasId: string, obId: string): Promise<void> {
+    async claimTugas(tugasId: string, obId: string, fotoAwal: string[]): Promise<void> {
         try {
             const tugas = await this.tugasRepo.getByID(tugasId);
             if (!tugas) {
@@ -189,18 +194,76 @@ export class TugasService implements ITugasService {
             if (tugas.ob_id !== null) {
                 throw new AppError("Tugas sudah diambil oleh OB lain", 409);
             }
-            await this.tugasRepo.claimByOb(tugasId, obId);
+            await this.tugasRepo.claimByOb(tugasId, obId, fotoAwal);
         } catch (err) {
             if (err instanceof AppError) throw err;
             throw handlePrismaError(err);
         }
     }
 
-    async completeTugas(tugasId: string, obId: string): Promise<void> {
+    async completeTugas(tugasId: string, obId: string, fotoAkhir: string[], catatan?: string): Promise<void> {
         try {
-            await this.tugasRepo.completeByOb(tugasId, obId);
+            const tugas = await this.tugasRepo.getByID(tugasId);
+            if (!tugas) {
+                throw new AppError("Tugas tidak ditemukan", 404);
+            }
+            if (tugas.ob_id !== obId) {
+                throw new AppError("Bukan tugas anda", 403);
+            }
+            await this.tugasRepo.completeByOb(tugasId, obId, fotoAkhir, catatan);
             await this.skillService.prosesSkillOtomatisForOb(obId);
             await this.achievementService.prosesOtomatisUntukOb(obId);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async getCompletedTugasForOb(obId: string, limit: number, cursor?: string | null, search?: string | null): Promise<import("../dto/response.js").PaginatedResponse<TugasDetailRes>> {
+        try {
+            const result = await this.tugasRepo.getCompletedTugasByObId(obId, limit, cursor, search);
+            const items: TugasDetailRes[] = result.items.map((tugas: TugasDetailPayload) => {
+                let total_durasi: number | null = null;
+                if (tugas.dikerjakan_at && tugas.selesai_at) {
+                    total_durasi = Math.floor((tugas.selesai_at.getTime() - tugas.dikerjakan_at.getTime()) / 1000);
+                }
+                return {
+                    id: tugas.id,
+                    nama_tugas: tugas.nama_tugas,
+                    kategori: tugas.kategori ?? null,
+                    lantai: tugas.lantai ?? null,
+                    ob: tugas.ob ?? null,
+                    status: tugas.status,
+                    catatan: tugas.catatan,
+                    foto_awal: (tugas.foto_awal ?? []).map((f: string) => resolveFileUrl(f)).filter((url: string | null): url is string => url !== null),
+                    foto_akhir: (tugas.foto_akhir ?? []).map((f: string) => resolveFileUrl(f)).filter((url: string | null): url is string => url !== null),
+                    dikerjakan_at: tugas.dikerjakan_at,
+                    selesai_at: tugas.selesai_at,
+                    total_durasi,
+                    hari: tugas.hari,
+                    is_approved: tugas.is_approved,
+                    approved_at: tugas.approved_at,
+                    created_at: tugas.created_at,
+                    updated_at: tugas.updated_at,
+                };
+            });
+            return {
+                items,
+                next_cursor: result.next_cursor,
+                meta: result.meta ?? {
+                    total_items: 0,
+                    current_page: 1,
+                    limit,
+                    total_pages: 0
+                }
+            };
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async countCompletedTugasForOb(obId: string): Promise<number> {
+        try {
+            return await this.tugasRepo.countCompletedTugasByObId(obId);
         } catch (err) {
             throw handlePrismaError(err);
         }

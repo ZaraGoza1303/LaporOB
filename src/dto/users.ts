@@ -147,6 +147,8 @@ export interface MappedProfileReport {
   updated_at: string;
 }
 
+import type { TugasDetailRes } from "./tugas.js";
+
 export interface ProfileRes {
   user: {
     id: string;
@@ -157,6 +159,7 @@ export interface ProfileRes {
     profile_picture: string | null;
     total_laporan?: number;
     tasksCompleted?: number;
+    laporanSelesai?: number;
     rejected?: number;
     admin?: AdminProfileData;
     lokasiAktif?: Array<{
@@ -166,6 +169,7 @@ export interface ProfileRes {
     }>;
   };
   laporan?: PaginatedResponse<MappedProfileReport>;
+  tugas?: PaginatedResponse<TugasDetailRes>;
 }
 
 export interface MappedReportDetailRes {
@@ -206,7 +210,6 @@ export interface ObProfileResponse {
   email: string;
   role: string;
   profile_picture: string | null;
-  laporanDiterima: number;
   laporanSelesai: number;
   lokasiAktif: Array<{
     id: string;
