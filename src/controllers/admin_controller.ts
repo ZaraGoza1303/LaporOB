@@ -161,7 +161,7 @@ export class AdminController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
 
-            const { obId, lokasiIds, bulan, tahun } = validateBody.data;
+            const { ob_id: obId, lokasi_ids: lokasiIds, bulan, tahun } = validateBody.data;
             await this.adminService.assignObToLocations(obId, lokasiIds, bulan, tahun);
 
             const assignments = await this.adminService.getPenugasanByPeriode(bulan, tahun);
@@ -177,10 +177,10 @@ export class AdminController {
 
     async getPenugasanByPeriode(req: Request, res: Response) {
         try {
-            const querySchema = z.object({
-                bulan: z.coerce.number().int().min(1).max(12),
-                tahun: z.coerce.number().int().min(2000).max(2100),
-            });
+        const querySchema = z.object({
+            bulan: z.coerce.number().int().min(1).max(12).default(() => new Date().getMonth() + 1),
+            tahun: z.coerce.number().int().min(2000).max(2100).default(() => new Date().getFullYear()),
+        });
             const validateQuery = querySchema.safeParse(req.query);
             if (!validateQuery.success) {
                 const formattedErr = validateQuery.error.flatten().fieldErrors;
@@ -237,7 +237,7 @@ export class AdminController {
             }
 
             const schemaBody = z.object({
-                catatan: z.string().min(1, "Catatan alasan pembatalan wajib diisi"),
+                alasan: z.string().min(1, "Catatan alasan pembatalan wajib diisi"),
             });
             const validateBody = schemaBody.safeParse(req.body);
             if (!validateBody.success) {
@@ -246,7 +246,7 @@ export class AdminController {
             }
 
             const laporanId = validateParams.data.laporan_id;
-            const response = await this.adminService.rejectLaporan(laporanId, validateBody.data.catatan);
+            const response = await this.adminService.rejectLaporan(laporanId, validateBody.data.alasan);
 
             return res.status(200).json(sendSuccessfullResponse("Pekerjaan berhasil dibatalkan dan dikembalikan ke antrean", response));
         } catch (err: unknown) {

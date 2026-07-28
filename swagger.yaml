@@ -1304,18 +1304,6 @@ components:
         status:
           type: string
 
-    PaginationMeta:
-      type: object
-      properties:
-        total_items:
-          type: integer
-        current_page:
-          type: integer
-        limit:
-          type: integer
-        total_pages:
-          type: integer
-
 # AUTH
 paths:
   /api/auth/login:
@@ -2483,15 +2471,13 @@ paths:
             schema:
               type: object
               required:
-                - obId
-                - lokasiIds
-                - bulan
-                - tahun
+                - ob_id
+                - lokasi_ids
               properties:
-                obId:
+                ob_id:
                   type: string
                   format: uuid
-                lokasiIds:
+                lokasi_ids:
                   type: array
                   items:
                     type: string
@@ -2500,9 +2486,11 @@ paths:
                   type: integer
                   minimum: 1
                   maximum: 12
+                  description: Default ke bulan sekarang
                 tahun:
                   type: integer
                   minimum: 2000
+                  description: Default ke tahun sekarang
       responses:
         '200':
           description: Berhasil memperbarui penugasan OB
@@ -2517,14 +2505,16 @@ paths:
       parameters:
         - name: bulan
           in: query
-          required: true
+          required: false
           schema:
             type: integer
             minimum: 1
             maximum: 12
+            default: 7
+          description: Default ke bulan sekarang
         - name: tahun
           in: query
-          required: true
+          required: false
           schema:
             type: integer
             minimum: 2000
@@ -3295,9 +3285,9 @@ paths:
             schema:
               type: object
               required:
-                - catatan
+                - alasan
               properties:
-                catatan:
+                alasan:
                   type: string
       responses:
         '200':
