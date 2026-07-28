@@ -26,7 +26,7 @@ export const AdminLaporanQuerySchema = z.object({
 
 export const AdminLaporanHistoryQuerySchema = z.object({
     search: z.preprocess(emptyToNull, z.string().nullable()),
-    user_id: z.preprocess(emptyToNull, z.string().uuid({ message: "Format user_id harus UUID yang valid" })),
+    user_id: z.preprocess(emptyToNull, z.string().uuid({ message: "Format user_id harus UUID yang valid" }).nullable().optional()),
 });
 
 export type AdminLaporanQuery = z.infer<typeof AdminLaporanQuerySchema>;
@@ -233,10 +233,10 @@ export const PatchLaporanReqSchema = z.object({
 
 export type PatchLaporanReq = z.infer<typeof PatchLaporanReqSchema>;
 export const AssignObToLocationsSchema = z.object({
-    obId: z.string().uuid({ message: "Format obId harus UUID yang valid" }),
-    lokasiIds: z.array(z.string().uuid({ message: "Format lokasiId harus UUID yang valid" })),
-    bulan: z.coerce.number().int().min(1).max(12),
-    tahun: z.coerce.number().int().min(2000).max(2100),
+    ob_id: z.string().uuid({ message: "Format ob_id harus UUID yang valid" }),
+    lokasi_ids: z.array(z.string().uuid({ message: "Format lokasi_id harus UUID yang valid" })),
+    bulan: z.coerce.number().int().min(1).max(12).default(() => new Date().getMonth() + 1),
+    tahun: z.coerce.number().int().min(2000).max(2100).default(() => new Date().getFullYear()),
 });
 
 export type AssignObToLocationsReq = z.infer<typeof AssignObToLocationsSchema>;

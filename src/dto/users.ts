@@ -40,7 +40,7 @@ export const UpdateUserSchema = CreateUserSchema.extend({
 
 export const UpdateProfileSchema = CreateUserSchema.pick({
   nama_lengkap: true,
-}).partial();
+}).partial().strict();
 
 // export interface CreateUserRes {
 //   activationUrl: string,
