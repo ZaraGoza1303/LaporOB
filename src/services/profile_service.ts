@@ -4,9 +4,11 @@ import type { IKaryawanService } from "./karyawan_service.interface.js";
 import type { IObService } from "./ob_service.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
 import type { IAdminService } from "./admin_service.interface.js";
+import type { ITugasService } from "./tugas_service.interface.js";
 import type { ProfileLaporanQuery, ProfileRes, ObProfileResponse, UserProfileResponse, MappedProfileReport } from "../dto/users.js";
+import type { TugasDetailRes } from "../dto/tugas.js";
 import type { PaginatedResponse } from "../dto/response.js";
-import { USER_ROLE } from "../utils/constants.js";
+import { USER_ROLE, LAPORAN_STATUS } from "../utils/constants.js";
 
 export class ProfileService implements IProfileService {
   constructor(
@@ -15,6 +17,7 @@ export class ProfileService implements IProfileService {
     private obService: IObService,
     private laporanService: ILaporanService,
     private adminService: IAdminService,
+    private tugasService: ITugasService,
   ) {}
 
   async getProfile(userId: string, role: string, query: ProfileLaporanQuery): Promise<ProfileRes> {
@@ -29,7 +32,7 @@ export class ProfileService implements IProfileService {
       };
     }
 
-    const { search, status, cursor, limit } = query;
+    const { search, cursor, limit } = query;
 
     const userProfile = isOb
       ? await this.obService.getProfile(userId)
@@ -41,17 +44,30 @@ export class ProfileService implements IProfileService {
     }
 
     const laporan: PaginatedResponse<MappedProfileReport> = isOb
-      ? await this.laporanService.getRiwayat(userId, limit, cursor, search, status)
-      : await this.karyawanService.getRiwayat(userId, limit, { cursor, search, status }) as PaginatedResponse<MappedProfileReport>;
+      ? await this.laporanService.getRiwayat(userId, limit, cursor, search, LAPORAN_STATUS.SELESAI)
+      : await this.karyawanService.getRiwayat(userId, limit, { cursor, search, status: LAPORAN_STATUS.SELESAI }) as PaginatedResponse<MappedProfileReport>;
 
-    const profileRes = this.toProfileRes(userProfile as ObProfileResponse | UserProfileResponse, isOb, laporan);
+    let completedTugasCount = 0;
+    let tugas: PaginatedResponse<TugasDetailRes> | undefined = undefined;
+    if (isOb) {
+      const [tugasResult, countResult] = await Promise.all([
+        this.tugasService.getCompletedTugasForOb(userId, limit, cursor, search),
+        this.tugasService.countCompletedTugasForOb(userId),
+      ]);
+      tugas = tugasResult;
+      completedTugasCount = countResult;
+    }
+
+    const profileRes = this.toProfileRes(userProfile as ObProfileResponse | UserProfileResponse, isOb, laporan, completedTugasCount, tugas);
     return profileRes;
   }
 
   private toProfileRes(
     userProfile: ObProfileResponse | UserProfileResponse,
     isOb: boolean,
-    laporan: PaginatedResponse<MappedProfileReport>
+    laporan: PaginatedResponse<MappedProfileReport>,
+    completedTugasCount: number,
+    tugas?: PaginatedResponse<TugasDetailRes>
   ): ProfileRes {
     const obProfile = userProfile as ObProfileResponse;
     const user: ProfileRes['user'] = {
@@ -62,8 +78,8 @@ export class ProfileService implements IProfileService {
       role: userProfile.role,
       profile_picture: userProfile.profile_picture,
       ...(isOb ? {
-        total_laporan: obProfile.laporanDiterima ?? 0,
-        tasksCompleted: obProfile.laporanSelesai ?? 0,
+        tasksCompleted: completedTugasCount,
+        laporanSelesai: obProfile.laporanSelesai ?? 0,
         lokasiAktif: obProfile.lokasiAktif,
       } : {
         total_laporan: (userProfile as UserProfileResponse).total_laporan ?? 0,
@@ -72,6 +88,7 @@ export class ProfileService implements IProfileService {
     const profileRes: ProfileRes = {
       user,
       laporan,
+      ...(tugas !== undefined && { tugas }),
     };
     return profileRes;
   }

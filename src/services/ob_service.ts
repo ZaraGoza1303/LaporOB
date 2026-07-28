@@ -10,6 +10,7 @@ import { resolveFileUrl } from "../utils/url.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { LAPORAN_PRIORITY, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, REF_TIPE, type LaporanPriority, type LaporanStatus, USER_ROLE } from "../utils/constants.js";
 import type { LaporanKaryawanWithDetails } from "../repositories/laporan_repository.interface.js";
+import type { ITugasService } from "./tugas_service.interface.js";
 
 export class ObService implements IObService {
     private obRepo: IObRepository;
@@ -80,10 +81,9 @@ export class ObService implements IObService {
             const bulan = today.getMonth() + 1;
             const tahun = today.getFullYear();
 
-            const [obStats, penugasan, allReports] = await Promise.all([
+            const [obStats, penugasan] = await Promise.all([
                 this.laporanService.getObPerformanceStats(obId),
                 this.obRepo.getActiveAssignments(obId, bulan, tahun),
-                this.laporanService.getReportsByObId(obId, 1)
             ]);
 
             const lokasiAktif = penugasan.map((p) => ({
@@ -99,7 +99,6 @@ export class ObService implements IObService {
                 email: user.email,
                 role: user.role?.nama_role || "OB",
                 profile_picture: resolveFileUrl(user.profile_picture),
-                laporanDiterima: allReports.meta?.total_items ?? 0,
                 laporanSelesai: obStats.total_tugas_selesai,
                 lokasiAktif: lokasiAktif,
             };

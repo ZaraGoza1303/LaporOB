@@ -27,8 +27,10 @@ export interface ITugasRepository {
     update(tugasId: string, req: TugasUpdateInput): Promise<void>;
     delete(tugasId: string): Promise<void>;
     getAllTugasForOb(obId: string): Promise<Tugas[]>;
-    claimByOb(tugasId: string, obId: string): Promise<void>;
-    completeByOb(tugasId: string, obId: string): Promise<void>;
+    claimByOb(tugasId: string, obId: string, fotoAwal: string[]): Promise<void>;
+    completeByOb(tugasId: string, obId: string, fotoAkhir: string[], catatan?: string): Promise<void>;
+    getCompletedTugasByObId(obId: string, limit: number, cursor?: string | null, search?: string | null): Promise<PaginatedResponse<TugasDetailPayload>>;
+    countCompletedTugasByObId(obId: string): Promise<number>;
     getMatchingToday(today: Date): Promise<Tugas[]>;
     getPendingApproval(period: { start: Date; end: Date }, lokasiId?: string): Promise<TugasApprovalItem[]>;
     approve(tugasId: string, adminId: string): Promise<void>;

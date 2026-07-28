@@ -40,6 +40,8 @@ export interface TugasDetailRes {
     ob: { id: string; nama_lengkap: string } | null;
     status: string;
     catatan: string | null;
+    foto_awal: string[];
+    foto_akhir: string[];
     dikerjakan_at: Date | null;
     selesai_at: Date | null;
     total_durasi: number | null;
