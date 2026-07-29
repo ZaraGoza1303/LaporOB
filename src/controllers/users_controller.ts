@@ -4,7 +4,7 @@ import type { IObService } from "../services/ob_service.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
 import type { IStorageService } from "../services/storage_service.interface.js";
 import { CreateUserSchema, UpdateUserSchema, UpdateProfileSchema, ProfileLaporanQuerySchema, UserIdParamSchema, LaporanIdParamSchema } from "../dto/users.js";
-import type { ProfileRes, ObProfileResponse, UserProfileResponse } from "../dto/users.js";
+import type { ProfileRes, ObProfileResponse, UserProfileResponse } from "../types/users.js";
 import { UserSearchQuerySchema, GetDashboardQuerySchema } from "../dto/admin.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";

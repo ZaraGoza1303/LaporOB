@@ -1,6 +1,6 @@
 import type { Tugas, Prisma } from "../generated/prisma/client.js";
 import type { TugasCreateInput, TugasUpdateInput } from "../generated/prisma/models.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { PaginatedResponse } from "../types/response.js";
 
 export type TugasApprovalItem = Prisma.TugasGetPayload<{
     include: {

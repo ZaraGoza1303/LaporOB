@@ -1,7 +1,7 @@
 import { Prisma } from "../generated/prisma/client.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import type { JadwalChecklist } from "../generated/prisma/client.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { PaginatedResponse } from "../types/response.js";
 
 export type ChecklistHarianWithRelations = Prisma.Checklist_harianGetPayload<{
     include: { kategori: true, lantai: true, ob: true }

@@ -1,10 +1,10 @@
-import type { PaginatedResponse } from "../dto/response.js";
-import type { UserActivityRes } from "../dto/users.js";
+import type { PaginatedResponse } from "../types/response.js";
+import type { UserActivityRes } from "../types/users.js";
 import type { AdminLaporanHistoryQuery, AdminLaporanQuery } from '../dto/admin.js';
 import type { User, Kategori, Lantai, Lokasi, Laporan_karyawan, Prisma } from "../generated/prisma/client.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { PeriodRange } from "../utils/date.js";
-import type { ObPerformance } from "../dto/ob.js";
+import type { ObPerformance } from "../types/ob.js";
 
 export type ProfileReport = Laporan_karyawan & {
     kategori: Kategori;

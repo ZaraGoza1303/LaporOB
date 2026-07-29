@@ -1,8 +1,9 @@
-import type { AdminLaporanHistoryQuery, AdminLaporanPageResponse, AdminLaporanQuery, AdminReportDetailResponse, PatchLaporanReq, UserSearchQuery, UserStatsRes, StatsTugasQuery, StatsTugasResponse, StatsLaporanQuery, StatsLaporanResponse, AdminProfileData, ObRankingItem, ObPerformanceDashboardResponse, ObPerformanceDashboardQuery } from '../dto/admin.js';
-import type { GetDashboardQuery, DashboardMainResponse } from '../dto/admin.js';
+import type { AdminLaporanHistoryQuery, AdminLaporanQuery, PatchLaporanReq, UserSearchQuery, StatsTugasQuery, StatsLaporanQuery, ObPerformanceDashboardQuery } from '../dto/admin.js';
+import type { GetDashboardQuery } from '../dto/admin.js';
+import type { AdminLaporanPageResponse, AdminReportDetailResponse, UserStatsRes, StatsTugasResponse, StatsLaporanResponse, AdminProfileData, ObRankingItem, ObPerformanceDashboardResponse, DashboardMainResponse } from '../types/admin.js';
 import type { PenugasanObWithDetails } from '../repositories/admin_repository.interface.js';
 import type { Laporan_karyawan } from '../generated/prisma/client.js';
-import type { PaginatedResponse } from '../dto/response.js';
+import type { PaginatedResponse } from '../types/response.js';
 
 export interface IAdminService {
     getUserStats(): Promise<UserStatsRes>;

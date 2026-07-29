@@ -1,4 +1,4 @@
-import type { NotificationData, BulkNotificationData, NotifikasiGroupedResponse } from "../dto/notification.js"
+import type { NotificationData, BulkNotificationData, NotifikasiGroupedResponse } from "../types/notification.js";
 import type { NotifikasiWithPengirim } from "../repositories/notification_repository.interface.js";
 
 export interface INotificationService {

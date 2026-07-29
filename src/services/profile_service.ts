@@ -4,8 +4,9 @@ import type { IKaryawanService } from "./karyawan_service.interface.js";
 import type { IObService } from "./ob_service.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
 import type { IAdminService } from "./admin_service.interface.js";
-import type { ProfileLaporanQuery, ProfileRes, ObProfileResponse, UserProfileResponse, MappedProfileReport } from "../dto/users.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { ProfileLaporanQuery } from "../dto/users.js";
+import type { ProfileRes, ObProfileResponse, UserProfileResponse, MappedProfileReport } from "../types/users.js";
+import type { PaginatedResponse } from "../types/response.js";
 import { USER_ROLE } from "../utils/constants.js";
 
 export class ProfileService implements IProfileService {

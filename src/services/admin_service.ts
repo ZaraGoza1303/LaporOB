@@ -1,5 +1,7 @@
-import type { AdminLaporanItemResponse, AdminLaporanPageResponse, AdminLaporanQuery, PatchLaporanReq, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse, AdminLaporanHistoryQuery, StatsTugasQuery, StatsTugasResponse, StatsLaporanQuery, StatsLaporanResponse, AdminProfileData, ObRankingItem, ObPerformanceDashboardResponse, ObPerformanceDashboardQuery, ObPerbandinganItem, TrenLaporanBulananItem } from "../dto/admin.js";
-import type { DashboardMainResponse, GetDashboardQuery, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse, DailyChecklistOBResponse } from "../dto/admin.js";
+import type { AdminLaporanQuery, PatchLaporanReq, AdminLaporanHistoryQuery, StatsTugasQuery, StatsLaporanQuery, ObPerformanceDashboardQuery } from "../dto/admin.js";
+import type { AdminLaporanItemResponse, AdminLaporanPageResponse, UserStatsRes, RecentActivityPayload, ReportSummaryPayload, AdminReportDetailResponse, StatsTugasResponse, StatsLaporanResponse, AdminProfileData, ObRankingItem, ObPerformanceDashboardResponse, ObPerbandinganItem, TrenLaporanBulananItem } from "../types/admin.js";
+import type { GetDashboardQuery } from "../dto/admin.js";
+import type { DashboardMainResponse, RecentActivityResponse, StatDetail, BarChartResponse, PieChartResponse, DailyChecklistOBResponse } from "../types/admin.js";
 import type { IAdminRepository, PenugasanObWithDetails, ObRankingRawData, TrenLaporanBulananRaw } from "../repositories/admin_repository.interface.js";
 import type { AdminLaporanPayload } from "../repositories/laporan_repository.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
@@ -12,7 +14,7 @@ import type { IAdminService } from "./admin_service.interface.js";
 import type { Laporan_karyawan } from "../generated/prisma/client.js";
 import type { DailyChecklistObReport } from "../repositories/admin_repository.interface.js";
 import type { IRedisClient } from "../database/redis.interface.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { PaginatedResponse } from "../types/response.js";
 
 
 export class AdminService implements IAdminService {

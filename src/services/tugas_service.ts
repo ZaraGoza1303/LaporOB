@@ -1,4 +1,6 @@
-import type { CreateTugasReq, UpdateTugasReq, TugasDetailRes } from "../dto/tugas.js";
+import type { CreateTugasReq, UpdateTugasReq } from "../dto/tugas.js";
+import type { TugasDetailRes } from "../types/tugas.js";
+import type { PaginatedResponse } from "../types/response.js";
 import type { Tugas } from "../generated/prisma/client.js";
 import type { TugasCreateInput, TugasUpdateInput } from "../generated/prisma/models.js";
 import type { ITugasRepository, TugasApprovalItem, TugasDetailPayload } from "../repositories/tugas_repository.interface.js";
@@ -48,7 +50,7 @@ export class TugasService implements ITugasService {
         }
     }
 
-    async getAllPaginated(page: number, limit: number, search?: string): Promise<import("../dto/response.js").PaginatedResponse<TugasDetailRes>> {
+    async getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<TugasDetailRes>> {
         try {
             const result = await this.tugasRepo.getAllPaginated(page, limit, search);
             const items: TugasDetailRes[] = result.items.map((tugas: TugasDetailPayload) => {
