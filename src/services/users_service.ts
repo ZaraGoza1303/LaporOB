@@ -11,6 +11,7 @@ import type { IUsersService } from "./users_service.interface.js";
 import bcrypt from 'bcrypt';
 import type { IRedisClient } from "../database/redis.interface.js";
 import type { IEmailService } from "./email_service.interface.js";
+import type { IAppSettingService } from "./appSetting_service.interface.js";
 import { sendRenderedEmail } from "../utils/email.js";
 import { USER_ROLE } from "../utils/constants.js";
 
@@ -18,11 +19,13 @@ export class UsersService implements IUsersService {
     private usersRepo: IUsersRepository;
     private redis: IRedisClient;
     private emailService: IEmailService;
+    private settingService: IAppSettingService;
 
-    constructor(usersRepo: IUsersRepository, redis: IRedisClient, emailService: IEmailService) {
+    constructor(usersRepo: IUsersRepository, redis: IRedisClient, emailService: IEmailService, settingService: IAppSettingService) {
         this.usersRepo = usersRepo;
         this.redis = redis;
         this.emailService = emailService;
+        this.settingService = settingService;
     }
 
     async getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>> {
@@ -147,7 +150,9 @@ export class UsersService implements IUsersService {
             });
 
             const activationUrl = buildActivationUrl(activationToken.token);
-            await sendRenderedEmail(this.emailService, req.email, "Aktivasi Akun", "activation", {
+            const settingsCreate = await this.settingService.getAll();
+            const subjectCreate = `Aktivasi Akun ${settingsCreate.app_name || "Aplikasi"}`;
+            await sendRenderedEmail(this.emailService, req.email, subjectCreate, "activation", {
                 userName: req.nama_lengkap,
                 activationUrl,
             });
@@ -264,7 +269,9 @@ export class UsersService implements IUsersService {
             });
 
             const activationUrl = buildActivationUrl(activationToken.token);
-            await sendRenderedEmail(this.emailService, user.email, "Aktivasi Akun (Baru)", "activation", {
+            const settingsRenew = await this.settingService.getAll();
+            const subjectRenew = `Aktivasi Akun ${settingsRenew.app_name || "Aplikasi"} (Baru)`;
+            await sendRenderedEmail(this.emailService, user.email, subjectRenew, "activation", {
                 user: { nama_lengkap: user.nama_lengkap },
                 activationUrl,
             });

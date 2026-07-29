@@ -1,5 +1,6 @@
 import { PrismaClient } from "./generated/prisma/client.js";
 import { AdminRepository } from "./repositories/admin_repository.js";
+import { AppSettingRepository } from "./repositories/appSetting_repository.js";
 import { AuthRepository } from "./repositories/auth_repository.js";
 import { ChecklistHarianRepository } from "./repositories/checklistHarian_repository.js";
 import { JadwalChecklistRepository } from "./repositories/jadwalChecklist_repository.js";
@@ -15,6 +16,7 @@ import { TugasRepository } from "./repositories/tugas_repository.js";
 import { UsersRepository } from "./repositories/users_repository.js";
 import { UserSessionRepository } from "./repositories/userSession_repository.js";
 import { AdminService } from "./services/admin_service.js";
+import { AppSettingService } from "./services/appSetting_service.js";
 import { AuthService } from "./services/auth_service.js";
 import { ChecklistHarianService } from "./services/checklistHarian_service.js";
 import { JadwalChecklistService } from "./services/jadwalChecklist_service.js";
@@ -34,6 +36,7 @@ import { ProfileService } from "./services/profile_service.js";
 import { StorageServiceFactory } from "./services/storage_service.factory.js";
 import { UserSessionService } from "./services/userSession_service.js";
 import { AdminController } from "./controllers/admin_controller.js";
+import { SettingController } from "./controllers/setting_controller.js";
 import { AuthController } from "./controllers/auth_controller.js";
 import { ChecklistHarianController } from "./controllers/checklistHarian_controller.js";
 import { JadwalChecklistController } from "./controllers/jadwalChecklist_controller.js";
@@ -63,6 +66,7 @@ const prisma = new PrismaClient();
 
 //  REPOSITORIES 
 const adminRepository = new AdminRepository(prisma);
+const appSettingRepository = new AppSettingRepository(prisma);
 const authRepository = new AuthRepository(prisma);
 const checklistHarianRepository = new ChecklistHarianRepository(prisma);
 const jadwalChecklistRepository = new JadwalChecklistRepository(prisma);
@@ -87,9 +91,10 @@ const storageService = StorageServiceFactory.getProvider();
 const emailService = EmailServiceFactory.getProvider();
 
 //  SERVICES 
+const appSettingService = new AppSettingService(appSettingRepository, redisClient as unknown as IRedisClient);
 const kategoriService = new KategoriService(kategoriRepository, redisClient as unknown as IRedisClient);
 const lantaiService = new LantaiService(lantaiRepository, redisClient as unknown as IRedisClient);
-const usersService = new UsersService(usersRepository, redisClient as unknown as IRedisClient, emailService);
+const usersService = new UsersService(usersRepository, redisClient as unknown as IRedisClient, emailService, appSettingService);
 const notificationService = new NotificationService(notificationRepository);
 const lokasiService = new LokasiService(lokasiRepository, redisClient as unknown as IRedisClient);
 const ruanganService = new RuanganService(ruanganRepository, redisClient as unknown as IRedisClient);
@@ -101,7 +106,7 @@ export const checklistHarianService = new ChecklistHarianService(checklistHarian
 export const jadwalChecklistService = new JadwalChecklistService(jadwalChecklistRepository, checklistHarianService, notificationService, usersService);
 export const constantsService = new ConstantsService();
 const sessionService = new UserSessionService(userSessionRepository, redisClient as unknown as IRedisClient);
-const authService = new AuthService(authRepository, usersService, sessionService, emailService);
+const authService = new AuthService(authRepository, usersService, sessionService, emailService, appSettingService);
 const obService = new ObService(obRepository, laporanService, usersService);
 const kolaborasiService = new KolaborasiService(kolaborasiRepository, laporanService, notificationService);
 const adminService = new AdminService(adminRepository, laporanService, usersService, redisClient as unknown as IRedisClient);
@@ -133,6 +138,7 @@ export const usersController = new UsersController(
 );
 export const notificationController = new NotificationController(notificationService);
 export const kolaborasiController = new KolaborasiController(kolaborasiService);
+export const settingController = new SettingController(appSettingService);
 
 export const container = {
     sessionService,
@@ -151,4 +157,5 @@ export const container = {
     usersController,
     notificationController,
     kolaborasiController,
+    settingController,
 };

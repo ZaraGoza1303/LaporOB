@@ -4899,3 +4899,103 @@ paths:
           description: Switching Protocols — koneksi WebSocket berhasil
         '400':
           description: Token invalid/kosong
+
+  /api/admin/settings:
+    get:
+      tags:
+        - Admin
+      summary: 'Ambil semua pengaturan aplikasi (Admin)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Pengaturan berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil mengambil pengaturan
+                  data:
+                    type: object
+                    properties:
+                      app_name:
+                        type: string
+                        nullable: true
+                        example: LaporOB
+                      company_name:
+                        type: string
+                        nullable: true
+                        example: PT Lapor OB
+                      logo_url:
+                        type: string
+                        nullable: true
+                        example: null
+    put:
+      tags:
+        - Admin
+      summary: 'Simpan pengaturan aplikasi (Admin)'
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                app_name:
+                  type: string
+                  nullable: true
+                  maxLength: 100
+                  description: Nama aplikasi
+                company_name:
+                  type: string
+                  nullable: true
+                  maxLength: 200
+                  description: Nama perusahaan
+                logo_url:
+                  type: string
+                  nullable: true
+                  maxLength: 500
+                  description: URL logo perusahaan
+      responses:
+        '200':
+          description: Pengaturan berhasil disimpan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Pengaturan berhasil disimpan
+                  data:
+                    type: object
+                    properties:
+                      app_name:
+                        type: string
+                        nullable: true
+                        example: LaporOB
+                      company_name:
+                        type: string
+                        nullable: true
+                        example: PT Lapor OB
+                      logo_url:
+                        type: string
+                        nullable: true
+                        example: null
+        '400':
+          description: Validasi gagal
+        '401':
+          description: Tidak terautentikasi
+        '403':
+          description: Tidak memiliki akses admin
