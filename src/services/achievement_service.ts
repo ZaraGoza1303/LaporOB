@@ -1,11 +1,12 @@
-import type { CreateAchievementReq, UpdateAchievementReq, AchievementRes, ObAchievementRes } from "../dto/achievement.js";
+import type { CreateAchievementReq, UpdateAchievementReq } from "../dto/achievement.js";
+import type { AchievementRes, ObAchievementRes } from "../types/achievement.js";
 import type { IAchievementRepository, ObCompletedTask } from "../repositories/achievement_repository.interface.js";
 import type { IAchievementService } from "./achievement_service.interface.js";
 import type { Achievement, ObAchievement, Prisma } from "../generated/prisma/client.js";
 import { handlePrismaError } from "../utils/error.js";
 import { NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE, REF_TIPE } from "../utils/constants.js";
 import type { INotificationService } from "./notification_service.interface.js";
-import type { BulkNotificationData } from "../dto/notification.js";
+import type { BulkNotificationData } from "../types/notification.js";
 import { matchSkillIds } from "../utils/skillMatcher.js";
 
 export class AchievementService implements IAchievementService {

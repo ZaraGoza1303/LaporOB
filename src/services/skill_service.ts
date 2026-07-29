@@ -1,4 +1,5 @@
-import type { CreateSkillDefinitionReq, UpdateSkillDefinitionReq, AssignSkillReq, SkillDefinitionRes, ObSkillRes } from "../dto/skill.js";
+import type { CreateSkillDefinitionReq, UpdateSkillDefinitionReq, AssignSkillReq } from "../dto/skill.js";
+import type { SkillDefinitionRes, ObSkillRes } from "../types/skill.js";
 import type { ISkillRepository, ObCompletedTask } from "../repositories/skill_repository.interface.js";
 import type { ISkillService } from "./skill_service.interface.js";
 import type { SkillDefinition, ObSkill, Prisma } from "../generated/prisma/client.js";
@@ -7,7 +8,7 @@ import { AppError } from "../utils/error.js";
 import { matchSkillIds } from "../utils/skillMatcher.js";
 import { NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE, REF_TIPE } from "../utils/constants.js";
 import type { INotificationService } from "./notification_service.interface.js";
-import type { BulkNotificationData } from "../dto/notification.js";
+import type { BulkNotificationData } from "../types/notification.js";
 
 export class SkillService implements ISkillService {
     private skillRepo: ISkillRepository;

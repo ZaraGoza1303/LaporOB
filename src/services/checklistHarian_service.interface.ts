@@ -1,6 +1,7 @@
-import type { UpdateChecklistHarianReq, ChecklistHarianRes } from "../dto/checklist_harian.js";
+import type { UpdateChecklistHarianReq } from "../dto/checklist_harian.js";
+import type { ChecklistHarianRes } from "../types/checklist_harian.js";
 import type { ChecklistHarianWithDetails, ChecklistHarianApprovalItem } from "../repositories/checklistHarian_repository.interface.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { PaginatedResponse } from "../types/response.js";
 import type { JadwalChecklist } from "../generated/prisma/client.js";
 
 export interface IChecklistHarianService {

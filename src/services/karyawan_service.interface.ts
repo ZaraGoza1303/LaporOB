@@ -1,6 +1,6 @@
-import type { CreateLaporanKaryawanInput, UserHomeRes, MappedProfileReport } from '../dto/users.js';
-import type { PaginatedResponse } from '../dto/response.js';
-import type { KaryawanPerformanceRes } from '../dto/karyawan.js';
+import type { CreateLaporanKaryawanInput, UserHomeRes, MappedProfileReport } from '../types/users.js';
+import type { PaginatedResponse } from '../types/response.js';
+import type { KaryawanPerformanceRes } from '../types/karyawan.js';
 
 export interface RiwayatParams {
     cursor?: string | null;

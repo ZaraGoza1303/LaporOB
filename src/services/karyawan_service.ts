@@ -1,4 +1,4 @@
-import type { CreateLaporanKaryawanInput, UserHomeRes, MappedProfileReport, ProfileRes } from "../dto/users.js";
+import type { CreateLaporanKaryawanInput, UserHomeRes, MappedProfileReport, ProfileRes } from "../types/users.js";
 import { LAPORAN_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, REF_TIPE, USER_ROLE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { IUsersService } from "./users_service.interface.js";
@@ -8,10 +8,10 @@ import { AppError, handlePrismaError } from "../utils/error.js";
 import { resolveFileUrl } from "../utils/url.js";
 import type { IKaryawanService, RiwayatParams } from "./karyawan_service.interface.js";
 import type { IKategoriService } from "./kategori_service.interface.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { PaginatedResponse } from "../types/response.js";
 import type { INotificationService } from "./notification_service.interface.js";
-import type { BulkNotificationData } from "../dto/notification.js";
-import type { KaryawanPerformanceRes } from "../dto/karyawan.js";
+import type { BulkNotificationData } from "../types/notification.js";
+import type { KaryawanPerformanceRes } from "../types/karyawan.js";
 
 export class KaryawanService implements IKaryawanService {
     private usersService: IUsersService;

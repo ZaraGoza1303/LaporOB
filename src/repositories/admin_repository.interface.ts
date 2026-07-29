@@ -1,7 +1,8 @@
 import type { Prisma } from "../generated/prisma/client.js";
-import type { UserStatsRes, StatsTugasQuery } from "../dto/admin.js";
-import type { PaginatedResponse } from "../dto/response.js";
-import type { AssignObRepoArgs } from "../dto/admin.js";
+import type { StatsTugasQuery } from "../dto/admin.js";
+import type { UserStatsRes } from "../types/admin.js";
+import type { PaginatedResponse } from "../types/response.js";
+import type { AssignObRepoArgs } from "../types/admin.js";
 
 
 export type RecentLaporanPayload = {

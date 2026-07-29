@@ -1,4 +1,5 @@
-import type { LoginReq, LoginRes, ChangePasswordReq } from "../dto/auth.js";
+import type { LoginReq, ChangePasswordReq } from "../dto/auth.js";
+import type { LoginRes } from "../types/auth.js";
 import type { IAuthRepository } from "../repositories/auth_repository.interface.js";
 import { generateJWTToken } from "../utils/jwt.js";
 import bcrypt from 'bcrypt';

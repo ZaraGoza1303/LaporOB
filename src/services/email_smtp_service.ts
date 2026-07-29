@@ -1,6 +1,6 @@
 import { createTransport, type Transporter } from "nodemailer";
 import type { EmailPayload, IEmailService } from "./email_service.interface.js";
-import type { TransporterConfig } from "../dto/email.js";
+import type { TransporterConfig } from "../types/email.js";
 
 export class EmailSmtpService implements IEmailService {
     private transporter: Transporter;

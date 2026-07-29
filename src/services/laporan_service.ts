@@ -1,8 +1,8 @@
-import type { MappedReportDetailRes, MappedProfileReport } from "../dto/users.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { MappedReportDetailRes, MappedProfileReport } from "../types/users.js";
+import type { PaginatedResponse } from "../types/response.js";
 import type { AdminLaporanHistoryQuery, AdminLaporanQuery, PatchLaporanReq } from "../dto/admin.js";
 import type { ILaporanRepository, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, StatusInfoPayload, DetailReportPayload, ProfileReport, LaporanKaryawanWithDetails } from "../repositories/laporan_repository.interface.js";
-import type { UserActivityRes } from "../dto/users.js";
+import type { UserActivityRes } from "../types/users.js";
 import { USER_ROLE, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, REF_TIPE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { handlePrismaError } from "../utils/error.js";
 import { resolveFileUrl } from "../utils/url.js";
@@ -15,8 +15,8 @@ import type { INotificationService } from "./notification_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
 import type { ISkillService } from "./skill_service.interface.js";
 import type { IAchievementService } from "./achievement_service.interface.js";
-import type { NotificationData, BulkNotificationData } from "../dto/notification.js";
-import type { ObPerformance } from "../dto/ob.js";
+import type { NotificationData, BulkNotificationData } from "../types/notification.js";
+import type { ObPerformance } from "../types/ob.js";
 
 export class LaporanService implements ILaporanService {
     private laporanRepo: ILaporanRepository;

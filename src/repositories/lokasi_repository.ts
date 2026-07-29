@@ -1,6 +1,7 @@
 import type { PrismaClient } from "../generated/prisma/client.js";
 import type { ILokasiRepository } from "./lokasi_repository.interface.js";
-import type { LokasiWithLantai, CreateLokasiReq, UpdateLokasiReq } from "../dto/lokasi.js";
+import type { CreateLokasiReq, UpdateLokasiReq } from "../dto/lokasi.js";
+import type { LokasiWithLantai } from "../types/lokasi.js";
 
 export class LokasiRepository implements ILokasiRepository {
     private db: PrismaClient;
