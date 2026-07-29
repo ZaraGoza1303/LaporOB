@@ -9,6 +9,7 @@ import type { UserToken } from "../generated/prisma/client.js";
 import type { IUsersService } from "./users_service.interface.js";
 import type { IUserSessionService } from "./userSession_service.interface.js";
 import type { IEmailService } from "./email_service.interface.js";
+import type { IAppSettingService } from "./appSetting_service.interface.js";
 import { sendRenderedEmail } from "../utils/email.js";
 import { buildResetPasswordUrl } from "../utils/url.js";
 
@@ -17,17 +18,20 @@ export class AuthService implements IAuthService {
     private usersService: IUsersService;
     private sessionService: IUserSessionService;
     private emailService: IEmailService;
+    private settingService: IAppSettingService;
 
     constructor(
         authRepo: IAuthRepository, 
         usersService: IUsersService, 
         sessionService: IUserSessionService,
-        emailService: IEmailService
+        emailService: IEmailService,
+        settingService: IAppSettingService,
     ) {
         this.authRepo = authRepo;
         this.usersService = usersService;
         this.sessionService = sessionService;
         this.emailService = emailService;
+        this.settingService = settingService;
     }
 
     async login(req: LoginReq, deviceInfo?: string | null, ipAddress?: string | null): Promise<LoginRes> {
@@ -110,7 +114,9 @@ export class AuthService implements IAuthService {
             await this.usersService.createPasswordResetToken(user.id, resetToken.tokenHash, resetToken.expiredAt);
 
             const resetUrl = buildResetPasswordUrl(resetToken.token);
-            await sendRenderedEmail(this.emailService, user.email, "Reset Password Akun LaporOB", "reset-password", {
+            const settings = await this.settingService.getAll();
+            const subjectReset = `Reset Password Akun ${settings.app_name || "Aplikasi"}`;
+            await sendRenderedEmail(this.emailService, user.email, subjectReset, "reset-password", {
                 userName: user.username,
                 resetUrl: resetUrl,
                 expiresInHours: 1,
@@ -161,7 +167,9 @@ export class AuthService implements IAuthService {
             const hashedPassword = await bcrypt.hash(req.newPassword, 16);
             await this.usersService.resetUserPassword(userId, hashedPassword, null);
 
-            await sendRenderedEmail(this.emailService, user.email, "Password Akun LaporOB Berhasil Diubah", "password-changed", {
+            const settingsPw = await this.settingService.getAll();
+            const subjectPw = `Password Akun ${settingsPw.app_name || "Aplikasi"} Berhasil Diubah`;
+            await sendRenderedEmail(this.emailService, user.email, subjectPw, "password-changed", {
                 userName: user.username,
             });
         } catch (err) {

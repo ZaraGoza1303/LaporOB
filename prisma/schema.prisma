@@ -365,6 +365,17 @@ model UserSession {
   @@map("user_session")
 }
 
+model AppSetting {
+  id         String   @id @default(uuid()) @db.Uuid
+  key        String   @unique @db.VarChar(50)
+  value      String?  @db.Text
+  type       String   @default("text") @db.VarChar(20)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt @db.Timestamp(6)
+
+  @@map("app_setting")
+}
+
 model Notifikasi {
   id          String    @id @default(uuid()) @db.Uuid
   penerima_id     String    @db.Uuid
