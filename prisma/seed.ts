@@ -37,7 +37,7 @@ async function main() {
         ('9e4d64c0-34e2-455c-b317-b9e4d6d5e6bd', 'ob2',       'ob2@mail.com',       $1, 'Rina Marlina',     '62c0a9d8-afd7-45f5-9cb3-6dc6e8a9b8da', true,  false, now(), now()),
         ('dc21d543-3890-4ffb-8b6d-b226c35ab8dc', 'ob3',       'ob3@mail.com',       $1, 'Dedi Kurniawan',   '62c0a9d8-afd7-45f5-9cb3-6dc6e8a9b8da', false, false, now(), now()),
         ('d5178486-b32e-414a-b927-04d96b150d1b', 'hr1',       'hr1@mail.com',       $1, 'Lestari Handayani','eb89b4f9-635f-4e1e-8916-3a96af4e0c72', true,  false, now(), now())
-      ON CONFLICT (username) DO NOTHING
+      ON CONFLICT (email) DO NOTHING
       `,
       [hashedPassword]
     );

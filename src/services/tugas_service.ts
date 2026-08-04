@@ -76,7 +76,7 @@ export class TugasService implements ITugasService {
                     is_approved: tugas.is_approved,
                     approved_at: tugas.approved_at,
                     created_at: tugas.created_at,
-                    updated_at: tugas.updated_at,
+                    updated_at: tugas.updated_at,   
                 };
             });
             return { items, next_cursor: result.next_cursor, meta: result.meta ?? { total_items: 0, current_page: page, limit, total_pages: 0 } };
