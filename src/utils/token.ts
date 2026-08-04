@@ -1,4 +1,4 @@
-import type { GeneratedToken } from "../dto/token.js";
+import type { GeneratedToken } from "../types/token.js";
 import crypto from "node:crypto";
 
 export function generateActivationToken(expiresInHours: number): GeneratedToken {

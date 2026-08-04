@@ -1,4 +1,5 @@
-import type { CreateLokasiReq, UpdateLokasiReq, LokasiRes } from "../dto/lokasi.js";
+import type { CreateLokasiReq, UpdateLokasiReq } from "../dto/lokasi.js";
+import type { LokasiRes } from "../types/lokasi.js";
 
 export interface ILokasiService {
     getAll(): Promise<LokasiRes[]>;

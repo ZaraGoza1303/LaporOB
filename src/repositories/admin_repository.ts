@@ -1,5 +1,6 @@
-import type { UserStatsRes, AdminLaporanQuery, StatsTugasQuery } from "../dto/admin.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { AdminLaporanQuery, StatsTugasQuery } from "../dto/admin.js";
+import type { UserStatsRes } from "../types/admin.js";
+import type { PaginatedResponse } from "../types/response.js";
 import { Prisma, PrismaClient } from "../generated/prisma/client.js";
 import type { IAdminRepository, DailyChecklistObReport, PenugasanObWithDetails, RiwayatTugasObReport, StatsTugasResult, ObRankingRawData, TrenLaporanBulananRaw } from "./admin_repository.interface.js";
 import { CHECKLIST_STATUS, LAPORAN_STATUS, TUGAS_STATUS, USER_ROLE } from "../utils/constants.js";

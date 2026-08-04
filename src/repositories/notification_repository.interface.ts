@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from "../dto/response.js";
+import type { PaginatedResponse } from "../types/response.js";
 import type { Notifikasi } from "../generated/prisma/client.js";
 import type { NotifikasiCreateInput } from "../generated/prisma/models.js";
 

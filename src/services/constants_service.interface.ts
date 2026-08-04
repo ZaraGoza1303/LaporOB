@@ -1,4 +1,4 @@
-import type { AppConstantsRes } from "../dto/constants.js";
+import type { AppConstantsRes } from "../types/constants.js";
 
 export interface IConstantsService {
     getConstants(): AppConstantsRes;

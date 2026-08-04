@@ -1,4 +1,4 @@
-import type { NotificationData, BulkNotificationData, NotifikasiGroupedResponse } from "../dto/notification.js";
+import type { NotificationData, BulkNotificationData, NotifikasiGroupedResponse } from "../types/notification.js";
 import type { NotifikasiCreateInput } from "../generated/prisma/models.js";
 import type { INotificationRepository } from "../repositories/notification_repository.interface.js";
 import { USER_ROLE, NOTIFICATION_TYPE } from "../utils/constants.js";

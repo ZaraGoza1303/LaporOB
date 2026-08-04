@@ -1,12 +1,12 @@
-import type { MappedReportDetailRes, MappedProfileReport } from '../dto/users.js';
-import type { PaginatedResponse } from '../dto/response.js';
+import type { MappedReportDetailRes, MappedProfileReport } from '../types/users.js';
+import type { PaginatedResponse } from '../types/response.js';
 import type { AdminLaporanHistoryQuery, AdminLaporanQuery, PatchLaporanReq } from '../dto/admin.js';
 import type { RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, StatusInfoPayload, DetailReportPayload, ProfileReport, LaporanKaryawanWithDetails } from '../repositories/laporan_repository.interface.js';
-import type { UserActivityRes } from '../dto/users.js';
+import type { UserActivityRes } from '../types/users.js';
 import type { Laporan_karyawanCreateInput } from '../generated/prisma/models.js';
 import type { Laporan_karyawan } from "../generated/prisma/client.js";
 import type { PeriodRange } from "../utils/date.js";
-import type { ObPerformance } from '../dto/ob.js';
+import type { ObPerformance } from '../types/ob.js';
 
 export interface ILaporanService {
     getReportDetail(reportId: string, obId?: string): Promise<MappedReportDetailRes>;

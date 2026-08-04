@@ -1,11 +1,12 @@
-import type { UpdateChecklistHarianReq, ChecklistHarianRes } from "../dto/checklist_harian.js";
+import type { UpdateChecklistHarianReq } from "../dto/checklist_harian.js";
+import type { ChecklistHarianRes } from "../types/checklist_harian.js";
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
 import { handlePrismaError, AppError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails, ChecklistHarianApprovalItem } from "../repositories/checklistHarian_repository.interface.js";
 import type { Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { PaginatedResponse } from "../types/response.js";
 import type { JadwalChecklist } from "../generated/prisma/client.js";
 import type { ISkillService } from "./skill_service.interface.js";
 import type { IAchievementService } from "./achievement_service.interface.js";

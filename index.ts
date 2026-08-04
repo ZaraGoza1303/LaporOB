@@ -23,6 +23,7 @@ import kategoriRouter from './src/routes/kategori.js';
 import tugasRouter from './src/routes/tugas.js';
 import notifikasiRouter from './src/routes/notifikasi.js';
 import obKolaborasiRouter from './src/routes/obKolaborasi.js';
+import settingRouter from './src/routes/setting.js';
 import swaggerUi from 'swagger-ui-express';
 import path from 'node:path';
 import YAML from 'yamljs';
@@ -84,6 +85,7 @@ const initRouter = () => {
     app.use('/api/constants', constantsRouter);
     app.use('/api/skill', skillRouter);
     app.use('/api/achievement', achievementRouter);
+    app.use('/api/admin/settings', settingRouter);
 }
 
 const startApp = async () => {
