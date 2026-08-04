@@ -1,4 +1,5 @@
-import type { CreateLokasiReq, UpdateLokasiReq, LokasiRes, LokasiWithLantai } from "../dto/lokasi.js";
+import type { CreateLokasiReq, UpdateLokasiReq } from "../dto/lokasi.js";
+import type { LokasiRes, LokasiWithLantai } from "../types/lokasi.js";
 import type { Lantai } from "../generated/prisma/client.js";
 import type { ILokasiRepository } from "../repositories/lokasi_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";

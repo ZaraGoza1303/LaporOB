@@ -1,4 +1,5 @@
-import type { LoginReq, LoginUserData } from "../dto/auth.js";
+import type { LoginReq } from "../dto/auth.js";
+import type { LoginUserData } from "../types/auth.js";
 import { PrismaClient, type UserToken } from "../generated/prisma/client.js";
 import type { IAuthRepository } from "./auth_repository.interface.js";
 

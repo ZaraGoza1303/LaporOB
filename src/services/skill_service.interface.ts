@@ -1,4 +1,5 @@
-import type { CreateSkillDefinitionReq, UpdateSkillDefinitionReq, AssignSkillReq, SkillDefinitionRes, ObSkillRes } from "../dto/skill.js";
+import type { CreateSkillDefinitionReq, UpdateSkillDefinitionReq, AssignSkillReq } from "../dto/skill.js";
+import type { SkillDefinitionRes, ObSkillRes } from "../types/skill.js";
 
 export interface ISkillService {
     createDefinition(req: CreateSkillDefinitionReq): Promise<SkillDefinitionRes>;

@@ -1,4 +1,4 @@
-import type { BaseResponse } from "../dto/response.js";
+import type { BaseResponse } from "../types/response.js";
 
 export const sendSuccessfullResponse = <T>(message?: string, data?: T): BaseResponse<T> => {
     return {

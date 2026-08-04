@@ -1,12 +1,12 @@
-import type { PaginatedResponse } from "../dto/response.js";
-import type { UserActivityRes } from "../dto/users.js";
+import type { PaginatedResponse } from "../types/response.js";
+import type { UserActivityRes } from "../types/users.js";
 import type { AdminLaporanHistoryQuery, AdminLaporanQuery } from "../dto/admin.js";
 import type { PrismaClient, Prisma, Laporan_karyawan } from "../generated/prisma/client.js";
 import type { PeriodRange } from "../utils/date.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { ILaporanRepository, ProfileReport, DetailReportPayload, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, StatusInfoPayload, LaporanKaryawanWithDetails } from "./laporan_repository.interface.js";
 import { LAPORAN_STATUS, KOLABORASI_STATUS } from "../utils/constants.js";
-import type { ObPerformance } from "../dto/ob.js";
+import type { ObPerformance } from "../types/ob.js";
 
 export class LaporanRepository implements ILaporanRepository {
     private db: PrismaClient;

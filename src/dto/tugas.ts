@@ -32,26 +32,6 @@ export const TugasQuerySchema = z.object({
     kategori_id: z.string().uuid({ message: "Format Kategori ID harus berupa UUID yang valid" }).optional(),
 });
 
-export interface TugasDetailRes {
-    id: string;
-    nama_tugas: string;
-    kategori: { id: string; nama_kategori: string } | null;
-    lantai: { id: string; nomor_lantai: number; lokasi: { id: string; nama_lokasi: string } } | null;
-    ob: { id: string; nama_lengkap: string } | null;
-    status: string;
-    catatan: string | null;
-    foto_awal: string[];
-    foto_akhir: string[];
-    dikerjakan_at: Date | null;
-    selesai_at: Date | null;
-    total_durasi: number | null;
-    hari: string[];
-    is_approved: boolean;
-    approved_at: Date | null;
-    created_at: Date;
-    updated_at: Date;
-}
-
 export type CreateTugasReq = z.infer<typeof CreateTugasSchema>;
 export type UpdateTugasReq = z.infer<typeof UpdateTugasSchema>;
 export type TugasQuery = z.infer<typeof TugasQuerySchema>;

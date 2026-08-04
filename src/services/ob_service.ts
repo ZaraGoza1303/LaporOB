@@ -2,9 +2,9 @@ import type { IObService } from "./ob_service.interface.js";
 import type { IObRepository, PenugasanWithLokasi } from "../repositories/ob_repository.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
-import type { ObHomeRes } from "../dto/ob.js";
-import type { MappedProfileReport, MappedReportDetailRes, ObProfileResponse } from "../dto/users.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { ObHomeRes } from "../types/ob.js";
+import type { MappedProfileReport, MappedReportDetailRes, ObProfileResponse } from "../types/users.js";
+import type { PaginatedResponse } from "../types/response.js";
 import type { RiwayatParams } from "./karyawan_service.interface.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
@@ -81,9 +81,10 @@ export class ObService implements IObService {
             const bulan = today.getMonth() + 1;
             const tahun = today.getFullYear();
 
-            const [obStats, penugasan] = await Promise.all([
+            const [obStats, penugasan, allReports] = await Promise.all([
                 this.laporanService.getObPerformanceStats(obId),
                 this.obRepo.getActiveAssignments(obId, bulan, tahun),
+                this.laporanService.getReportsByObId(obId, 1)
             ]);
 
             const lokasiAktif = penugasan.map((p) => ({
@@ -99,6 +100,7 @@ export class ObService implements IObService {
                 email: user.email,
                 role: user.role?.nama_role || "OB",
                 profile_picture: resolveFileUrl(user.profile_picture),
+                laporanDiterima: allReports.meta?.total_items ?? 0,
                 laporanSelesai: obStats.total_tugas_selesai,
                 lokasiAktif: lokasiAktif,
             };

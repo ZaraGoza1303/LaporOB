@@ -4,7 +4,7 @@ import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpd
 import { CHECKLIST_STATUS } from "../utils/constants.js";
 import type { IChecklistHarianRepository, ChecklistHarianWithRelations, ChecklistHarianWithDetails, ChecklistHarianApprovalItem } from "./checklistHarian_repository.interface.js";
 import type { PeriodRange } from "../utils/date.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { PaginatedResponse } from "../types/response.js";
 
 export class ChecklistHarianRepository implements IChecklistHarianRepository {
     private db: PrismaClient;

@@ -1,5 +1,5 @@
 import type { UserSearchQuery } from "../dto/admin.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { PaginatedResponse } from "../types/response.js";
 import { Prisma, type PrismaClient, type User, type Role } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
 import type { IUsersRepository, ProfileUser, UserWithRoleAndToken } from "./users_repository.interface.js";

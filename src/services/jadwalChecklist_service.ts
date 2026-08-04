@@ -8,7 +8,7 @@ import type { IJadwalChecklistService } from "./jadwalChecklist_service.interfac
 import type { INotificationService } from "./notification_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
 import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE, REF_TIPE, USER_ROLE, HARI } from "../utils/constants.js";
-import type { BulkNotificationData } from "../dto/notification.js";
+import type { BulkNotificationData } from "../types/notification.js";
 
 export class JadwalChecklistService implements IJadwalChecklistService {
     private jadwalRepo: IJadwalChecklistRepository;

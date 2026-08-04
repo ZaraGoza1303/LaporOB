@@ -1,4 +1,5 @@
-import type { CreateAchievementReq, UpdateAchievementReq, AchievementRes, ObAchievementRes } from "../dto/achievement.js";
+import type { CreateAchievementReq, UpdateAchievementReq } from "../dto/achievement.js";
+import type { AchievementRes, ObAchievementRes } from "../types/achievement.js";
 
 export interface IAchievementService {
     create(req: CreateAchievementReq): Promise<AchievementRes>;

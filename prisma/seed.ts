@@ -193,6 +193,16 @@ async function main() {
       ON CONFLICT (id) DO NOTHING
     `);
 
+    // ============ APP SETTING ============
+    console.log("  Insert app_setting...");
+    await client.query(`
+      INSERT INTO app_setting (id, key, value, type, created_at, updated_at) VALUES
+        ('a1000000-0000-4000-8000-000000000001', 'app_name',    'LaporOB',        'text', now(), now()),
+        ('a1000000-0000-4000-8000-000000000002', 'company_name', 'PT Lapor OB',    'text', now(), now()),
+        ('a1000000-0000-4000-8000-000000000003', 'logo_url',    null,              'text', now(), now())
+      ON CONFLICT (key) DO NOTHING
+    `);
+
     // ============ SKILL DEFINITION ============
     console.log("  Insert skill_definition...");
     await client.query(`

@@ -5,7 +5,7 @@ import type { ITugasRepository, TugasApprovalItem, TugasDetailPayload } from "./
 import type { PeriodRange } from "../utils/date.js";
 import { Prisma } from "../generated/prisma/client.js";
 import { TUGAS_STATUS, HARI } from "../utils/constants.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { PaginatedResponse } from "../types/response.js";
 
 export class TugasRepository implements ITugasRepository {
     private db: PrismaClient;

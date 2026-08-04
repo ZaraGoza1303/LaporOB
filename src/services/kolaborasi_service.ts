@@ -2,8 +2,8 @@ import type { IKolaborasiService } from "./kolaborasi_service.interface.js";
 import type { IKolaborasiRepository } from "../repositories/kolaborasi_repository.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
 import type { INotificationService } from "./notification_service.interface.js";
-import type { GabungResponse, DaftarGabungItem } from "../dto/kolaborasi.js";
-import type { NotificationData } from "../dto/notification.js";
+import type { GabungResponse, DaftarGabungItem } from "../types/kolaborasi.js";
+import type { NotificationData } from "../types/notification.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, REF_TIPE, KOLABORASI_STATUS } from "../utils/constants.js";
 
