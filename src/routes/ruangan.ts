@@ -6,7 +6,7 @@ import { USER_ROLE } from "../utils/constants.js";
 
 const ruanganRouter = Router();
 ruanganRouter.use(verifyJWTToken);
-ruanganRouter.use(requireRole(USER_ROLE.ADMIN));
+ruanganRouter.use(requireRole(USER_ROLE.ADMIN, USER_ROLE.KARYAWAN));
 
 ruanganRouter.get('/', (req, res) => ruanganController.getAll(req, res));
 ruanganRouter.get('/:ruangan_id', (req, res) => ruanganController.getByID(req, res));
