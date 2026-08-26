@@ -43,20 +43,48 @@ const server = createServer(app);
 initWebSocket(server)
 
 const upload = multer();
+const ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:8000',
+    /\.ngrok-free\.dev$/,
+    /\.ngrok\.io$/,
+];
+
 const corsOptions = {
-    origin: ['http://localhost:3000', 'http://localhost:5173'],
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        if (!origin) return callback(null, true);
+        const allowed = ALLOWED_ORIGINS.some(o =>
+            typeof o === 'string' ? o === origin : o.test(origin)
+        );
+        if (allowed) return callback(null, true);
+        return callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
         'Content-Type',
         'Authorization',
         'X-Requested-With',
-        'Origin'
+        'Origin',
+        'Access-Control-Request-Private-Network',
     ],
+    exposedHeaders: ['Access-Control-Allow-Private-Network'],
     credentials: true,
 }
 
 app.use(cors(corsOptions));
+
+// Handle Chrome Private Network Access (PNA) preflight
+// Diperlukan saat Swagger diakses dari ngrok (HTTPS public) dan request ke localhost
+app.use((req, res, next) => {
+    if (req.method === 'OPTIONS' && req.headers['access-control-request-private-network']) {
+        res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    }
+    next();
+});
+
 app.use(express.json({ limit: '5mb' }));
+
 app.use(setBaseUrlMiddleware);
 app.set('trust proxy', 1);
 
@@ -64,7 +92,16 @@ app.use('/uploads', express.static('uploads'));
 app.use(upload.any());
 
 const initRouter = () => {
-    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+        swaggerOptions: {
+            persistAuthorization: true,
+            tryItOutEnabled: true,
+            requestInterceptor: (request: Record<string, unknown>) => {
+                request['credentials'] = 'include';
+                return request;
+            },
+        },
+    }));
     app.use('/api/admin', adminUserManagementRouter);
     app.use('/api/admin', adminRouter);
     app.use('/api/user', profileRouter);

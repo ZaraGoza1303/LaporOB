@@ -5,8 +5,11 @@ info:
   version: 1.0.0
 
 servers:
-  - url: https://stylar-nonseverable-denver.ngrok-free.dev
+  - url: https://taps-quiet-subtly.ngrok-free.dev
+    description: Ngrok tunnel (aktif)
+  - url: http://localhost:8000
     description: Local development
+
 
 components:
   securitySchemes:
