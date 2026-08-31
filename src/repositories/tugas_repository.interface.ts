@@ -19,7 +19,7 @@ export type TugasDetailPayload = Prisma.TugasGetPayload<{
 }>;
 
 export interface ITugasRepository {
-    getAll(kategoriId?: string): Promise<Tugas[]>
+    getAll(kategoriId?: string): Promise<TugasDetailPayload[]>;
     getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<TugasDetailPayload>>;
     getByID(tugasId: string): Promise<Tugas | null>
     getDetailByID(tugasId: string): Promise<TugasDetailPayload | null>

@@ -124,11 +124,18 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
 
     async approve(checklistId: string, adminId: string): Promise<void> {
         const now = new Date();
+        const existing = await this.db.checklist_harian.findUnique({
+            where: { id: checklistId },
+            select: { selesai_at: true },
+        });
+
         await this.db.checklist_harian.update({
             where: { id: checklistId },
             data: {
+                status: CHECKLIST_STATUS.SELESAI,
                 is_approved: true,
                 approved_at: now,
+                selesai_at: existing?.selesai_at ?? now,
             },
         });
     }
@@ -147,7 +154,11 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
                 skip,
                 take: limit,
                 orderBy: { created_at: 'desc' },
-                include: { kategori: true, lantai: true, ob: true },
+                include: {
+                    kategori: true,
+                    lantai: { include: { lokasi: true } },
+                    ob: true,
+                },
             }),
             this.db.checklist_harian.count({ where }),
         ]);
@@ -169,12 +180,12 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
             orderBy: { created_at: 'desc' },
             include: {
                 kategori: true,
-                lantai: true,
+                lantai: { include: { lokasi: true } },
                 ob: true,
             },
         });
 
-        return items
+        return items;
     }
 
     async getByID(checklist_harianId: string): Promise<ChecklistHarianWithRelations | null> {
@@ -184,12 +195,12 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
             },
             include: {
                 kategori: true,
-                lantai: true,
+                lantai: { include: { lokasi: true } },
                 ob: true,
             },
-        })
+        });
 
-        return data
+        return data;
     }
 
     async insertMany(data: Checklist_harianUncheckedCreateInput[]): Promise<void> {

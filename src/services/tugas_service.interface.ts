@@ -5,7 +5,7 @@ import type { TugasApprovalItem } from "../repositories/tugas_repository.interfa
 import type { PaginatedResponse } from "../types/response.js";
 
 export interface ITugasService {
-    getAll(kategoriId?: string): Promise<Tugas[]>
+    getAll(kategoriId?: string): Promise<TugasDetailRes[]>;
     getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<TugasDetailRes>>;
     getByID(tugasId: string): Promise<Tugas | null>
     getDetailByID(tugasId: string): Promise<TugasDetailRes | null>

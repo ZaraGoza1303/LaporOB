@@ -14,7 +14,7 @@ export class TugasRepository implements ITugasRepository {
         this.db = db;
     }
 
-    async getAll(kategoriId?: string): Promise<Tugas[]> {
+    async getAll(kategoriId?: string): Promise<TugasDetailPayload[]> {
         const where: Prisma.TugasWhereInput = {
             is_active: true,
         };
@@ -25,6 +25,11 @@ export class TugasRepository implements ITugasRepository {
 
         const data = await this.db.tugas.findMany({
             where,
+            include: {
+                kategori: true,
+                lantai: { include: { lokasi: true } },
+                ob: true,
+            },
             orderBy: {
                 nama_tugas: 'asc',
             },
@@ -281,11 +286,18 @@ export class TugasRepository implements ITugasRepository {
 
     async approve(tugasId: string, adminId: string): Promise<void> {
         const now = new Date();
+        const existing = await this.db.tugas.findUnique({
+            where: { id: tugasId },
+            select: { selesai_at: true },
+        });
+
         await this.db.tugas.update({
             where: { id: tugasId },
             data: {
+                status: TUGAS_STATUS.SELESAI,
                 is_approved: true,
                 approved_at: now,
+                selesai_at: existing?.selesai_at ?? now,
             },
         });
     }
