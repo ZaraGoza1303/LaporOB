@@ -12,6 +12,8 @@ export interface ChecklistHarianRes {
     selesai_at?: Date | null;
     terlewat_at?: Date | null;
     total_durasi?: number | null;
+    is_approved: boolean;
+    approved_at?: Date | null;
     tanggal: Date;
     created_at: Date;
     updated_at: Date;
