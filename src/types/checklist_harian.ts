@@ -1,4 +1,4 @@
-import type { Kategori, Lantai, User } from "../generated/prisma/client.js";
+import type { Kategori, Lantai, Lokasi, User } from "../generated/prisma/client.js";
 
 export interface ChecklistHarianRes {
     id: string;
@@ -15,7 +15,7 @@ export interface ChecklistHarianRes {
     tanggal: Date;
     created_at: Date;
     updated_at: Date;
-    kategori?: Kategori;
-    lantai?: Lantai;
+    kategori?: Kategori | null;
+    lantai?: (Lantai & { lokasi?: Lokasi | null }) | null;
     ob?: User | null;
 }

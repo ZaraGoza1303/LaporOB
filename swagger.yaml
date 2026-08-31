@@ -548,6 +548,44 @@ components:
           type: string
           format: uuid
           nullable: true
+        kategori:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            nama_kategori:
+              type: string
+        lantai:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            nomor_lantai:
+              type: integer
+            lokasi:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                nama_lokasi:
+                  type: string
+                alamat:
+                  type: string
+                  nullable: true
+        ob:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+              format: uuid
+            nama_lengkap:
+              type: string
         ob_id:
           type: string
           format: uuid
@@ -558,6 +596,14 @@ components:
         catatan:
           type: string
           nullable: true
+        foto_awal:
+          type: array
+          items:
+            type: string
+        foto_akhir:
+          type: array
+          items:
+            type: string
         is_active:
           type: boolean
         dikerjakan_at:
@@ -565,6 +611,19 @@ components:
           format: date-time
           nullable: true
         selesai_at:
+          type: string
+          format: date-time
+          nullable: true
+        total_durasi:
+          type: integer
+          nullable: true
+        hari:
+          type: array
+          items:
+            type: string
+        is_approved:
+          type: boolean
+        approved_at:
           type: string
           format: date-time
           nullable: true

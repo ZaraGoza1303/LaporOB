@@ -4,7 +4,7 @@ import type { JadwalChecklist } from "../generated/prisma/client.js";
 import type { PaginatedResponse } from "../types/response.js";
 
 export type ChecklistHarianWithRelations = Prisma.Checklist_harianGetPayload<{
-    include: { kategori: true, lantai: true, ob: true }
+    include: { kategori: true; lantai: { include: { lokasi: true } }; ob: true };
 }>;
 
 export type ChecklistHarianWithDetails = Prisma.Checklist_harianGetPayload<{
