@@ -3,8 +3,10 @@ import type { IUsersService } from "./users_service.interface.js";
 import type { IKaryawanService } from "./karyawan_service.interface.js";
 import type { IObService } from "./ob_service.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
-import type { ProfileLaporanQuery, ProfileRes, ObProfileResponse, UserProfileResponse, MappedProfileReport } from "../dto/users.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { IAdminService } from "./admin_service.interface.js";
+import type { ProfileLaporanQuery } from "../dto/users.js";
+import type { ProfileRes, ObProfileResponse, UserProfileResponse, MappedProfileReport } from "../types/users.js";
+import type { PaginatedResponse } from "../types/response.js";
 import { USER_ROLE } from "../utils/constants.js";
 
 export class ProfileService implements IProfileService {
@@ -13,10 +15,21 @@ export class ProfileService implements IProfileService {
     private karyawanService: IKaryawanService,
     private obService: IObService,
     private laporanService: ILaporanService,
+    private adminService: IAdminService,
   ) {}
 
   async getProfile(userId: string, role: string, query: ProfileLaporanQuery): Promise<ProfileRes> {
+    const isAdmin = role.toLowerCase() === USER_ROLE.ADMIN;
     const isOb = role.toLowerCase() === USER_ROLE.OB;
+
+    if (isAdmin) {
+      const userProfile = await this.usersService.getProfile(userId);
+      const adminData = await this.adminService.getAdminStats(userId);
+      return {
+        user: { ...userProfile, admin: adminData },
+      };
+    }
+
     const { search, status, cursor, limit } = query;
 
     const userProfile = isOb
@@ -41,6 +54,7 @@ export class ProfileService implements IProfileService {
     isOb: boolean,
     laporan: PaginatedResponse<MappedProfileReport>
   ): ProfileRes {
+    const obProfile = userProfile as ObProfileResponse;
     const user: ProfileRes['user'] = {
       id: userProfile.id,
       nama_lengkap: userProfile.nama_lengkap,
@@ -49,8 +63,9 @@ export class ProfileService implements IProfileService {
       role: userProfile.role,
       profile_picture: userProfile.profile_picture,
       ...(isOb ? {
-        total_laporan: (userProfile as ObProfileResponse).laporanDiterima ?? 0,
-        tasksCompleted: (userProfile as ObProfileResponse).laporanSelesai ?? 0,
+        total_laporan: obProfile.laporanDiterima ?? 0,
+        tasksCompleted: obProfile.laporanSelesai ?? 0,
+        lokasiAktif: obProfile.lokasiAktif,
       } : {
         total_laporan: (userProfile as UserProfileResponse).total_laporan ?? 0,
       }),

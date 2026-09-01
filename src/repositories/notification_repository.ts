@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from "../dto/response.js";
+import type { PaginatedResponse } from "../types/response.js";
 import { Prisma, type Notifikasi, type PrismaClient } from "../generated/prisma/client.js";
 import type { NotifikasiCreateInput } from "../generated/prisma/models.js";
 import type { INotificationRepository, NotifikasiWithPengirim } from "./notification_repository.interface.js";
@@ -23,6 +23,18 @@ export class NotificationRepository implements INotificationRepository {
             reqs.map(req => this.db.notifikasi.create({ data: req }))
         );
         return result;
+    }
+
+    async getById(notifId: string): Promise<NotifikasiWithPengirim | null> {
+        const notif = await this.db.notifikasi.findFirst({
+            where: { id: notifId },
+            include: {
+                pengirim: {
+                    select: { id: true, nama_lengkap: true }
+                }
+            },
+        });
+        return notif;
     }
 
     async markAsRead(notifId: string): Promise<void> {

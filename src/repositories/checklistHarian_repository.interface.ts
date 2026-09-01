@@ -1,12 +1,10 @@
-import type { ChecklistHarianQuery } from "../dto/checklist_harian.js";
-import type { PaginatedResponse } from "../dto/response.js";
 import { Prisma } from "../generated/prisma/client.js";
-import type { Checklist_harian } from "../generated/prisma/client.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
-import type { PeriodRange } from "../utils/date.js";
+import type { JadwalChecklist } from "../generated/prisma/client.js";
+import type { PaginatedResponse } from "../types/response.js";
 
 export type ChecklistHarianWithRelations = Prisma.Checklist_harianGetPayload<{
-    include: { kategori: true, lantai: true, ob: true }
+    include: { kategori: true, lantai: true, ob: { omit: { password: true } } }
 }>;
 
 export type ChecklistHarianWithDetails = Prisma.Checklist_harianGetPayload<{
@@ -20,23 +18,32 @@ export type ChecklistHarianWithDetails = Prisma.Checklist_harianGetPayload<{
     };
 }>;
 
+export type ChecklistHarianApprovalItem = Prisma.Checklist_harianGetPayload<{
+    include: {
+        ob: { select: { id: true; nama_lengkap: true } };
+        lantai: { include: { lokasi: { select: { nama_lokasi: true } } } };
+        kategori: { select: { id: true; nama_kategori: true } };
+    };
+}>;
+
 export interface IChecklistHarianRepository {
-    getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<PaginatedResponse<ChecklistHarianWithRelations>>;
+    getAll(): Promise<ChecklistHarianWithRelations[]>;
+    getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<ChecklistHarianWithRelations>>;
     getByID(checklist_harianId: string): Promise<ChecklistHarianWithRelations | null>
     insert(req: Checklist_harianUncheckedCreateInput): Promise<void>;
     update(checklist_harianId: string, req: Checklist_harianUncheckedUpdateInput): Promise<void>;
     delete(checklist_harianId: string): Promise<void>;
 
-    countTotalChecklist(dateRange?: PeriodRange): Promise<number>;
-    countTotalChecklistDone(dateRange?: PeriodRange): Promise<number>;
-    countTotalChecklistPending(dateRange?: PeriodRange): Promise<number>;
-    countTotalChecklistLate(dateRange?: PeriodRange): Promise<number>;
     insertMany(data: Checklist_harianUncheckedCreateInput[]): Promise<void>;
 
-    /** For OB dashboard: get today's checklists for an OB */
+    insertFromJadwal(jadwal: JadwalChecklist): Promise<void>;
+    getExistingInstanceKeys(today: Date): Promise<Array<{ nama_tugas: string; lantai_id: string; ob_id: string | null }>>;
+
     getTodayChecklists(obId: string, tanggal: Date): Promise<ChecklistHarianWithDetails[]>;
-    /** For OB dashboard: count today's checklists for an OB */
     countTodayChecklists(obId: string, tanggal: Date): Promise<number>;
-    /** For OB: take/claim a checklist */
     ambilChecklist(checklistId: string, obId: string): Promise<void>;
+
+    getCompletedChecklistByOb(): Promise<Array<{ ob_id: string; nama_tugas: string }>>;
+    getPendingApproval(period: { start: Date; end: Date }, lokasiId?: string): Promise<ChecklistHarianApprovalItem[]>;
+    approve(checklistId: string, adminId: string): Promise<void>;
 }

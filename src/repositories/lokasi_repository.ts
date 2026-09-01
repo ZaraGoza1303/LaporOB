@@ -1,6 +1,7 @@
 import type { PrismaClient } from "../generated/prisma/client.js";
 import type { ILokasiRepository } from "./lokasi_repository.interface.js";
-import type { LokasiWithLantai, CreateLokasiReq, UpdateLokasiReq } from "../dto/lokasi.js";
+import type { CreateLokasiReq, UpdateLokasiReq } from "../dto/lokasi.js";
+import type { LokasiWithLantai } from "../types/lokasi.js";
 
 export class LokasiRepository implements ILokasiRepository {
     private db: PrismaClient;
@@ -45,7 +46,8 @@ export class LokasiRepository implements ILokasiRepository {
         await this.db.$transaction(async (tx) => {
             const lokasi = await tx.lokasi.create({
                 data: {
-                    nama_lokasi: req.nama_lokasi
+                    nama_lokasi: req.nama_lokasi,
+                    ...(req.alamat ? { alamat: req.alamat } : {})
                 }
             });
 
@@ -62,10 +64,14 @@ export class LokasiRepository implements ILokasiRepository {
 
     async update(lokasiId: string, req: UpdateLokasiReq): Promise<void> {
         await this.db.$transaction(async (tx) => {
-            if (req.nama_lokasi) {
+            const updateData: Record<string, string> = {};
+            if (req.nama_lokasi !== undefined) updateData.nama_lokasi = req.nama_lokasi;
+            if (req.alamat !== undefined) updateData.alamat = req.alamat;
+
+            if (Object.keys(updateData).length > 0) {
                 await tx.lokasi.update({
                     where: { id: lokasiId },
-                    data: { nama_lokasi: req.nama_lokasi }
+                    data: updateData
                 });
             }
 

@@ -1,17 +1,33 @@
 import z from "zod";
-import type { Laporan_karyawanGetPayload } from "../generated/prisma/models.js";
-import { LAPORAN_PRIORITY, LAPORAN_STATUS, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
-import type { PaginatedResponse } from "./response.js";
+import { LAPORAN_PRIORITY, LAPORAN_STATUS } from "../utils/constants.js";
 
 export const UserIdParamSchema = z.object({
   user_id: z.string().trim().uuid({ message: "Format user_id harus UUID yang valid" }),
 });
+
+const emptyToUndefined = (val: unknown) => {
+  if (val === "" || val === null || val === undefined) return undefined;
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed;
+      return [val];
+    } catch {
+      return [val];
+    }
+  }
+  return val;
+};
 
 export const CreateUserSchema = z.object({
   nama_lengkap: z.string().trim().min(1, { message: 'Nama lengkap wajib diisi' }),
   username: z.string().trim().min(3, { message: 'Username minimal 3 karakter' }).max(50, { message: 'Username maksimal 50 karakter' }),
   email: z.string().trim().email(),
   role_id: z.string().trim().uuid({ message: 'Format role_id harus UUID yang valid' }),
+  lokasi_ids: z.preprocess(
+    emptyToUndefined,
+    z.array(z.string().trim().uuid({ message: 'Format lokasi_id harus UUID yang valid' })).optional()
+  ),
 });
 
 export const UpdateUserSchema = CreateUserSchema.extend({
@@ -21,49 +37,7 @@ export const UpdateUserSchema = CreateUserSchema.extend({
 
 export const UpdateProfileSchema = CreateUserSchema.pick({
   nama_lengkap: true,
-}).partial();
-
-// export interface CreateUserRes {
-//   activationUrl: string,
-// }
-
-export interface UserHomeRes {
-  karyawan: {
-    nama_lengkap: string;
-  },
-  kategori: {
-    nama_kategori: string;
-  }[]
-  acitivity: Array<{
-    id: string;
-    deskripsi_kendala: string;
-    status: LaporanStatus;
-    foto_masalah: string[];
-    lokasi: string;
-    nomor_lantai: number;
-    created_at: string;
-  }>
-}
-
-export type UserActivityRes = Laporan_karyawanGetPayload<{
-  include: {
-    lantai: {
-      include: {
-        lokasi: true
-      }
-    },
-    kategori: true
-  }
-}>
-
-export interface CreateLaporanKaryawanInput {
-  kategori_id: string;
-  prioritas: LaporanPriority;
-  lantai_id: string;
-  ruangan_id: string;
-  deskripsi_kendala: string;
-  foto_masalah: string[];
-}
+}).partial().strict();
 
 export const LaporanIdParamSchema = z.object({
   laporan_id: z.string().trim().uuid({ message: "Format laporan_id harus UUID yang valid" }),
@@ -106,83 +80,3 @@ export const ProfileLaporanQuerySchema = z.object({
 });
 
 export type ProfileLaporanQuery = z.infer<typeof ProfileLaporanQuerySchema>;
-
-export interface GetProfileReq {
-  role: string;
-  cursor?: string | null;
-  search?: string | null;
-  status?: string | null;
-}
-
-export interface MappedProfileReport {
-  id: string;
-  kategori: string;
-  deskripsi_kendala: string;
-  status: LaporanStatus;
-  prioritas: LaporanPriority;
-  foto_masalah: string[];
-  lokasi: string;
-  nomor_lantai: number;
-  nama_ob: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ProfileRes {
-  user: {
-    id: string;
-    nama_lengkap: string;
-    username: string;
-    email: string;
-    role: string;
-    profile_picture: string | null;
-    total_laporan?: number; //Karyawan
-    tasksCompleted?: number; // OB
-    rejected?: number; // OB
-  };
-  laporan: PaginatedResponse<MappedProfileReport>;
-}
-
-export interface MappedReportDetailRes {
-  id: string;
-  kategori: string;
-  deskripsi_kendala: string;
-  status: LaporanStatus;
-  prioritas: LaporanPriority;
-  foto_masalah: string[];
-  foto_selesai: string[];
-  catatan: string;
-  lokasi: string;
-  nomor_lantai: number;
-  nama_karyawan: string;
-  nama_ob: string | null;
-  is_kolaborasi_open: boolean;
-  catatan_kolaborasi: string | null;
-  created_at: string;
-}
-
-export interface UserProfileResponse {
-  id: string;
-  nama_lengkap: string;
-  username: string;
-  email: string;
-  role: string;
-  profile_picture: string | null;
-  total_laporan?: number;
-}
-
-export interface ObProfileResponse {
-  id: string;
-  nama_lengkap: string;
-  username: string;
-  email: string;
-  role: string;
-  profile_picture: string | null;
-  laporanDiterima: number;
-  laporanSelesai: number;
-  lokasiAktif: Array<{
-    id: string;
-    nama_lokasi: string;
-    status: string;
-  }>
-}

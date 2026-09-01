@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from "../dto/response.js";
+import type { PaginatedResponse } from "../types/response.js";
 import type { Notifikasi } from "../generated/prisma/client.js";
 import type { NotifikasiCreateInput } from "../generated/prisma/models.js";
 
@@ -23,6 +23,7 @@ export interface NotifikasiWithPengirim {
 export interface INotificationRepository {
     insert(req: NotifikasiCreateInput): Promise<Notifikasi>
     insertMany(reqs: NotifikasiCreateInput[]): Promise<Notifikasi[]>
+    getById(notifId: string): Promise<NotifikasiWithPengirim | null>;
     markAsRead(notifId: string): Promise<void>
     markAllAsRead(userId: string): Promise<void>
     countUnread(userId: string): Promise<number>

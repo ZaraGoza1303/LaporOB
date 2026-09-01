@@ -19,7 +19,8 @@ export class NotificationController {
             }
 
             const notifId = validateParams.data.notification_id;
-            await this.notificationService.markAsRead(notifId);
+            const userId = req.user?.id as string;
+            await this.notificationService.markAsRead(notifId, userId);
 
             return res.status(200).json(sendSuccessfullResponse("Notifikasi berhasil dibaca"));
         } catch (err: unknown) {

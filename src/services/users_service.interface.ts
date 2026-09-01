@@ -1,14 +1,16 @@
-import type { CreateUserReq, UpdateProfileReq, UpdateUserReq, UserProfileResponse } from "../dto/users.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { CreateUserReq, UpdateProfileReq, UpdateUserReq } from "../dto/users.js";
+import type { UserProfileResponse, PublicUser } from "../types/users.js";
+import type { PaginatedResponse } from "../types/response.js";
 import type { UserSearchQuery } from "../dto/admin.js";
 import type { User, Role } from "../generated/prisma/client.js";
-import type { UserWithRoleAndToken } from "../repositories/users_repository.interface.js";
+import type { UserWithRoleAndToken, UserDetailWithPenugasan } from "../repositories/users_repository.interface.js";
 
 export interface IUsersService {
-    getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>>;
-    getByID(userId: string): Promise<UserWithRoleAndToken | null>;
-    getByEmail(email: string): Promise<User | null>;
-    getByRole(nama_role: string): Promise<User[]>;
+    getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<PublicUser>>;
+    getByID(userId: string): Promise<UserDetailWithPenugasan | null>;
+    getByEmail(email: string): Promise<PublicUser | null>;
+    getUserWithPasswordById(userId: string): Promise<User | null>;
+    getByRole(nama_role: string): Promise<PublicUser[]>;
     create(req: CreateUserReq): Promise<void>;
     update(userId: string, req: UpdateUserReq): Promise<void>;
     delete(userId: string): Promise<void>;

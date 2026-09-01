@@ -10,11 +10,36 @@ export async function renderEmailTemplate(templateName: string, data: Record<str
     return ejs.renderFile(templatePath, data);
 }
 
-export async function sendRenderedEmail(emailService: IEmailService, to: string, subject: string, templateName: string, templateData: Record<string, unknown>): Promise<void> {
+interface EmailSettings {
+    appName: string | null;
+    companyName: string | null;
+    logoUrl: string | null;
+}
+
+export async function sendRenderedEmail(
+    emailService: IEmailService,
+    to: string,
+    subject: string,
+    templateName: string,
+    templateData: Record<string, unknown>,
+    fetchSettings?: () => Promise<EmailSettings>,
+): Promise<void> {
     try {
+        let appName = process.env.APP_NAME || null;
+        let companyName = process.env.COMPANY_NAME || null;
+        let logoUrl = process.env.LOGO_URL || null;
+
+        if (fetchSettings) {
+            const dbSettings = await fetchSettings();
+            if (dbSettings.appName) appName = dbSettings.appName;
+            if (dbSettings.companyName) companyName = dbSettings.companyName;
+            if (dbSettings.logoUrl) logoUrl = dbSettings.logoUrl;
+        }
+
         const html = await renderEmailTemplate(templateName, {
-            appName: process.env.APP_NAME || "LaporOB",
-            companyName: process.env.COMPANY_NAME,
+            appName: appName || "Aplikasi",
+            companyName,
+            logoUrl,
             ...templateData,
         });
 

@@ -1,33 +1,28 @@
 import type { IObService } from "./ob_service.interface.js";
-import type { IObRepository } from "../repositories/ob_repository.interface.js";
+import type { IObRepository, PenugasanWithLokasi } from "../repositories/ob_repository.interface.js";
 import type { ILaporanService } from "./laporan_service.interface.js";
 import type { IUsersService } from "./users_service.interface.js";
-import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
-import type { ObHomeRes } from "../dto/ob.js";
-import type { MappedProfileReport, MappedReportDetailRes, ObProfileResponse } from "../dto/users.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { ObHomeRes } from "../types/ob.js";
+import type { MappedProfileReport, MappedReportDetailRes, ObProfileResponse } from "../types/users.js";
+import type { PaginatedResponse } from "../types/response.js";
 import type { RiwayatParams } from "./karyawan_service.interface.js";
 import { resolveFileUrl } from "../utils/url.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
-import { CHECKLIST_STATUS, LAPORAN_PRIORITY, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, REF_TIPE, type LaporanPriority, type LaporanStatus, USER_ROLE } from "../utils/constants.js";
-import type { ChecklistHarianWithDetails } from "../repositories/checklistHarian_repository.interface.js";
+import { LAPORAN_PRIORITY, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, REF_TIPE, type LaporanPriority, type LaporanStatus, USER_ROLE } from "../utils/constants.js";
 import type { LaporanKaryawanWithDetails } from "../repositories/laporan_repository.interface.js";
 
 export class ObService implements IObService {
     private obRepo: IObRepository;
     private laporanService: ILaporanService;
-    private checklistService: IChecklistHarianService;
     private usersService: IUsersService;
 
     constructor(
         obRepo: IObRepository,
         laporanService: ILaporanService,
-        checklistService: IChecklistHarianService,
         usersService: IUsersService
     ) {
         this.obRepo = obRepo;
         this.laporanService = laporanService;
-        this.checklistService = checklistService;
         this.usersService = usersService;
     }
 
@@ -38,37 +33,7 @@ export class ObService implements IObService {
                 throw new AppError("OB user tidak ditemukan", 404);
             }
 
-            const today = new Date();
-            const [checklists, totalChecklists, reports] = await Promise.all([
-                this.checklistService.getTodayChecklists(obId, today),
-                this.checklistService.countTodayChecklists(obId, today),
-                this.laporanService.getReportsForObDashboard(obId),
-            ]);
-
-            let resolvedCount = 0;
-            let pendingCount = 0;
-
-            const tugasHarianMapped = checklists.map((item: ChecklistHarianWithDetails) => {
-                const statusLower = (item.status || "").toLowerCase();
-                const isResolved = statusLower === "resolved" || statusLower === CHECKLIST_STATUS.SELESAI.toLowerCase() || statusLower === "complete" || statusLower === "sukses";
-
-                if (isResolved) {
-                    resolvedCount++;
-                } else {
-                    pendingCount++;
-                }
-
-                const mapped = {
-                    id: item.id,
-                    nama_tugas: item.nama_tugas,
-                    kategori: item.kategori?.nama_kategori || "",
-                    lokasi: item.lantai?.lokasi?.nama_lokasi || "",
-                    nomor_lantai: item.lantai?.nomor_lantai || 0,
-                    status: item.status,
-                    tanggal: item.tanggal instanceof Date ? item.tanggal.toISOString().split('T').at(0) ?? "" : String(item.tanggal ?? "")
-                };
-                return mapped;
-            });
+            const reports = await this.laporanService.getReportsForObDashboard(obId);
 
             const laporanMapped = reports.map((item: LaporanKaryawanWithDetails) => {
                 const kategoriName = item.kategori?.nama_kategori || "";
@@ -94,12 +59,6 @@ export class ObService implements IObService {
                 ob: {
                     nama_lengkap: obUser.nama_lengkap,
                 },
-                tugas_harian_stats: {
-                    total: totalChecklists,
-                    resolved: resolvedCount,
-                    pending: pendingCount
-                },
-                tugas_harian: tugasHarianMapped,
                 laporan: laporanMapped
             }
 
@@ -121,9 +80,10 @@ export class ObService implements IObService {
             const bulan = today.getMonth() + 1;
             const tahun = today.getFullYear();
 
-            const [obStats, penugasan] = await Promise.all([
+            const [obStats, penugasan, allReports] = await Promise.all([
                 this.laporanService.getObPerformanceStats(obId),
-                this.obRepo.getActiveAssignments(obId, bulan, tahun)
+                this.obRepo.getActiveAssignments(obId, bulan, tahun),
+                this.laporanService.getReportsByObId(obId, 1)
             ]);
 
             const lokasiAktif = penugasan.map((p) => ({
@@ -139,12 +99,21 @@ export class ObService implements IObService {
                 email: user.email,
                 role: user.role?.nama_role || "OB",
                 profile_picture: resolveFileUrl(user.profile_picture),
-                laporanDiterima: obStats.laporanDiterima || 0,
-                laporanSelesai: obStats.laporanSelesai || 0,
+                laporanDiterima: allReports.meta?.total_items ?? 0,
+                laporanSelesai: obStats.total_tugas_selesai,
                 lokasiAktif: lokasiAktif,
             };
 
             return profile;
+        } catch (err: unknown) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async getActiveAssignments(obId: string, bulan: number, tahun: number): Promise<PenugasanWithLokasi[]> {
+        try {
+            const assignments = await this.obRepo.getActiveAssignments(obId, bulan, tahun);
+            return assignments;
         } catch (err: unknown) {
             throw handlePrismaError(err);
         }

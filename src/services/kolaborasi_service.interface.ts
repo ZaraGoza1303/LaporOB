@@ -1,4 +1,4 @@
-import type { GabungResponse, DaftarGabungItem } from "../dto/kolaborasi.js";
+import type { GabungResponse, DaftarGabungItem } from "../types/kolaborasi.js";
 
 export interface IKolaborasiService {
     gabung(laporanId: string, obId: string): Promise<GabungResponse>;

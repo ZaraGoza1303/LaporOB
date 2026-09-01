@@ -1,11 +1,12 @@
-import type { PaginatedResponse } from "../dto/response.js";
-import type { UserActivityRes } from "../dto/users.js";
+import type { PaginatedResponse } from "../types/response.js";
+import type { UserActivityRes } from "../types/users.js";
 import type { AdminLaporanHistoryQuery, AdminLaporanQuery } from "../dto/admin.js";
 import type { PrismaClient, Prisma, Laporan_karyawan } from "../generated/prisma/client.js";
 import type { PeriodRange } from "../utils/date.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
-import type { ILaporanRepository, ProfileReport, DetailReportPayload, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, RuanganTerpopulerPayload, LaporanKaryawanWithDetails } from "./laporan_repository.interface.js";
+import type { ILaporanRepository, ProfileReport, DetailReportPayload, RecentActivityPayload, ReportSummaryPayload, AdminLaporanPayload, StatusInfoPayload, LaporanKaryawanWithDetails } from "./laporan_repository.interface.js";
 import { LAPORAN_STATUS, KOLABORASI_STATUS } from "../utils/constants.js";
+import type { ObPerformance } from "../types/ob.js";
 
 export class LaporanRepository implements ILaporanRepository {
     private db: PrismaClient;
@@ -90,8 +91,8 @@ export class LaporanRepository implements ILaporanRepository {
                         lokasi: true
                     }
                 },
-                ob: true,
-                pelapor: true,
+                ob: { omit: { password: true } },
+                pelapor: { omit: { password: true } },
                 histori_pekerjaan: true,
                 kolaborasi: {
                     include: {
@@ -106,21 +107,42 @@ export class LaporanRepository implements ILaporanRepository {
         return report;
     }
 
-    async getRecentActivities(limit: number): Promise<RecentActivityPayload[]> {
-        const activities = await this.db.laporan_karyawan.findMany({
-            include: {
-                lantai: {
-                    include: { lokasi: true }
-                },
-                ob: true
-            },
-            orderBy: {
-                updated_at: 'desc'
-            },
-            take: limit
-        });
+    async getRecentActivities(page: number, limit: number): Promise<PaginatedResponse<RecentActivityPayload>> {
+        const offset = (page - 1) * limit;
 
-        return activities;
+        const where = {
+            prioritas: "URGENT",
+            status: { in: [LAPORAN_STATUS.BELUM_DIKERJAKAN, LAPORAN_STATUS.SEDANG_DIKERJAKAN, LAPORAN_STATUS.PENDING] }
+        };
+
+        const [activities, total] = await Promise.all([
+            this.db.laporan_karyawan.findMany({
+                where,
+                include: {
+                    lantai: {
+                        include: { lokasi: true }
+                    },
+                    ob: { omit: { password: true } }
+                },
+                orderBy: {
+                    created_at: 'desc'
+                },
+                skip: offset,
+                take: limit
+            }),
+            this.db.laporan_karyawan.count({ where })
+        ]);
+
+        return {
+            items: activities,
+            next_cursor: null,
+            meta: {
+                total_items: total,
+                current_page: page,
+                limit,
+                total_pages: Math.ceil(total / limit)
+            }
+        };
     }
 
     async getReportsByDateRange(startDate: Date, endDate: Date): Promise<ReportSummaryPayload[]> {
@@ -152,8 +174,8 @@ export class LaporanRepository implements ILaporanRepository {
                 skip: offset,
                 take: limit,
                 include: {
-                    pelapor: true,
-                    ob: true,
+                    pelapor: { omit: { password: true } },
+                    ob: { omit: { password: true } },
                     lantai: {
                         include: {
                             lokasi: true
@@ -214,31 +236,32 @@ export class LaporanRepository implements ILaporanRepository {
         return result
     }
 
-    async getRuanganTerpopuler(limit: number, query: AdminLaporanQuery): Promise<any[]> {
+    async getStatusInfo(query: AdminLaporanQuery): Promise<StatusInfoPayload> {
         const where = this.buildAdminLaporanWhereClause(query);
 
-        const laporan = await this.db.laporan_karyawan.findMany({
-            where,
-            include: {
-                ruangan: {
-                    include: {
-                        lantai: {
-                            include: {
-                                lokasi: true
-                            }
-                        }
-                    }
-                }
-            }
-        });
+        const [totalMendesak, totalStandar, totalDibatalkan, totalMenunggu, totalSedangDikerjakan, totalSelesai] = await Promise.all([
+            this.db.laporan_karyawan.count({ where: { ...where, prioritas: "URGENT" } }),
+            this.db.laporan_karyawan.count({ where: { ...where, prioritas: "STANDARD" } }),
+            this.db.laporan_karyawan.count({ where: { ...where, status: LAPORAN_STATUS.DIBATALKAN } }),
+            this.db.laporan_karyawan.count({ where: { ...where, status: LAPORAN_STATUS.PENDING } }),
+            this.db.laporan_karyawan.count({ where: { ...where, status: LAPORAN_STATUS.SEDANG_DIKERJAKAN } }),
+            this.db.laporan_karyawan.count({ where: { ...where, status: LAPORAN_STATUS.SELESAI } }),
+        ]);
 
-        return laporan;
+        return {
+            mendesak: totalMendesak,
+            standar: totalStandar,
+            dibatalkan: totalDibatalkan,
+            menunggu: totalMenunggu,
+            sedang_dikerjakan: totalSedangDikerjakan,
+            selesai: totalSelesai,
+        };
     }
 
     async countLaporanAktif(query: AdminLaporanQuery): Promise<number> {
         const where = this.buildAdminLaporanWhereClause(query);
         where.status = {
-            in: [LAPORAN_STATUS.BELUM_DIKERJAKAN, LAPORAN_STATUS.PENDING]
+            in: [LAPORAN_STATUS.BELUM_DIKERJAKAN, LAPORAN_STATUS.SEDANG_DIKERJAKAN, LAPORAN_STATUS.PENDING]
         };
 
         const count = await this.db.laporan_karyawan.count({ where });
@@ -261,48 +284,23 @@ export class LaporanRepository implements ILaporanRepository {
     }
 
     async getReportsForObDashboard(obId: string): Promise<LaporanKaryawanWithDetails[]> {
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-
-        const assignments = await this.db.penugasanOb.findMany({
-            where: { ob_id: obId, bulan: now.getMonth() + 1, tahun: now.getFullYear() },
-            select: { lokasi_id: true }
-        });
-        const lokasiIds = assignments.map(a => a.lokasi_id);
-
-        const ownReports = await this.db.laporan_karyawan.findMany({
+        const reports = await this.db.laporan_karyawan.findMany({
             where: {
-                OR: [
-                    { ob_id: obId },
-                    { ob_id: null, status: { not: "PENDING" } }
-                ]
+                status: { in: [LAPORAN_STATUS.BELUM_DIKERJAKAN, LAPORAN_STATUS.SEDANG_DIKERJAKAN, LAPORAN_STATUS.PENDING] },
+                prioritas: "URGENT",
             },
             include: { kategori: true, lantai: { include: { lokasi: true } } },
             orderBy: { created_at: 'desc' },
-            take: 3
         });
 
-        if (ownReports.length >= 3) {
-            return ownReports;
-        }
-
-        const backupReports = await this.db.laporan_karyawan.findMany({
-            where: { ob_id: null, lantai: { lokasi_id: { notIn: lokasiIds } } },
-            include: { kategori: true, lantai: { include: { lokasi: true } } },
-            orderBy: { created_at: 'desc' },
-            take: 3 - ownReports.length
-        });
-
-        const result = [...ownReports, ...backupReports];
-        return result;
+        return reports;
     }
 
     async ambilLaporan(laporanId: string, obId: string): Promise<void> {
         const now = new Date();
         await this.db.laporan_karyawan.update({
             where: { id: laporanId },
-            data: { status: "PENDING", ob_id: obId, dikerjakan_at: now }
+            data: { status: LAPORAN_STATUS.SEDANG_DIKERJAKAN, ob_id: obId, dikerjakan_at: now }
         });
     }
 
@@ -319,7 +317,7 @@ export class LaporanRepository implements ILaporanRepository {
             }),
             this.db.laporan_karyawan.update({
                 where: { id: laporanId },
-                data: { status: "SELESAI", selesai_at: now }
+                data: { status: LAPORAN_STATUS.PENDING, selesai_at: now }
             })
         ]);
     }
@@ -338,7 +336,7 @@ export class LaporanRepository implements ILaporanRepository {
             this.db.laporan_karyawan.update({
                 where: { id: laporanId },
                 data: {
-                    status: "BELUM_DIKERJAKAN",
+                    status: LAPORAN_STATUS.BELUM_DIKERJAKAN,
                     ob_id: null,
                     alasan_gagal: catatan,
                     dibatalkan_at: now,
@@ -351,6 +349,7 @@ export class LaporanRepository implements ILaporanRepository {
         const laporan = await this.db.laporan_karyawan.update({
             where: { id: laporanId },
             data: {
+                status: LAPORAN_STATUS.SELESAI,
                 is_approved: true,
                 admin_catatan: catatan ?? null,
             }
@@ -373,19 +372,61 @@ export class LaporanRepository implements ILaporanRepository {
         return laporan;
     }
 
-    async getObPerformanceStats(obId: string, dateRange?: PeriodRange): Promise<{ laporanDiterima: number; laporanSelesai: number }> {
-        const dateFilter = dateRange
-            ? { created_at: { gte: dateRange.start, lte: dateRange.end } }
-            : {};
-
-        const [laporanDiterima, laporanSelesai] = await Promise.all([
-            this.db.laporan_karyawan.count({ where: { ob_id: obId, ...dateFilter } }),
-            this.db.laporan_karyawan.count({ where: { ob_id: obId, status: "SELESAI", ...dateFilter } })
+    async getObPerformanceStats(obId: string): Promise<ObPerformance> {
+        const [tugasSelesai, rataRataKecepatan] = await Promise.all([
+            this.countLaporanSelesaiOb(obId),
+            this.calculateAverageObTime(obId)
         ]);
+        
+        const res: ObPerformance = {
+            total_tugas_selesai: tugasSelesai,
+            rata_rata_kecepatan: rataRataKecepatan
+        }
 
-        const result = { laporanDiterima, laporanSelesai };
-        return result;
+        return res;
     }
+
+    async calculateAverageObTime(obId: string): Promise<number> {
+        const [totalLaporanSelesai, totalDurasiWaktu] = await Promise.all([
+            this.countLaporanSelesaiOb(obId),
+            this.getTotalDurasiObInSeconds(obId),
+        ])
+
+        const averageTime = totalDurasiWaktu / totalLaporanSelesai;
+        return averageTime;
+    }
+
+    async getTotalDurasiObInSeconds(obId: string): Promise<number> {
+        const data = await this.db.laporan_karyawan.findMany({
+            where: {
+                ob_id: obId,
+                status: LAPORAN_STATUS.SELESAI,
+                selesai_at: {not: null}
+            },
+            select: {
+                dikerjakan_at: true,
+                selesai_at: true,
+            }
+        });
+
+        const totalSeconds = data.reduce((acc, item) => {
+            if (!item.selesai_at || !item.dikerjakan_at) return acc;
+
+            const durasiMinutes = item.selesai_at.getTime() - item.dikerjakan_at.getTime();
+            const durasiSeconds = Math.floor(durasiMinutes / 1000);
+
+            return acc + durasiSeconds;
+        }, 0) 
+
+        return totalSeconds;
+    }
+
+
+    private async countLaporanSelesaiOb(obId: string): Promise<number> {
+        const total = await this.db.laporan_karyawan.count({ where: { ob_id: obId, status: LAPORAN_STATUS.SELESAI} })
+        return total;
+    }
+
 
     private async executePaginatedReports(whereCondition: Prisma.Laporan_karyawanWhereInput, limit: number, cursor?: string | null): Promise<PaginatedResponse<ProfileReport>> {
         const [reports, total] = await Promise.all([
@@ -399,7 +440,7 @@ export class LaporanRepository implements ILaporanRepository {
                 include: {
                     kategori: true,
                     lantai: { include: { lokasi: true } },
-                    ob: true
+                    ob: { omit: { password: true } }
                 },
                 orderBy: [
                     { created_at: "desc" },

@@ -1,119 +1,68 @@
-import type { ChecklistHarianQuery, CreateChecklistHarianReq, UpdateChecklistHarianReq, ChecklistHarianRes, ChecklistHarianPageResponse, ChecklistHarianGroupedByOB } from "../dto/checklist_harian.js";
+import type { UpdateChecklistHarianReq } from "../dto/checklist_harian.js";
+import type { ChecklistHarianRes } from "../types/checklist_harian.js";
 import type { IChecklistHarianRepository } from "../repositories/checklistHarian_repository.interface.js";
-import { handlePrismaError } from "../utils/error.js";
+import { handlePrismaError, AppError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
-import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails } from "../repositories/checklistHarian_repository.interface.js";
-import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
-import { CHECKLIST_STATUS, NOTIFICATION_TITLE, NOTIFICATION_TYPE, NOTIFICATION_MESSAGE, REF_TIPE, USER_ROLE } from "../utils/constants.js";
-import type { BulkNotificationData } from "../dto/notification.js";
-import type { INotificationService } from "./notification_service.interface.js";
-import type { IUsersService } from "./users_service.interface.js";
-import { calculatePeriodRange } from "../utils/date.js";
+import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails, ChecklistHarianApprovalItem } from "../repositories/checklistHarian_repository.interface.js";
+import type { Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
+import { CHECKLIST_STATUS } from "../utils/constants.js";
+import type { PaginatedResponse } from "../types/response.js";
+import type { JadwalChecklist } from "../generated/prisma/client.js";
+import type { ISkillService } from "./skill_service.interface.js";
+import type { IAchievementService } from "./achievement_service.interface.js";
 
 export class ChecklistHarianService implements IChecklistHarianService {
     private checklistRepo: IChecklistHarianRepository;
-    private notificationService: INotificationService;
-    private usersService: IUsersService;
+    private skillService: ISkillService;
+    private achievementService: IAchievementService;
 
     constructor(
         checklistRepo: IChecklistHarianRepository,
-        notificationService: INotificationService,
-        usersService: IUsersService,
+        skillService: ISkillService,
+        achievementService: IAchievementService,
     ) {
         this.checklistRepo = checklistRepo;
-        this.notificationService = notificationService;
-        this.usersService = usersService;
+        this.skillService = skillService;
+        this.achievementService = achievementService;
     }
 
-    async getAll(page: number, limit: number, query: ChecklistHarianQuery): Promise<ChecklistHarianPageResponse> {
+    async getAll(obId?: string): Promise<ChecklistHarianRes[]> {
         try {
-            const dateRange = calculatePeriodRange(query.period);
-
-            const [
-                data,
-                total,
-                done,
-                pending,
-                late
-            ] = await Promise.all([
-                this.checklistRepo.getAll(page, limit, query),
-                this.checklistRepo.countTotalChecklist(dateRange),
-                this.checklistRepo.countTotalChecklistDone(dateRange),
-                this.checklistRepo.countTotalChecklistPending(dateRange),
-                this.checklistRepo.countTotalChecklistLate(dateRange)
-            ]);
-
-            const mappedItems = data.items.map(item => this.mapToResponse(item));
-            const groupedMap = new Map<string | null, ChecklistHarianGroupedByOB>();
-
-            for (const item of mappedItems) {
-                const key = item.ob_id || null;
-                if (!groupedMap.has(key)) {
-                    groupedMap.set(key, {
-                        ob_id: key,
-                        ob: item.ob || null,
-                        items: []
-                    });
-                }
-                groupedMap.get(key)!.items.push(item);
-            }
-
-            const groupedItems = Array.from(groupedMap.values());
-
-            const result: ChecklistHarianPageResponse = {
-                checklist: {
-                    ...data,
-                    items: groupedItems
-                },
-                counts: {
-                    total,
-                    done,
-                    pending,
-                    late
-                }
-            };
+            const items = await this.checklistRepo.getAll();
+            const filtered = obId
+                ? items.filter(item => item.ob_id === obId)
+                : items;
+            const result = filtered.map(item => this.mapToResponse(item));
             return result;
         } catch (err) {
             handlePrismaError(err);
         }
     }
 
-    async getByID(checklistId: string): Promise<ChecklistHarianRes | null> {
+    async getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<ChecklistHarianRes>> {
+        try {
+            const result = await this.checklistRepo.getAllPaginated(page, limit, search);
+            return {
+                items: result.items.map(item => this.mapToResponse(item)),
+                next_cursor: result.next_cursor,
+                meta: result.meta ?? { total_items: 0, current_page: page, limit, total_pages: 0 },
+            };
+        } catch (err) {
+            handlePrismaError(err);
+        }
+    }
+
+    async getByID(checklistId: string, obId?: string): Promise<ChecklistHarianRes | null> {
         try {
             const item = await this.checklistRepo.getByID(checklistId);
             if (!item) return null;
+            if (obId && item.ob_id !== obId) {
+                throw new AppError("Anda tidak memiliki akses ke checklist ini", 403);
+            }
             const result = this.mapToResponse(item);
             return result;
         } catch (err) {
-            handlePrismaError(err);
-        }
-    }
-
-    async create(userId: string, req: CreateChecklistHarianReq): Promise<void> {
-        try {
-            const dataToInsert: Checklist_harianUncheckedCreateInput = {
-                nama_tugas: req.nama_tugas,
-                kategori_id: req.kategori_id,
-                lantai_id: req.lantai_id,
-                tanggal: new Date(),
-                status: CHECKLIST_STATUS.BELUM_DIKERJAKAN,
-                ob_id: null,
-            };
-
-            await this.checklistRepo.insert(dataToInsert);
-
-            const allOb = await this.usersService.getByRole(USER_ROLE.OB);
-            const notifData: BulkNotificationData = {
-                penerima_ids: allOb.map(ob => ob.id),
-                pengirim_id: userId,
-                tipe: NOTIFICATION_TYPE.PENUGASAN_CHECKLIST,
-                judul: NOTIFICATION_TITLE.PENUGASAN_CHECKLIST,
-                pesan: NOTIFICATION_MESSAGE.ADMIN_MENUGASKAN_OB,
-                ref_tipe: REF_TIPE.CHECKLIST,
-            };
-
-            await this.notificationService.sendBulkNotification(notifData);
-        } catch (err) {
+            if (err instanceof AppError) throw err;
             handlePrismaError(err);
         }
     }
@@ -140,6 +89,14 @@ export class ChecklistHarianService implements IChecklistHarianService {
             }
 
             await this.checklistRepo.update(checklistId, dataToUpdate);
+
+            if (req.status === CHECKLIST_STATUS.SELESAI) {
+                const updated = await this.checklistRepo.getByID(checklistId);
+                if (updated?.ob_id) {
+                    await this.skillService.prosesSkillOtomatisForOb(updated.ob_id);
+                    await this.achievementService.prosesOtomatisUntukOb(updated.ob_id);
+                }
+            }
         } catch (err) {
             handlePrismaError(err);
         }
@@ -164,10 +121,50 @@ export class ChecklistHarianService implements IChecklistHarianService {
     }
 
     async ambilChecklist(checklistId: string, obId: string): Promise<void> {
+        const checklist = await this.checklistRepo.getByID(checklistId);
+        if (!checklist) {
+            throw new AppError("Checklist tidak ditemukan", 404);
+        }
+        if (checklist.ob_id !== null) {
+            throw new AppError("Checklist sudah diambil oleh OB lain", 409);
+        }
         await this.checklistRepo.ambilChecklist(checklistId, obId);
     }
 
+    async getCompletedByOb(): Promise<Array<{ ob_id: string; nama_tugas: string }>> {
+        return this.checklistRepo.getCompletedChecklistByOb();
+    }
+
+    async getPendingApprovalChecklist(period: { start: Date; end: Date }, lokasiId?: string): Promise<ChecklistHarianApprovalItem[]> {
+        try {
+            const items = await this.checklistRepo.getPendingApproval(period, lokasiId);
+            return items;
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async approveChecklist(checklistId: string, adminId: string): Promise<void> {
+        try {
+            await this.checklistRepo.approve(checklistId, adminId);
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async getExistingInstanceKeys(today: Date): Promise<Array<{ nama_tugas: string; lantai_id: string; ob_id: string | null }>> {
+        return this.checklistRepo.getExistingInstanceKeys(today);
+    }
+
+    async insertFromJadwal(jadwal: JadwalChecklist): Promise<void> {
+        await this.checklistRepo.insertFromJadwal(jadwal);
+    }
+
     private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {
+        let total_durasi: number | null = null;
+        if (item.dikerjakan_at && item.selesai_at) {
+            total_durasi = Math.floor((item.selesai_at.getTime() - item.dikerjakan_at.getTime()) / 1000);
+        }
         const response: ChecklistHarianRes = {
             id: item.id,
             nama_tugas: item.nama_tugas,
@@ -179,6 +176,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
             dikerjakan_at: item.dikerjakan_at ?? null,
             selesai_at: item.selesai_at ?? null,
             terlewat_at: item.terlewat_at ?? null,
+            total_durasi,
             tanggal: item.tanggal,
             created_at: item.created_at,
             updated_at: item.updated_at,

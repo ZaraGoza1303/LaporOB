@@ -114,15 +114,15 @@ async function main() {
     console.log("  Insert tugas...");
     
     await client.query(`
-      INSERT INTO tugas (id, kategori_id, nama_tugas, is_active, created_at, updated_at) VALUES
+      INSERT INTO tugas (id, kategori_id, nama_tugas, is_active, tanggal_selesai, created_at, updated_at) VALUES
         -- Kebersihan
-        ('550fd576-3fd1-4a42-af0b-bb16c06436b2', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Bersihkan lantai toilet', true, now(), now()),
-        ('b8e4dd5c-227e-4650-bda5-ec630226a9d4', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Sapu dan pel lantai ruangan', true, now(), now()),
-        ('db8b6a86-3ac3-4cf7-bfc7-8fc72a368580', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Lap meja dan kursi', true, now(), now()),
-        ('695d2f29-7afe-47af-805e-bb47ddfd5c0b', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Angkut & buang sampah ke TPS', true, now(), now()),
+        ('550fd576-3fd1-4a42-af0b-bb16c06436b2', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Bersihkan lantai toilet', true, now() + interval '30 days', now(), now()),
+        ('b8e4dd5c-227e-4650-bda5-ec630226a9d4', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Sapu dan pel lantai ruangan', true, now() + interval '30 days', now(), now()),
+        ('db8b6a86-3ac3-4cf7-bfc7-8fc72a368580', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Lap meja dan kursi', true, now() + interval '30 days', now(), now()),
+        ('695d2f29-7afe-47af-805e-bb47ddfd5c0b', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'Angkut & buang sampah ke TPS', true, now() + interval '30 days', now(), now()),
         -- Pengecekan
-        ('d7d74511-f099-48ae-b357-6e3af2ccbde5', 'd2597de5-120f-47b0-878a-83a46c47db34', 'Cek kondisi wastafel & toilet', true, now(), now()),
-        ('cb9b64e7-e59f-481b-a357-78e93719a4a9', 'd2597de5-120f-47b0-878a-83a46c47db34', 'Cek kondisi AC ruangan', true, now(), now())
+        ('d7d74511-f099-48ae-b357-6e3af2ccbde5', 'd2597de5-120f-47b0-878a-83a46c47db34', 'Cek kondisi wastafel & toilet', true, now() + interval '30 days', now(), now()),
+        ('cb9b64e7-e59f-481b-a357-78e93719a4a9', 'd2597de5-120f-47b0-878a-83a46c47db34', 'Cek kondisi AC ruangan', true, now() + interval '30 days', now(), now())
       ON CONFLICT (id) DO NOTHING
     `);
 
@@ -190,6 +190,38 @@ async function main() {
           now(),
           now()
         )
+      ON CONFLICT (id) DO NOTHING
+    `);
+
+    // ============ APP SETTING ============
+    console.log("  Insert app_setting...");
+    await client.query(`
+      INSERT INTO app_setting (id, key, value, type, created_at, updated_at) VALUES
+        ('a1000000-0000-4000-8000-000000000001', 'app_name',    'LaporOB',        'text', now(), now()),
+        ('a1000000-0000-4000-8000-000000000002', 'company_name', 'PT Lapor OB',    'text', now(), now()),
+        ('a1000000-0000-4000-8000-000000000003', 'logo_url',    null,              'text', now(), now())
+      ON CONFLICT (key) DO NOTHING
+    `);
+
+    // ============ SKILL DEFINITION ============
+    console.log("  Insert skill_definition...");
+    await client.query(`
+      INSERT INTO skill_definition (id, nama_skill, keyword, deskripsi, is_auto, is_active, threshold, created_at, updated_at) VALUES
+        ('b1a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c4d', 'Perawatan AC', ARRAY['ac','pendingin','air conditioner','filter ac','remote ac','freon'], 'Merawat dan memperbaiki AC ruangan', true, true, 3, now(), now()),
+        ('b2a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c4e', 'Kebersihan Sanitasi', ARRAY['toilet','wc','kamar mandi','kloset','wastafel','urinoir','cermin toilet','sanitasi'], 'Membersihkan area sanitasi & kamar mandi', true, true, 5, now(), now()),
+        ('b3a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c4f', 'Perawatan Lantai', ARRAY['lantai','sapu','pel','menyapu','mengepel','keset','vinil','vynil','noda lantai'], 'Merawat kebersihan lantai', true, true, 5, now(), now()),
+        ('b4a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c50', 'Kebersihan Meja & Kursi', ARRAY['meja','kursi','lap meja','membersihkan meja'], 'Membersihkan meja dan kursi kerja', true, true, 5, now(), now()),
+        ('b5a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c51', 'Pengelolaan Sampah', ARRAY['sampah','tps','tong sampah','limbah','buang sampah','angkut sampah','kantong plastik sampah','recycle'], 'Mengelola dan membuang sampah', true, true, 5, now(), now()),
+        ('b6a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c52', 'Karyawan Teladan', ARRAY[]::text[], 'Penghargaan khusus dari admin', false, true, 0, now(), now())
+      ON CONFLICT (id) DO NOTHING
+    `);
+
+    // ============ ACHIEVEMENT ============
+    console.log("  Insert achievement...");
+    await client.query(`
+      INSERT INTO achievement (id, nama, deskripsi, tipe, keyword, threshold, response_time_threshold_seconds, icon, is_active, created_at, updated_at) VALUES
+        ('c1a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c01', 'Pekerja Keras', 'Menyelesaikan 50 tugas', 'COMPLETION_COUNT', ARRAY[]::text[], 50, null, null, true, now(), now()),
+        ('c2a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c02', 'Cepat Tanggap', 'Menyelesaikan 10 tugas dalam waktu 5 menit', 'FAST_RESPONSE', ARRAY[]::text[], 10, 300, null, true, now(), now())
       ON CONFLICT (id) DO NOTHING
     `);
 

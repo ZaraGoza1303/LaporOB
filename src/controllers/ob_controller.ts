@@ -213,25 +213,7 @@ export class ObController {
         }
     }
 
-    async getRiwayat(req: Request, res: Response) {
-        try {
-            const obId = req.user?.id as string;
-            const limit = parseInt(req.query.limit as string) || 10;
-            const cursor = req.query.cursor as string | undefined;
-            const status = req.query.status as string | undefined;
-            const search = req.query.search as string | undefined;
-
-            const result = await this.laporanService.getRiwayat(obId, limit, cursor, search, status);
-            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan riwayat", result));
-        } catch (err) {
-            if (err instanceof AppError) {
-                return res.status(err.statusCode).json(sendErrorResponse(err.message));
-            }
-            return res.status(500).json(sendErrorResponse("Gagal mendapatkan riwayat"));
-        }
-    }
-
-    async getDetailRiwayat(req: Request, res: Response) {
+    async getReportDetail(req: Request, res: Response) {
         try {
             const validateParams = LaporanIdParamSchema.safeParse(req.params);
             if (!validateParams.success) {
@@ -241,7 +223,7 @@ export class ObController {
             const laporanId = validateParams.data.laporan_id;
             const obId = req.user?.id as string;
 
-            const detail = await this.laporanService.getDetailRiwayat(laporanId, obId);
+            const detail = await this.laporanService.getReportDetail(laporanId, obId);
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan detail riwayat", detail));
         } catch (err) {
             if (err instanceof AppError) {
@@ -251,23 +233,11 @@ export class ObController {
         }
     }
 
-    async getProfile(req: Request, res: Response) {
-        try {
-            const obId = req.user?.id as string;
-            const profile = await this.obService.getProfile(obId);
-            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan profil", profile));
-        } catch (err: unknown) {
-            if (err instanceof AppError) {
-                return res.status(err.statusCode).json(sendErrorResponse(err.message));
-            }
-            return res.status(500).json(sendErrorResponse("Gagal mendapatkan profil"));
-        }
-    }
-
     async getTugas(req: Request, res: Response) {
         try {
             const obId = req.user?.id as string;
-            const tugas = await this.tugasService.getAvailableTugas(obId);
+            const tugas = await this.tugasService.getAllTugasForOb(obId);
+            
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan daftar tugas", tugas));
         } catch (err: unknown) {
             if (err instanceof AppError) {
