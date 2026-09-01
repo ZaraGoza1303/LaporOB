@@ -1,9 +1,10 @@
 import type { UserSearchQuery } from "../dto/admin.js";
-import type { CreateUserReq, UpdateProfileReq, UpdateUserReq, UserProfileResponse } from "../dto/users.js";
-import type { PaginatedResponse } from "../dto/response.js";
+import type { CreateUserReq, UpdateProfileReq, UpdateUserReq } from "../dto/users.js";
+import type { UserProfileResponse, PublicUser } from "../types/users.js";
+import type { PaginatedResponse } from "../types/response.js";
 import type { User, Role } from "../generated/prisma/client.js";
 import type { UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
-import type { IUsersRepository, UserWithRoleAndToken } from "../repositories/users_repository.interface.js";
+import type { IUsersRepository, UserWithRoleAndToken, UserDetailWithPenugasan } from "../repositories/users_repository.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { generateActivationToken } from "../utils/token.js";
 import { buildActivationUrl, resolveFileUrl } from "../utils/url.js";
@@ -11,26 +12,30 @@ import type { IUsersService } from "./users_service.interface.js";
 import bcrypt from 'bcrypt';
 import type { IRedisClient } from "../database/redis.interface.js";
 import type { IEmailService } from "./email_service.interface.js";
+import type { IAppSettingService } from "./appSetting_service.interface.js";
 import { sendRenderedEmail } from "../utils/email.js";
+import { USER_ROLE } from "../utils/constants.js";
 
 export class UsersService implements IUsersService {
     private usersRepo: IUsersRepository;
     private redis: IRedisClient;
     private emailService: IEmailService;
+    private settingService: IAppSettingService;
 
-    constructor(usersRepo: IUsersRepository, redis: IRedisClient, emailService: IEmailService) {
+    constructor(usersRepo: IUsersRepository, redis: IRedisClient, emailService: IEmailService, settingService: IAppSettingService) {
         this.usersRepo = usersRepo;
         this.redis = redis;
         this.emailService = emailService;
+        this.settingService = settingService;
     }
 
-    async getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>> {
+    async getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<PublicUser>> {
         try {
             const cacheKey = `users:all:page=${page}:limit=${limit}:query=${JSON.stringify(query)}`;
 
             const cachedData = await this.redis.get(cacheKey)
             if (cachedData) {
-                const parsedData: PaginatedResponse<User> = JSON.parse(cachedData)
+                const parsedData: PaginatedResponse<PublicUser> = JSON.parse(cachedData)
                 return parsedData
             }
 
@@ -42,21 +47,43 @@ export class UsersService implements IUsersService {
         }
     }
 
-    async getByID(userId: string): Promise<UserWithRoleAndToken | null> {
+    async getByID(userId: string): Promise<UserDetailWithPenugasan | null> {
         try {
-            const user = await this.usersRepo.getByID(userId)
+            const user = await this.usersRepo.getByID(userId);
             if (!user) return null;
 
+            let penugasan: import("../repositories/ob_repository.interface.js").PenugasanWithLokasi[] = [];
+            const isOb = user.role?.nama_role?.toLowerCase() === USER_ROLE.OB;
+            if (isOb) {
+                const today = new Date();
+                penugasan = await this.usersRepo.getObActiveAssignments(
+                    userId,
+                    today.getMonth() + 1,
+                    today.getFullYear()
+                );
+            }
+
+            return {
+                ...user,
+                penugasan,
+            };
+        } catch (err) {
+            throw handlePrismaError(err);
+        }
+    }
+
+    async getByEmail(email: string): Promise<PublicUser | null> {
+        try {
+            const user = await this.usersRepo.getByEmail(email);
             return user;
         } catch (err) {
             throw handlePrismaError(err)
         }
     }
 
-    async getByEmail(email: string): Promise<User | null> {
+    async getUserWithPasswordById(userId: string): Promise<User | null> {
         try {
-            const user = await this.usersRepo.getByEmail(email);
-            return user;
+            return await this.usersRepo.getUserWithPasswordById(userId);
         } catch (err) {
             throw handlePrismaError(err)
         }
@@ -83,7 +110,7 @@ export class UsersService implements IUsersService {
         }
     }
 
-    async getByRole(nama_role: string): Promise<User[]> {
+    async getByRole(nama_role: string): Promise<PublicUser[]> {
         try {
             const users = await this.usersRepo.getByRole(nama_role);
             return users;
@@ -96,7 +123,7 @@ export class UsersService implements IUsersService {
         try {
             const activationToken = generateActivationToken(5);
 
-            const createdUser = await this.usersRepo.transaction(async (tx) => {
+            await this.usersRepo.transaction(async (tx) => {
                 const user = await tx.user.create({
                     data: {
                         role: { connect: { id: req.role_id } },
@@ -104,6 +131,7 @@ export class UsersService implements IUsersService {
                         email: req.email,
                         nama_lengkap: req.nama_lengkap,
                     },
+                    include: { role: true },
                 });
 
                 await tx.userToken.create({
@@ -115,11 +143,25 @@ export class UsersService implements IUsersService {
                     },
                 });
 
+                const isOb = user.role?.nama_role?.toLowerCase() === USER_ROLE.OB;
+                if (isOb && req.lokasi_ids && req.lokasi_ids.length >= 0) {
+                    const today = new Date();
+                    await this.usersRepo.syncObLocations(
+                        user.id,
+                        req.lokasi_ids,
+                        today.getMonth() + 1,
+                        today.getFullYear(),
+                        tx
+                    );
+                }
+
                 return user;
             });
 
             const activationUrl = buildActivationUrl(activationToken.token);
-            await sendRenderedEmail(this.emailService, req.email, "Aktivasi Akun", "activation", {
+            const settingsCreate = await this.settingService.getAll();
+            const subjectCreate = `Aktivasi Akun ${settingsCreate.app_name || "Aplikasi"}`;
+            await sendRenderedEmail(this.emailService, req.email, subjectCreate, "activation", {
                 userName: req.nama_lengkap,
                 activationUrl,
             });
@@ -143,7 +185,30 @@ export class UsersService implements IUsersService {
             if (req.is_active !== undefined) updateData.is_active = req.is_active;
             if (req.is_active === false) updateData.is_deleted = true;
 
-            await this.usersRepo.update(userId, updateData);
+            await this.usersRepo.transaction(async (tx) => {
+                await tx.user.update({
+                    where: { id: userId },
+                    data: updateData,
+                });
+
+                if (req.lokasi_ids !== undefined) {
+                    const targetUser = await tx.user.findUnique({
+                        where: { id: userId },
+                        include: { role: true },
+                    });
+                    if (targetUser && targetUser.role?.nama_role?.toLowerCase() === USER_ROLE.OB) {
+                        const today = new Date();
+                        await this.usersRepo.syncObLocations(
+                            userId,
+                            req.lokasi_ids,
+                            today.getMonth() + 1,
+                            today.getFullYear(),
+                            tx
+                        );
+                    }
+                }
+            });
+
             await this.redis.del("users:all:*");
         } catch (err) {
             throw handlePrismaError(err);
@@ -213,7 +278,9 @@ export class UsersService implements IUsersService {
             });
 
             const activationUrl = buildActivationUrl(activationToken.token);
-            await sendRenderedEmail(this.emailService, user.email, "Aktivasi Akun (Baru)", "activation", {
+            const settingsRenew = await this.settingService.getAll();
+            const subjectRenew = `Aktivasi Akun ${settingsRenew.app_name || "Aplikasi"} (Baru)`;
+            await sendRenderedEmail(this.emailService, user.email, subjectRenew, "activation", {
                 user: { nama_lengkap: user.nama_lengkap },
                 activationUrl,
             });

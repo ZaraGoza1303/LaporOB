@@ -1,4 +1,5 @@
-import type { CreateLokasiReq, UpdateLokasiReq, LokasiRes, LokasiWithLantai } from "../dto/lokasi.js";
+import type { CreateLokasiReq, UpdateLokasiReq } from "../dto/lokasi.js";
+import type { LokasiRes, LokasiWithLantai } from "../types/lokasi.js";
 import type { Lantai } from "../generated/prisma/client.js";
 import type { ILokasiRepository } from "../repositories/lokasi_repository.interface.js";
 import { handlePrismaError } from "../utils/error.js";
@@ -18,6 +19,7 @@ export class LokasiService implements ILokasiService {
         const response: LokasiRes = {
             id: item.id,
             nama_lokasi: item.nama_lokasi,
+            alamat: item.alamat || null,
             jumlah_lantai: item.lantai ? item.lantai.length : 0,
             lantai: (item.lantai || []).map((floor: Lantai) => ({
                 id: floor.id,

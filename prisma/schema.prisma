@@ -27,6 +27,7 @@ model User {
 
   role                    Role               @relation(fields: [role_id], references: [id])
   checklist_harian        Checklist_harian[]
+  jadwal_checklist        JadwalChecklist[]
   laporan_sebagai_pelapor Laporan_karyawan[] @relation("LaporanPelapor")
   laporan_sebagai_ob      Laporan_karyawan[] @relation("LaporanOb")
   tokens                  UserToken[]
@@ -37,6 +38,8 @@ model User {
   histori_pekerjaan       Histori_pekerjaan[]
   sessions                UserSession[]
   tugas_ob                Tugas[]        @relation("TugasOb")
+  skills                  ObSkill[]
+  ob_achievements         ObAchievement[]
 
   @@map("user")
 }
@@ -68,6 +71,7 @@ model Role {
 model Lokasi {
   id          String   @id @default(uuid()) @db.Uuid
   nama_lokasi String   @db.VarChar(100)
+  alamat      String?  @db.VarChar(255)
   created_at  DateTime @default(now()) @db.Timestamp(6)
   updated_at  DateTime @updatedAt @db.Timestamp(6)
 
@@ -103,6 +107,7 @@ model Lantai {
   lokasi Lokasi @relation(fields: [lokasi_id], references: [id], onDelete: Cascade)
 
   checklist_harian Checklist_harian[]
+  jadwal_checklist JadwalChecklist[]
   laporan_karyawan Laporan_karyawan[]
   ruangan          Ruangan[]
   tugas            Tugas[]
@@ -132,6 +137,7 @@ model Kategori {
   tugas            Tugas[]
   laporan_karyawan Laporan_karyawan[]
   checklist_harian Checklist_harian[]
+  jadwal_checklist JadwalChecklist[]
 
   @@map("kategori")
 }
@@ -149,6 +155,15 @@ model Tugas {
   is_active      Boolean   @default(true)
   created_at     DateTime  @default(now()) @db.Timestamp(6)
   updated_at     DateTime  @updatedAt @db.Timestamp(6)
+
+  hari            String[]   @default([])
+  tanggal_ulang   Int?
+  tanggal_spesifik DateTime[] @default([])
+  tanggal_mulai   DateTime?  @db.Timestamp(6)
+  tanggal_selesai DateTime   @db.Timestamp(6)
+
+  is_approved    Boolean   @default(false)
+  approved_at    DateTime? @db.Timestamp(6)
 
   kategori  Kategori @relation(fields: [kategori_id], references: [id], onDelete: Cascade)
   lantai    Lantai?  @relation(fields: [lantai_id], references: [id])
@@ -169,6 +184,10 @@ model Checklist_harian {
   dikerjakan_at   DateTime? @db.Timestamp(6)
   selesai_at      DateTime? @db.Timestamp(6)
   terlewat_at     DateTime? @db.Timestamp(6)
+
+  is_approved    Boolean   @default(false)
+  approved_at    DateTime? @db.Timestamp(6)
+
   created_at      DateTime  @default(now()) @db.Timestamp(6)
   updated_at      DateTime  @updatedAt @db.Timestamp(6)
 
@@ -177,6 +196,92 @@ model Checklist_harian {
   kategori Kategori @relation(fields: [kategori_id], references: [id])
 
   @@map("checklist_harian")
+}
+
+model JadwalChecklist {
+  id          String    @id @default(uuid()) @db.Uuid
+  nama_tugas  String    @db.VarChar(150)
+  lantai_id   String    @db.Uuid
+  kategori_id String    @db.Uuid
+  ob_id       String?   @db.Uuid
+
+  hari String[] @default([])
+
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  updated_at DateTime  @updatedAt @db.Timestamp(6)
+
+  ob       User?    @relation(fields: [ob_id], references: [id])
+  lantai   Lantai   @relation(fields: [lantai_id], references: [id])
+  kategori Kategori @relation(fields: [kategori_id], references: [id])
+
+  @@map("jadwal_checklist")
+}
+
+model SkillDefinition {
+  id         String   @id @default(uuid()) @db.Uuid
+  nama_skill String   @db.VarChar(100)
+  keyword    String[] @default([])
+  deskripsi  String?  @db.Text
+  is_auto    Boolean  @default(true)
+  is_active  Boolean  @default(true)
+  threshold  Int      @default(5)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt @db.Timestamp(6)
+
+  ob_skills ObSkill[]
+
+  @@map("skill_definition")
+}
+
+model ObSkill {
+  id             String    @id @default(uuid()) @db.Uuid
+  ob_id          String    @db.Uuid
+  skill_id       String    @db.Uuid
+  jumlah_selesai Int       @default(0)
+  assigned_by    String?   @db.Uuid
+  diperoleh_at   DateTime?
+  created_at     DateTime  @default(now()) @db.Timestamp(6)
+  updated_at     DateTime  @updatedAt @db.Timestamp(6)
+
+  ob    User           @relation(fields: [ob_id], references: [id], onDelete: Cascade)
+  skill SkillDefinition @relation(fields: [skill_id], references: [id], onDelete: Cascade)
+
+  @@unique([ob_id, skill_id])
+  @@map("ob_skill")
+}
+
+model Achievement {
+  id                              String   @id @default(uuid()) @db.Uuid
+  nama                            String   @db.VarChar(100)
+  deskripsi                       String?  @db.Text
+  tipe                            String   @default("KEYWORD") @db.VarChar(30)
+  keyword                         String[] @default([])
+  threshold                       Int      @default(5)
+  response_time_threshold_seconds Int?
+  icon                            String?  @db.VarChar(255)
+  is_active                       Boolean  @default(true)
+  created_at                      DateTime @default(now()) @db.Timestamp(6)
+  updated_at                      DateTime @updatedAt @db.Timestamp(6)
+
+  ob_achievements ObAchievement[]
+
+  @@map("achievement")
+}
+
+model ObAchievement {
+  id             String    @id @default(uuid()) @db.Uuid
+  ob_id          String    @db.Uuid
+  achievement_id String    @db.Uuid
+  progress       Int       @default(0)
+  diperoleh_at   DateTime?
+  created_at     DateTime  @default(now()) @db.Timestamp(6)
+  updated_at     DateTime  @updatedAt @db.Timestamp(6)
+
+  ob          User        @relation(fields: [ob_id], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievement_id], references: [id], onDelete: Cascade)
+
+  @@unique([ob_id, achievement_id])
+  @@map("ob_achievement")
 }
 
 model Laporan_karyawan {
@@ -258,6 +363,17 @@ model UserSession {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("user_session")
+}
+
+model AppSetting {
+  id         String   @id @default(uuid()) @db.Uuid
+  key        String   @unique @db.VarChar(50)
+  value      String?  @db.Text
+  type       String   @default("text") @db.VarChar(20)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  updated_at DateTime @updatedAt @db.Timestamp(6)
+
+  @@map("app_setting")
 }
 
 model Notifikasi {

@@ -4,7 +4,7 @@ import type { IObService } from "../services/ob_service.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
 import type { IStorageService } from "../services/storage_service.interface.js";
 import { CreateUserSchema, UpdateUserSchema, UpdateProfileSchema, ProfileLaporanQuerySchema, UserIdParamSchema, LaporanIdParamSchema } from "../dto/users.js";
-import type { ProfileRes, ObProfileResponse, UserProfileResponse } from "../dto/users.js";
+import type { ProfileRes, ObProfileResponse, UserProfileResponse } from "../types/users.js";
 import { UserSearchQuerySchema, GetDashboardQuerySchema } from "../dto/admin.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
@@ -92,12 +92,12 @@ export class UsersController {
             }
 
             const userId = validate.data.user_id;
-            const response = await this.usersService.getByID(userId);
-            if (!response) {
+            const user = await this.usersService.getByID(userId);
+            if (!user) {
                 return res.status(404).json(sendErrorResponse("User tidak ditemukan"));
             }
 
-            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data user", response))
+            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan data user", user));
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
@@ -290,27 +290,6 @@ export class UsersController {
         }
     }
 
-    async getReportDetail(req: Request, res: Response) {
-        try {
-            const validateParams = LaporanIdParamSchema.safeParse(req.params);
-            if (!validateParams.success) {
-                const formattedErr = validateParams.error.flatten().fieldErrors;
-                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
-            }
-            const laporanId = validateParams.data.laporan_id;
-            const userId = req.user?.id as string;
-            const role = req.user?.role as string;
-            
-            const response = await this.laporanService.getReportDetail(laporanId, userId, role);
-            return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan detail laporan", response));
-        } catch (err: unknown) {
-            if (err instanceof AppError) {
-                return res.status(err.statusCode).json(sendErrorResponse(err.message))
-            }
-            return res.status(500).json(sendErrorResponse("Terjadi kesalahan pada server"));
-        }
-    }
-    
     async getObPerformanceStats(req: Request, res: Response) {
         try {
             const validateParams = UserIdParamSchema.safeParse(req.params);
@@ -318,16 +297,9 @@ export class UsersController {
                 const formatedErr = validateParams.error.flatten().fieldErrors;
                 return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
             }
+            
             const obId = validateParams.data.user_id;
-
-            const validateQuery = GetDashboardQuerySchema.safeParse(req.query);
-            if (!validateQuery.success) {
-                const formatedErr = validateQuery.error.flatten().fieldErrors;
-                return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
-            }
-
-            const dateRange = calculatePeriodRange(validateQuery.data.period);
-            const response = await this.laporanService.getObPerformanceStats(obId, dateRange);
+            const response = await this.laporanService.getObPerformanceStats(obId);
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil mendapatkan statistik performa OB", response));
         } catch (err: unknown) {

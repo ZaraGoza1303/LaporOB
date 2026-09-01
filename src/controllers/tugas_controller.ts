@@ -39,7 +39,7 @@ export class TugasController {
             }
             const tugasId = validateParams.data.tugas_id;
 
-            const response = await this.tugasService.getByID(tugasId);
+            const response = await this.tugasService.getDetailByID(tugasId);
             if (!response) {
                 return res.status(404).json(sendErrorResponse("Data tugas tidak ditemukan"));
             }
