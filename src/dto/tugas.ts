@@ -20,6 +20,10 @@ export const CreateTugasSchema = z.object({
 export const UpdateTugasSchema = z.object({
     kategori_id: z.string().uuid({ message: "Format Kategori ID harus berupa UUID yang valid" }).optional(),
     nama_tugas: z.string().trim().min(1, { message: "Nama tugas tidak boleh kosong" }).max(150, { message: "Nama tugas maksimal 150 karakter" }).optional(),
+    lantai_id: z.string().uuid({ message: "Format Lantai ID harus berupa UUID yang valid" }).nullable().optional(),
+    catatan: z.string().trim().nullable().optional(),
+    ob_id: z.string().uuid({ message: "Format OB ID harus berupa UUID yang valid" }).nullable().optional(),
+    status: z.enum(["BELUM_DIKERJAKAN", "SEDANG_DIKERJAKAN", "SELESAI", "TERLEWAT"]).optional(),
     hari: z.array(z.string()).optional(),
     tanggal_ulang: z.coerce.number().int().min(1).max(31).nullable().optional(),
     tanggal_spesifik: z.array(z.string()).optional(),

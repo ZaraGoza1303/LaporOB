@@ -10,6 +10,7 @@ import { resolveFileUrl } from "../utils/url.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { LAPORAN_PRIORITY, LAPORAN_STATUS, NOTIFICATION_TYPE, NOTIFICATION_TITLE, NOTIFICATION_MESSAGE, REF_TIPE, type LaporanPriority, type LaporanStatus, USER_ROLE } from "../utils/constants.js";
 import type { LaporanKaryawanWithDetails } from "../repositories/laporan_repository.interface.js";
+import type { ITugasService } from "./tugas_service.interface.js";
 
 export class ObService implements IObService {
     private obRepo: IObRepository;
