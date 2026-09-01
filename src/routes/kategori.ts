@@ -6,8 +6,7 @@ import { USER_ROLE } from "../utils/constants.js";
 
 const kategoriRouter = Router();
 kategoriRouter.use(verifyJWTToken);
-kategoriRouter.use(requireRole(USER_ROLE.ADMIN));
-
+kategoriRouter.use(requireRole(USER_ROLE.ADMIN, USER_ROLE.KARYAWAN));
 kategoriRouter.get('/', (req, res) => kategoriController.getAll(req, res));
 kategoriRouter.get('/:kategori_id', (req, res) => kategoriController.getByID(req, res));
 kategoriRouter.post('/', (req, res) => kategoriController.create(req, res));

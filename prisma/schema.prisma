@@ -150,6 +150,8 @@ model Tugas {
   ob_id          String?   @db.Uuid
   status         String    @default("BELUM_DIKERJAKAN") @db.VarChar(30)
   catatan        String?   @db.Text
+  foto_awal      String[]   @db.VarChar(255)
+  foto_akhir     String[]   @db.VarChar(255)
   dikerjakan_at  DateTime? @db.Timestamp(6)
   selesai_at     DateTime? @db.Timestamp(6)
   is_active      Boolean   @default(true)

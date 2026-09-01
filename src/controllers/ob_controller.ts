@@ -257,7 +257,32 @@ export class ObController {
             const tugasId = validateParams.data.tugas_id;
             const obId = req.user?.id as string;
 
-            await this.tugasService.claimTugas(tugasId, obId);
+            const fotoFiles = ((req.files || []) as Express.Multer.File[]).filter(
+                (file) => file.fieldname === "foto_awal"
+            );
+
+            if (fotoFiles.length === 0) {
+                return res.status(400).json(sendErrorResponse("Foto awal wajib diupload"));
+            }
+
+            const fotoUrls: string[] = [];
+            for (const file of fotoFiles) {
+                const validation = await validateImageFile(file);
+                if (!validation.ok) {
+                    return res.status(400).json(sendErrorResponse(validation.message));
+                }
+
+                try {
+                    await compressImageIfNeeded(file);
+                } catch (err: unknown) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar"));
+                }
+
+                const url = await this.storageService.uploadFile(file);
+                fotoUrls.push(url);
+            }
+
+            await this.tugasService.claimTugas(tugasId, obId, fotoUrls);
             return res.status(200).json(sendSuccessfullResponse("Tugas berhasil diklaim"));
         } catch (err: unknown) {
             if (err instanceof AppError) {
@@ -277,7 +302,34 @@ export class ObController {
             const tugasId = validateParams.data.tugas_id;
             const obId = req.user?.id as string;
 
-            await this.tugasService.completeTugas(tugasId, obId);
+            const fotoFiles = ((req.files || []) as Express.Multer.File[]).filter(
+                (file) => file.fieldname === "foto_akhir"
+            );
+
+            if (fotoFiles.length === 0) {
+                return res.status(400).json(sendErrorResponse("Foto akhir wajib diupload"));
+            }
+
+            const fotoUrls: string[] = [];
+            for (const file of fotoFiles) {
+                const validation = await validateImageFile(file);
+                if (!validation.ok) {
+                    return res.status(400).json(sendErrorResponse(validation.message));
+                }
+
+                try {
+                    await compressImageIfNeeded(file);
+                } catch (err: unknown) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar"));
+                }
+
+                const url = await this.storageService.uploadFile(file);
+                fotoUrls.push(url);
+            }
+
+            const catatan = req.body?.catatan || "";
+
+            await this.tugasService.completeTugas(tugasId, obId, fotoUrls, catatan);
             return res.status(200).json(sendSuccessfullResponse("Tugas berhasil diselesaikan"));
         } catch (err: unknown) {
             if (err instanceof AppError) {

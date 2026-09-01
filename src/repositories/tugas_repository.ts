@@ -14,7 +14,7 @@ export class TugasRepository implements ITugasRepository {
         this.db = db;
     }
 
-    async getAll(kategoriId?: string): Promise<Tugas[]> {
+    async getAll(kategoriId?: string): Promise<TugasDetailPayload[]> {
         const where: Prisma.TugasWhereInput = {
             is_active: true,
         };
@@ -25,6 +25,11 @@ export class TugasRepository implements ITugasRepository {
 
         const data = await this.db.tugas.findMany({
             where,
+            include: {
+                kategori: true,
+                lantai: { include: { lokasi: true } },
+                ob: true,
+            },
             orderBy: {
                 nama_tugas: 'asc',
             },
@@ -139,7 +144,7 @@ export class TugasRepository implements ITugasRepository {
         return tugas;
     }
 
-    async claimByOb(tugasId: string, obId: string): Promise<void> {
+    async claimByOb(tugasId: string, obId: string, fotoAwal: string[]): Promise<void> {
         const now = new Date();
         await this.db.tugas.update({
             where: { id: tugasId },
@@ -147,18 +152,79 @@ export class TugasRepository implements ITugasRepository {
                 ob_id: obId,
                 status: TUGAS_STATUS.SEDANG_DIKERJAKAN,
                 dikerjakan_at: now,
+                foto_awal: { set: fotoAwal },
             },
         });
     }
 
-    async completeByOb(tugasId: string, obId: string): Promise<void> {
+    async completeByOb(tugasId: string, obId: string, fotoAkhir: string[], catatan?: string): Promise<void> {
         const now = new Date();
         await this.db.tugas.update({
             where: { id: tugasId, ob_id: obId },
             data: {
                 status: TUGAS_STATUS.SELESAI,
                 selesai_at: now,
+                foto_akhir: { set: fotoAkhir },
+                ...(catatan !== undefined && { catatan }),
             },
+        });
+    }
+
+    async getCompletedTugasByObId(obId: string, limit: number, cursor?: string | null, search?: string | null): Promise<PaginatedResponse<TugasDetailPayload>> {
+        const whereCondition: Prisma.TugasWhereInput = {
+            ob_id: obId,
+            status: TUGAS_STATUS.SELESAI,
+            is_active: true,
+        };
+
+        if (search) {
+            whereCondition.nama_tugas = { contains: search, mode: "insensitive" };
+        }
+
+        const [tugasList, total] = await Promise.all([
+            this.db.tugas.findMany({
+                where: whereCondition,
+                take: limit + 1,
+                ...((cursor) && {
+                    skip: 1,
+                    cursor: { id: cursor }
+                }),
+                include: {
+                    kategori: true,
+                    lantai: { include: { lokasi: true } },
+                    ob: true
+                },
+                orderBy: [
+                    { selesai_at: "desc" },
+                    { id: "desc" }
+                ]
+            }),
+            this.db.tugas.count({ where: whereCondition })
+        ]);
+
+        const hasNextPage = tugasList.length > limit;
+        const items = hasNextPage ? tugasList.slice(0, limit) : tugasList;
+        const nextCursor = hasNextPage ? (items[items.length - 1]?.id ?? null) : null;
+
+        return {
+            items,
+            next_cursor: nextCursor,
+            meta: {
+                total_items: total,
+                current_page: 1,
+                limit,
+                total_pages: Math.ceil(total / limit)
+            }
+        };
+    }
+
+    async countCompletedTugasByObId(obId: string): Promise<number> {
+        return await this.db.tugas.count({
+            where: {
+                ob_id: obId,
+                status: TUGAS_STATUS.SELESAI,
+                is_active: true,
+            }
         });
     }
 
@@ -220,11 +286,18 @@ export class TugasRepository implements ITugasRepository {
 
     async approve(tugasId: string, adminId: string): Promise<void> {
         const now = new Date();
+        const existing = await this.db.tugas.findUnique({
+            where: { id: tugasId },
+            select: { selesai_at: true },
+        });
+
         await this.db.tugas.update({
             where: { id: tugasId },
             data: {
+                status: TUGAS_STATUS.SELESAI,
                 is_approved: true,
                 approved_at: now,
+                selesai_at: existing?.selesai_at ?? now,
             },
         });
     }

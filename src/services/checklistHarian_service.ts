@@ -177,6 +177,8 @@ export class ChecklistHarianService implements IChecklistHarianService {
             selesai_at: item.selesai_at ?? null,
             terlewat_at: item.terlewat_at ?? null,
             total_durasi,
+            is_approved: item.is_approved,
+            approved_at: item.approved_at ?? null,
             tanggal: item.tanggal,
             created_at: item.created_at,
             updated_at: item.updated_at,

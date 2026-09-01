@@ -111,7 +111,7 @@ const obService = new ObService(obRepository, laporanService, usersService);
 const kolaborasiService = new KolaborasiService(kolaborasiRepository, laporanService, notificationService);
 const adminService = new AdminService(adminRepository, laporanService, usersService, redisClient as unknown as IRedisClient);
 const karyawanService = new KaryawanService(usersService, laporanService, kategoriService, notificationService);
-const profileService = new ProfileService(usersService, karyawanService, obService, laporanService, adminService);
+const profileService = new ProfileService(usersService, karyawanService, obService, laporanService, adminService, tugasService);
 
 //  CONTROLLERS 
 export const adminController = new AdminController(adminService, checklistHarianService, tugasService, skillService);
