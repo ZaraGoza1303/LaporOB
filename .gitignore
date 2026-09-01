@@ -1,5 +1,7 @@
 node_modules
 /src/generated/prisma
 .env
-/uploads
+/uploads/*
+!/uploads/wgs-logo.png
+!/uploads/.gitkeep
 /generated/prisma
