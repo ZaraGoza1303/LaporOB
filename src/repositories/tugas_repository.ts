@@ -51,7 +51,7 @@ export class TugasRepository implements ITugasRepository {
                 include: {
                     kategori: true,
                     lantai: { include: { lokasi: true } },
-                    ob: true,
+                    ob: { omit: { password: true } },
                 },
             }),
             this.db.tugas.count({ where }),
@@ -85,7 +85,7 @@ export class TugasRepository implements ITugasRepository {
             include: {
                 kategori: true,
                 lantai: { include: { lokasi: true } },
-                ob: true,
+                ob: { omit: { password: true } },
             },
         });
         return tugas;

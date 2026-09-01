@@ -1,7 +1,7 @@
 import type { PaginatedResponse } from "../types/response.js";
-import type { UserActivityRes } from "../types/users.js";
+import type { UserActivityRes, PublicUser } from "../types/users.js";
 import type { AdminLaporanHistoryQuery, AdminLaporanQuery } from '../dto/admin.js';
-import type { User, Kategori, Lantai, Lokasi, Laporan_karyawan, Prisma } from "../generated/prisma/client.js";
+import type { Kategori, Lantai, Lokasi, Laporan_karyawan, Prisma } from "../generated/prisma/client.js";
 import type { Laporan_karyawanCreateInput } from "../generated/prisma/models.js";
 import type { PeriodRange } from "../utils/date.js";
 import type { ObPerformance } from "../types/ob.js";
@@ -11,15 +11,15 @@ export type ProfileReport = Laporan_karyawan & {
     lantai: Lantai & {
         lokasi: Lokasi;
     };
-    ob: User | null;
+    ob: PublicUser | null;
 };
 
 export type DetailReportPayload = Prisma.Laporan_karyawanGetPayload<{
     include: {
         kategori: true;
         lantai: { include: { lokasi: true } };
-        ob: true;
-        pelapor: true;
+        ob: { omit: { password: true } };
+        pelapor: { omit: { password: true } };
         histori_pekerjaan: true;
         kolaborasi: {
             include: {
@@ -34,7 +34,7 @@ export type DetailReportPayload = Prisma.Laporan_karyawanGetPayload<{
 export type RecentActivityPayload = Prisma.Laporan_karyawanGetPayload<{
     include: {
         lantai: { include: { lokasi: true } };
-        ob: true;
+        ob: { omit: { password: true } };
     };
 }>;
 
@@ -46,8 +46,8 @@ export interface ReportSummaryPayload {
 
 export type AdminLaporanPayload = Prisma.Laporan_karyawanGetPayload<{
     include: {
-        pelapor: true;
-        ob: true;
+        pelapor: { omit: { password: true } };
+        ob: { omit: { password: true } };
         lantai: { include: { lokasi: true } };
         kategori: true;
     };

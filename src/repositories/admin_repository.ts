@@ -158,7 +158,7 @@ export class AdminRepository implements IAdminRepository {
             this.db.tugas.findMany({
                 where,
                 include: {
-                    ob: true,
+                    ob: { omit: { password: true } },
                     kategori: true
                 },
                 orderBy: {

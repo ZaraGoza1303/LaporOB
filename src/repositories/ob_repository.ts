@@ -1,5 +1,5 @@
-import type { PrismaClient, User } from "../generated/prisma/client.js";
-import type { IObRepository, PenugasanWithLokasi } from "./ob_repository.interface.js";
+import type { PrismaClient } from "../generated/prisma/client.js";
+import type { IObRepository, PenugasanWithLokasi, UserWithoutPassword } from "./ob_repository.interface.js";
 
 export class ObRepository implements IObRepository {
     private db: PrismaClient;
@@ -8,17 +8,12 @@ export class ObRepository implements IObRepository {
         this.db = db;
     }
 
-    async getObById(obId: string): Promise<User | null> {
+    async getObById(obId: string): Promise<UserWithoutPassword | null> {
         const user = await this.db.user.findFirst({
             where: { id: obId },
+            omit: { password: true },
             include: {
-                role: true,
-                tokens: {
-                    orderBy: {
-                        created_at: 'desc'
-                    },
-                    take: 1
-                }
+                role: true
             }
         });
         return user;

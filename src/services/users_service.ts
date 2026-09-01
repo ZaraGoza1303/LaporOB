@@ -1,6 +1,6 @@
 import type { UserSearchQuery } from "../dto/admin.js";
 import type { CreateUserReq, UpdateProfileReq, UpdateUserReq } from "../dto/users.js";
-import type { UserProfileResponse } from "../types/users.js";
+import type { UserProfileResponse, PublicUser } from "../types/users.js";
 import type { PaginatedResponse } from "../types/response.js";
 import type { User, Role } from "../generated/prisma/client.js";
 import type { UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
@@ -29,13 +29,13 @@ export class UsersService implements IUsersService {
         this.settingService = settingService;
     }
 
-    async getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>> {
+    async getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<PublicUser>> {
         try {
             const cacheKey = `users:all:page=${page}:limit=${limit}:query=${JSON.stringify(query)}`;
 
             const cachedData = await this.redis.get(cacheKey)
             if (cachedData) {
-                const parsedData: PaginatedResponse<User> = JSON.parse(cachedData)
+                const parsedData: PaginatedResponse<PublicUser> = JSON.parse(cachedData)
                 return parsedData
             }
 
@@ -72,10 +72,18 @@ export class UsersService implements IUsersService {
         }
     }
 
-    async getByEmail(email: string): Promise<User | null> {
+    async getByEmail(email: string): Promise<PublicUser | null> {
         try {
             const user = await this.usersRepo.getByEmail(email);
             return user;
+        } catch (err) {
+            throw handlePrismaError(err)
+        }
+    }
+
+    async getUserWithPasswordById(userId: string): Promise<User | null> {
+        try {
+            return await this.usersRepo.getUserWithPasswordById(userId);
         } catch (err) {
             throw handlePrismaError(err)
         }
@@ -102,7 +110,7 @@ export class UsersService implements IUsersService {
         }
     }
 
-    async getByRole(nama_role: string): Promise<User[]> {
+    async getByRole(nama_role: string): Promise<PublicUser[]> {
         try {
             const users = await this.usersRepo.getByRole(nama_role);
             return users;

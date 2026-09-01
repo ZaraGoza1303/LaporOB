@@ -91,8 +91,8 @@ export class LaporanRepository implements ILaporanRepository {
                         lokasi: true
                     }
                 },
-                ob: true,
-                pelapor: true,
+                ob: { omit: { password: true } },
+                pelapor: { omit: { password: true } },
                 histori_pekerjaan: true,
                 kolaborasi: {
                     include: {
@@ -122,7 +122,7 @@ export class LaporanRepository implements ILaporanRepository {
                     lantai: {
                         include: { lokasi: true }
                     },
-                    ob: true
+                    ob: { omit: { password: true } }
                 },
                 orderBy: {
                     created_at: 'desc'
@@ -174,8 +174,8 @@ export class LaporanRepository implements ILaporanRepository {
                 skip: offset,
                 take: limit,
                 include: {
-                    pelapor: true,
-                    ob: true,
+                    pelapor: { omit: { password: true } },
+                    ob: { omit: { password: true } },
                     lantai: {
                         include: {
                             lokasi: true
@@ -440,7 +440,7 @@ export class LaporanRepository implements ILaporanRepository {
                 include: {
                     kategori: true,
                     lantai: { include: { lokasi: true } },
-                    ob: true
+                    ob: { omit: { password: true } }
                 },
                 orderBy: [
                     { created_at: "desc" },

@@ -1,7 +1,10 @@
 import type { Laporan_karyawanGetPayload } from "../generated/prisma/models.js";
+import type { User } from "../generated/prisma/client.js";
 import type { LaporanPriority, LaporanStatus } from "../utils/constants.js";
 import type { PaginatedResponse } from "./response.js";
 import type { AdminProfileData } from "./admin.js";
+
+export type PublicUser = Omit<User, "password">;
 
 export interface UserHomeRes {
   karyawan: {

@@ -147,7 +147,7 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
                 skip,
                 take: limit,
                 orderBy: { created_at: 'desc' },
-                include: { kategori: true, lantai: true, ob: true },
+                include: { kategori: true, lantai: true, ob: { omit: { password: true } } },
             }),
             this.db.checklist_harian.count({ where }),
         ]);
@@ -170,7 +170,7 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
             include: {
                 kategori: true,
                 lantai: true,
-                ob: true,
+                ob: { omit: { password: true } },
             },
         });
 
@@ -185,7 +185,7 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
             include: {
                 kategori: true,
                 lantai: true,
-                ob: true,
+                ob: { omit: { password: true } },
             },
         })
 

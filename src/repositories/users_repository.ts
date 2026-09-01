@@ -3,6 +3,7 @@ import type { PaginatedResponse } from "../types/response.js";
 import { Prisma, type PrismaClient, type User, type Role } from "../generated/prisma/client.js";
 import type { UserCreateInput, UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
 import type { IUsersRepository, ProfileUser, UserWithRoleAndToken } from "./users_repository.interface.js";
+import type { PublicUser } from "../types/users.js";
 
 export class UsersRepository implements IUsersRepository {
     private db: PrismaClient;
@@ -11,7 +12,7 @@ export class UsersRepository implements IUsersRepository {
         this.db = db
     }
 
-    async getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<User>> {
+    async getAll(page: number, limit: number, query: UserSearchQuery): Promise<PaginatedResponse<PublicUser>> {
         const { search, role_id } = query;
         const offset = (page - 1) * limit;
 
@@ -35,14 +36,15 @@ export class UsersRepository implements IUsersRepository {
                 where,
                 skip: offset,
                 take: limit,
-                orderBy: { username: 'asc' }
+                orderBy: { username: 'asc' },
+                omit: { password: true }
             }),
             this.db.user.count({
                 where
             })
         ])
 
-        const result: PaginatedResponse<User> = {
+        const result: PaginatedResponse<PublicUser> = {
             items: users,
             next_cursor: null,
             meta: {
@@ -58,24 +60,39 @@ export class UsersRepository implements IUsersRepository {
     async getByID(userId: string): Promise<UserWithRoleAndToken | null> {
         const user = await this.db.user.findFirst({
             where: { id: userId },
+            omit: { password: true },
             include: {
                 role: true,
                 tokens: {
                     orderBy: {
                         created_at: 'desc'
                     },
-                    take: 1
+                    take: 1,
+                    select: {
+                        id: true,
+                        type: true,
+                        expired_at: true,
+                        created_at: true,
+                        used_at: true
+                    }
                 }
             }
         });
         return user;
     }
 
-    async getByEmail(email: string): Promise<User | null> {
+    async getByEmail(email: string): Promise<PublicUser | null> {
         const user = await this.db.user.findFirst({
-            where: { email, is_deleted: false }
+            where: { email, is_deleted: false },
+            omit: { password: true }
         });
         return user;
+    }
+
+    async getUserWithPasswordById(userId: string): Promise<User | null> {
+        return this.db.user.findFirst({
+            where: { id: userId }
+        });
     }
 
     async insert(req: UserCreateInput): Promise<User> {
@@ -114,12 +131,13 @@ export class UsersRepository implements IUsersRepository {
                 id: userId,
                 is_deleted: false
             },
+            omit: { password: true },
             include: { role: true }
         });
         return user;
     }
 
-    async getByRole(nama_role: string): Promise<User[]> {
+    async getByRole(nama_role: string): Promise<PublicUser[]> {
         const users = await this.db.user.findMany({
             where: {
                 is_deleted: false,
@@ -130,7 +148,8 @@ export class UsersRepository implements IUsersRepository {
                         mode: 'insensitive'
                     }
                 }
-            }
+            },
+            omit: { password: true }
         });
         return users;
     }
