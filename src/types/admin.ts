@@ -150,7 +150,7 @@ export type RecentActivityPayload = Prisma.Laporan_karyawanGetPayload<{
         lantai: {
             include: { lokasi: true }
         };
-        ob: true;
+        ob: { omit: { password: true } };
     };
 }>;
 

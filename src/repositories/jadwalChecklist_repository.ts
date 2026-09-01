@@ -22,14 +22,14 @@ export class JadwalChecklistRepository implements IJadwalChecklistRepository {
     async getByID(jadwalId: string): Promise<JadwalChecklist | null> {
         return this.db.jadwalChecklist.findFirst({
             where: { id: jadwalId },
-            include: { kategori: true, lantai: { include: { lokasi: true } }, ob: true },
+            include: { kategori: true, lantai: { include: { lokasi: true } }, ob: { omit: { password: true } } },
         });
     }
 
     async getAll(): Promise<JadwalChecklist[]> {
         return this.db.jadwalChecklist.findMany({
             orderBy: { created_at: 'desc' },
-            include: { kategori: true, lantai: { include: { lokasi: true } }, ob: true },
+            include: { kategori: true, lantai: { include: { lokasi: true } }, ob: { omit: { password: true } } },
         });
     }
 

@@ -151,7 +151,7 @@ export class AuthService implements IAuthService {
 
     async changePassword(userId: string, req: ChangePasswordReq): Promise<void> {
         try {
-            const user = await this.usersService.getByID(userId);
+            const user = await this.usersService.getUserWithPasswordById(userId);
             if (!user) {
                 throw new AppError("User tidak ditemukan", 404);
             }

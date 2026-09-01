@@ -19,8 +19,8 @@ export type RecentLaporanPayload = {
 
 export type LaporanDetailPayload = Prisma.Laporan_karyawanGetPayload<{
     include: {
-        pelapor: true;
-        ob: true;
+        pelapor: { omit: { password: true } };
+        ob: { omit: { password: true } };
         lantai: { include: { lokasi: true } };
         kategori: true;
         histori_pekerjaan: true;
@@ -29,8 +29,8 @@ export type LaporanDetailPayload = Prisma.Laporan_karyawanGetPayload<{
 
 export type AdminLaporanPayload = Prisma.Laporan_karyawanGetPayload<{
     include: {
-        pelapor: true;
-        ob: true;
+        pelapor: { omit: { password: true } };
+        ob: { omit: { password: true } };
         lantai: { include: { lokasi: true } };
         kategori: true;
     };
