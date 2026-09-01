@@ -172,6 +172,78 @@ components:
           type: string
           nullable: true
 
+    PublicUser:
+      type: object
+      description: User object as returned by the API.
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        nama_lengkap:
+          type: string
+        profile_picture:
+          type: string
+          nullable: true
+        role_id:
+          type: string
+          format: uuid
+        role:
+          type: object
+          nullable: true
+          description: Populated on detail endpoints; absent on list endpoints
+          properties:
+            id:
+              type: string
+              format: uuid
+            nama_role:
+              type: string
+        is_active:
+          type: boolean
+        is_deleted:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        penugasan:
+          type: array
+          nullable: true
+          description: Only on GET /admin/user/{user_id} when the user is an OB
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              lokasi:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  nama_lokasi:
+                    type: string
+
+    PaginatedPublicUsers:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicUser'
+        next_cursor:
+          type: string
+          nullable: true
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
     MappedProfileReport:
       type: object
       properties:
@@ -683,6 +755,12 @@ components:
               type: string
             username:
               type: string
+            email:
+              type: string
+              format: email
+            profile_picture:
+              type: string
+              nullable: true
 
     JadwalChecklistRequest:
       type: object
@@ -1141,6 +1219,14 @@ components:
               format: uuid
             nama_lengkap:
               type: string
+            username:
+              type: string
+            email:
+              type: string
+              format: email
+            profile_picture:
+              type: string
+              nullable: true
         status:
           type: string
         catatan:
@@ -2394,6 +2480,18 @@ paths:
       responses:
         '200':
           description: Daftar user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/PaginatedPublicUsers'
 
     post:
       tags:
@@ -2455,6 +2553,20 @@ paths:
       responses:
         '200':
           description: Daftar ob
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicUser'
 
   /api/admin/user/assign-locations:
     post:
@@ -2532,6 +2644,20 @@ paths:
       responses:
         '200':
           description: Daftar karyawan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicUser'
 
   /api/admin/dashboard:
     get:
@@ -3312,6 +3438,18 @@ paths:
       responses:
         '200':
           description: Data user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/PublicUser'
     patch:
       tags:
         - Admin
