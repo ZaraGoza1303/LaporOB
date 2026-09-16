@@ -6,7 +6,7 @@ import { USER_ROLE } from "../utils/constants.js";
 
 const jadwalChecklistRouter = Router();
 jadwalChecklistRouter.use(verifyJWTToken);
-jadwalChecklistRouter.use(requireRole(USER_ROLE.ADMIN));
+jadwalChecklistRouter.use(requireRole(USER_ROLE.ADMIN, USER_ROLE.HR));
 
 jadwalChecklistRouter.get('/', (req, res) => jadwalChecklistController.getAll(req, res));
 jadwalChecklistRouter.post('/', (req, res) => jadwalChecklistController.create(req, res));
