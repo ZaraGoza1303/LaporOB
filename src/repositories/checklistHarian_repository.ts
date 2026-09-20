@@ -95,17 +95,18 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
             .map(r => ({ ob_id: r.ob_id, nama_tugas: r.nama_tugas }));
     }
 
-    async getPendingApproval(period: PeriodRange, lokasiId?: string): Promise<ChecklistHarianApprovalItem[]> {            // kolom tanggal bertipe date dan tersimpan sebagai tengah malam UTC
-            // period WIB diterjemahkan ke hari kalender supaya filter harian tetap ada hasilnya saat subuh
-            const startDay = toCalendarDate(period.start);
-            const endDay = toCalendarDate(period.end);
-            endDay.setUTCDate(endDay.getUTCDate() + 1); // exclusive
+    // kolom tanggal bertipe date dan tersimpan sebagai tengah malam UTC,
+    // period WIB diterjemahkan ke hari kalender supaya filter harian tetap ada hasilnya saat subuh
+    async getPendingApproval(period: PeriodRange, lokasiId?: string): Promise<ChecklistHarianApprovalItem[]> {
+        const startDay = toCalendarDate(period.start);
+        const endDay = toCalendarDate(period.end);
+        endDay.setUTCDate(endDay.getUTCDate() + 1); // exclusive
 
-            const where: Prisma.Checklist_harianWhereInput = {
-                status: CHECKLIST_STATUS.SELESAI,
-                is_approved: false,
-                tanggal: { gte: startDay, lt: endDay },
-            };
+        const where: Prisma.Checklist_harianWhereInput = {
+            status: CHECKLIST_STATUS.SELESAI,
+            is_approved: false,
+            tanggal: { gte: startDay, lt: endDay },
+        };
 
         if (lokasiId) {
             where.lantai = { lokasi_id: lokasiId };
