@@ -74,3 +74,24 @@ export function calculateDateRanges(period: Period): DateRangeResult {
 
     return { current_start, current_end, previous_start, previous_end };
 }
+
+// Konversi tanggal kalender WIB ke tengah malam UTC supaya cocok sama kolom @db.Date di Prisma 
+export function toCalendarDate(now: Date): Date {
+    return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+}
+
+// Format tanggal lokal jadi string YYYY-MM-DD supaya frontend tidak membacanya mundur sehari 
+export function toDateString(now: Date): string {
+    const bulan = String(now.getMonth() + 1).padStart(2, "0");
+    const tanggal = String(now.getDate()).padStart(2, "0");
+    return `${now.getFullYear()}-${bulan}-${tanggal}`;
+}
+
+/** Rentang hari untuk filter kolom @db.Date dari daysBack hari lalu sampai hari ini. Batas akhir digeser satu hari dan bersifat eksklusif supaya dipakai dengan lt */
+export function calculateCalendarDayRange(daysBack: number, now: Date = new Date()): PeriodRange {
+    const start = toCalendarDate(now);
+    start.setUTCDate(start.getUTCDate() - daysBack);
+    const end = toCalendarDate(now);
+    end.setUTCDate(end.getUTCDate() + 1); // exclusive
+    return { start, end };
+}

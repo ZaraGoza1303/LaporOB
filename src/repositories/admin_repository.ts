@@ -4,7 +4,7 @@ import type { PaginatedResponse } from "../types/response.js";
 import { Prisma, PrismaClient } from "../generated/prisma/client.js";
 import type { IAdminRepository, DailyChecklistObReport, PenugasanObWithDetails, RiwayatTugasObReport, StatsTugasResult, ObRankingRawData, TrenLaporanBulananRaw } from "./admin_repository.interface.js";
 import { CHECKLIST_STATUS, LAPORAN_STATUS, TUGAS_STATUS, USER_ROLE } from "../utils/constants.js";
-import { calculatePeriodRange } from "../utils/date.js";
+import { calculatePeriodRange, toCalendarDate } from "../utils/date.js";
 
 export class AdminRepository implements IAdminRepository {
     private db: PrismaClient;
@@ -44,11 +44,10 @@ export class AdminRepository implements IAdminRepository {
     }
 
     async getDailyChecklistOB(tanggal: Date): Promise<DailyChecklistObReport[]> {
-        const startOfDay = new Date(tanggal);
-        startOfDay.setHours(0, 0, 0, 0);
-
-        const endOfDay = new Date(tanggal);
-        endOfDay.setHours(23, 59, 59, 999);
+        // kolom tanggal bertipe date jadi filternya per hari pakai tengah malam UTC bukan window jam WIB
+        const startOfDay = toCalendarDate(tanggal);
+        const endOfDay = new Date(startOfDay);
+        endOfDay.setUTCDate(endOfDay.getUTCDate() + 1); // exclusive
 
         const obRole = await this.db.role.findFirst({
             where: {
@@ -75,7 +74,7 @@ export class AdminRepository implements IAdminRepository {
             where: {
                 tanggal: {
                     gte: startOfDay,
-                    lte: endOfDay
+                    lt: endOfDay
                 },
                 ob_id: {
                     in: obs.map(ob => ob.id)

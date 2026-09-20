@@ -13,6 +13,7 @@ services:
       - ./uploads:/app/uploads
     environment:
       - APP_PORT=8000
+      - TZ=${TZ}
       - STORAGE_PROVIDER=${STORAGE_PROVIDER}
       - DATABASE_URL=${DATABASE_URL}
       - BACKEND_BASE_URL=${BACKEND_BASE_URL}

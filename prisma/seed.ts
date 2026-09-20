@@ -140,8 +140,9 @@ async function main() {
 
     // ============ CHECKLIST HARIAN ============
     console.log("  Insert checklist_harian...");
+    // pakai komponen lokal karena toISOString bisa mundur sehari pas dini hari WIB
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
     await client.query(`
       INSERT INTO checklist_harian (id, tanggal, nama_tugas, ob_id, lantai_id, kategori_id, status, created_at, updated_at) VALUES
