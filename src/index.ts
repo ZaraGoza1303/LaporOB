@@ -1,44 +1,43 @@
-import './src/utils/load_env.js';
+import './utils/load_env.js';
 import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
-import connectDB from './src/database/db.js';
-import profileRouter from './src/routes/profile.js';
-import authRouter from './src/routes/auth.js';
-import obRouter from './src/routes/ob.js';
-import obLaporanRouter from './src/routes/obLaporan.js';
-import obTugasRouter from './src/routes/obTugas.js';
-import adminUserManagementRouter from './src/routes/userManagement.js';
-import adminRouter from './src/routes/admin.js';
-import karyawanRouter from './src/routes/karyawan.js';
-import lokasiRouter from './src/routes/lokasi.js';
-import checklistHarianRouter from './src/routes/checklistHarian.js';
-import jadwalChecklistRouter from './src/routes/jadwalChecklist.js';
-import constantsRouter from './src/routes/constants.js';
-import skillRouter from './src/routes/skill.js';
-import achievementRouter from './src/routes/achievement.js';
-import lantaiRouter from './src/routes/lantai.js';
-import ruanganRouter from './src/routes/ruangan.js';
-import kategoriRouter from './src/routes/kategori.js';
-import tugasRouter from './src/routes/tugas.js';
-import notifikasiRouter from './src/routes/notifikasi.js';
-import obKolaborasiRouter from './src/routes/obKolaborasi.js';
-import settingRouter from './src/routes/setting.js';
-import publicSettingRouter from './src/routes/publicSetting.js';
-import hrRouter from './src/routes/hr.js';
+import connectDB from './database/db.js';
+import profileRouter from './routes/profile.js';
+import authRouter from './routes/auth.js';
+import obRouter from './routes/ob.js';
+import obLaporanRouter from './routes/obLaporan.js';
+import obTugasRouter from './routes/obTugas.js';
+import adminUserManagementRouter from './routes/userManagement.js';
+import adminRouter from './routes/admin.js';
+import karyawanRouter from './routes/karyawan.js';
+import lokasiRouter from './routes/lokasi.js';
+import checklistHarianRouter from './routes/checklistHarian.js';
+import jadwalChecklistRouter from './routes/jadwalChecklist.js';
+import constantsRouter from './routes/constants.js';
+import skillRouter from './routes/skill.js';
+import achievementRouter from './routes/achievement.js';
+import lantaiRouter from './routes/lantai.js';
+import ruanganRouter from './routes/ruangan.js';
+import kategoriRouter from './routes/kategori.js';
+import tugasRouter from './routes/tugas.js';
+import notifikasiRouter from './routes/notifikasi.js';
+import obKolaborasiRouter from './routes/obKolaborasi.js';
+import settingRouter from './routes/setting.js';
+import publicSettingRouter from './routes/publicSetting.js';
+import hrRouter from './routes/hr.js';
 import swaggerUi from 'swagger-ui-express';
 import path from 'node:path';
 import YAML from 'yamljs';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
-import { initWebSocket } from './src/services/websocket_service.js';
-import { setBaseUrlMiddleware } from './src/middleware/setBaseUrl.js';
-import { checklistHarianService, jadwalChecklistService, skillService, achievementService } from './src/container.js';
-import cron from 'node-cron';
+import { initWebSocket } from './services/websocket_service.js';
+import { setBaseUrlMiddleware } from './middleware/setBaseUrl.js';
+import { initCron } from './cron/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));
+const swaggerDocument = YAML.load(path.join(__dirname, '../swagger.yaml'));
 
 const app = express();
 const server = createServer(app);
@@ -127,37 +126,10 @@ const initRouter = () => {
     app.use('/api/hr', hrRouter);
 }
 
-const jobGenerateChecklistHarian = async (trigger: string) => {
-    try {
-        const count = await jadwalChecklistService.generateToday();
-        if (count > 0) console.log(`[CRON] (${trigger}) Generated ${count} daily checklists`);
-    } catch (err) {
-        console.error(`[CRON] (${trigger}) Gagal generate checklist harian:`, err);
-    }
-};
-
-const jobUnlockSkillDanAchievement = async (trigger: string) => {
-    try {
-        const skillCount = await skillService.prosesSkillOtomatis();
-        if (skillCount > 0) console.log(`[CRON] (${trigger}) Unlocked ${skillCount} new OB skills`);
-    } catch (err) {
-        console.error(`[CRON] (${trigger}) Gagal unlock skill OB:`, err);
-    }
-
-    try {
-        const achievementCount = await achievementService.prosesOtomatis();
-        if (achievementCount > 0) console.log(`[CRON] (${trigger}) Unlocked ${achievementCount} new OB achievements`);
-    } catch (err) {
-        console.error(`[CRON] (${trigger}) Gagal unlock achievement OB:`, err);
-    }
-};
-
 const startApp = async () => {
     await connectDB();
     initRouter();
-
-    cron.schedule('0 0 * * *', () => jobGenerateChecklistHarian('cron 00:00'));
-    cron.schedule('0 1 * * *', () => jobUnlockSkillDanAchievement('cron 01:00'));
+    initCron();
 
     server.listen(process.env.APP_PORT, () => { console.log("Server Nyala cik") })
 }
