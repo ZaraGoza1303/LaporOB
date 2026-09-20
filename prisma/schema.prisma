@@ -197,7 +197,6 @@ model Checklist_harian {
   lantai   Lantai   @relation(fields: [lantai_id], references: [id])
   kategori Kategori @relation(fields: [kategori_id], references: [id])
 
-  // Kunci anti-dobel instance harian: 1 tugas per lantai per OB per tanggal
   @@unique([tanggal, nama_tugas, lantai_id, ob_id])
   @@map("checklist_harian")
 }

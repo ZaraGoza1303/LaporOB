@@ -150,7 +150,7 @@ async function main() {
         ('${randomUUID()}', '${todayStr}'::date, 'Sapu dan pel lantai ruangan', '6fb8dfa8-92dc-4125-a00a-6ba9c6cd5820', '45a8d4d0-ea99-404d-b35b-f39cd7315c2b', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'SEDANG_DIKERJAKAN', now(), now()),
         ('${randomUUID()}', '${todayStr}'::date, 'Lap meja dan kursi', '9e4d64c0-34e2-455c-b317-b9e4d6d5e6bd', '5970908a-117c-4ab9-95f6-065ed4d8b04c', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'BELUM_DIKERJAKAN', now(), now()),
         ('${randomUUID()}', '${todayStr}'::date, 'Angkut & buang sampah ke TPS', '9e4d64c0-34e2-455c-b317-b9e4d6d5e6bd', '5970908a-117c-4ab9-95f6-065ed4d8b04c', 'ba7079f3-fc98-4be7-afe3-cc769ffa3458', 'BELUM_DIKERJAKAN', now(), now())
-      ON CONFLICT (id) DO NOTHING
+      ON CONFLICT (tanggal, nama_tugas, lantai_id, ob_id) DO NOTHING
     `);
 
     // ============ LAPORAN KARYAWAN ============
@@ -162,7 +162,7 @@ async function main() {
         is_approved, created_at, updated_at
       ) VALUES
         (
-          '${randomUUID()}',
+          'e1a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c01',
           '1faac01e-e059-4686-af13-f04bce031a71',
           '6fb8dfa8-92dc-4125-a00a-6ba9c6cd5820',
           '45a8d4d0-ea99-404d-b35b-f39cd7315c2b',
@@ -177,7 +177,7 @@ async function main() {
           now()
         ),
         (
-          '${randomUUID()}',
+          'e2a0c1d2-3e4f-4a6b-8c7d-9e0f1a2b3c02',
           'd2ecedca-a2aa-4aa4-a721-34d6703e530c',
           '9e4d64c0-34e2-455c-b317-b9e4d6d5e6bd',
           '5970908a-117c-4ab9-95f6-065ed4d8b04c',
