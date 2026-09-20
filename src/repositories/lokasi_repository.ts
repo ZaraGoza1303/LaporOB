@@ -42,8 +42,8 @@ export class LokasiRepository implements ILokasiRepository {
         return lokasi;
     }
 
-    async insert(req: CreateLokasiReq): Promise<void> {
-        await this.db.$transaction(async (tx) => {
+    async insert(req: CreateLokasiReq): Promise<string> {
+        return this.db.$transaction(async (tx) => {
             const lokasi = await tx.lokasi.create({
                 data: {
                     nama_lokasi: req.nama_lokasi,
@@ -59,6 +59,8 @@ export class LokasiRepository implements ILokasiRepository {
             await tx.lantai.createMany({
                 data: lantaiData
             });
+
+            return lokasi.id;
         });
     }
 

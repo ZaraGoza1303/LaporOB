@@ -11,7 +11,7 @@ export interface IUsersService {
     getByEmail(email: string): Promise<PublicUser | null>;
     getUserWithPasswordById(userId: string): Promise<User | null>;
     getByRole(nama_role: string): Promise<PublicUser[]>;
-    create(req: CreateUserReq): Promise<void>;
+    create(req: CreateUserReq): Promise<{ id: string }>;
     update(userId: string, req: UpdateUserReq): Promise<void>;
     delete(userId: string): Promise<void>;
     getProfile(userId: string): Promise<UserProfileResponse>;

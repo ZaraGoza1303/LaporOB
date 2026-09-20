@@ -4,7 +4,7 @@ import type { LantaiCreateInput, LantaiUpdateInput } from "../generated/prisma/m
 export interface ILantaiRepository {
     getAll(lokasiId?: string): Promise<Lantai[]>;
     getById(lokasiId: string | undefined, lantaiId: string): Promise<Lantai | null>;
-    insert(req: LantaiCreateInput): Promise<void>;
+    insert(req: LantaiCreateInput): Promise<string>;
     update(lokasiId: string | undefined, lantaiId: string, req: LantaiUpdateInput): Promise<void>;
     delete(lokasiId: string | undefined, lantaiId: string): Promise<void>;
 }

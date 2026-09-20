@@ -42,6 +42,7 @@ export class UsersService implements IUsersService {
 
             const data = await this.usersRepo.getAll(page, limit, query);
             await this.redis.setEx(cacheKey, 300, JSON.stringify(data))
+            await this.redis.sAdd("users:all:keys", cacheKey);
             return data;
         } catch (err) {
             throw handlePrismaError(err)
@@ -120,11 +121,11 @@ export class UsersService implements IUsersService {
         }
     }
 
-    async create(req: CreateUserReq): Promise<void> {
+    async create(req: CreateUserReq): Promise<{ id: string }> {
         try {
             const activationToken = generateActivationToken(5);
 
-            await this.usersRepo.transaction(async (tx) => {
+            const user = await this.usersRepo.transaction(async (tx) => {
                 const user = await tx.user.create({
                     data: {
                         role: { connect: { id: req.role_id } },
@@ -167,7 +168,9 @@ export class UsersService implements IUsersService {
                 activationUrl,
             }, async () => toEmailSettings(settingsCreate));
 
-            await this.redis.del("users:all:*");
+            await this.invalidateUserListCache();
+
+            return { id: user.id };
         } catch (err) {
             throw handlePrismaError(err);
         }
@@ -210,7 +213,7 @@ export class UsersService implements IUsersService {
                 }
             });
 
-            await this.redis.del("users:all:*");
+            await this.invalidateUserListCache();
         } catch (err) {
             throw handlePrismaError(err);
         }
@@ -219,10 +222,19 @@ export class UsersService implements IUsersService {
     async delete(userId: string): Promise<void> {
         try {
             await this.usersRepo.delete(userId);
-            await this.redis.del("users:all:*");
+            await this.invalidateUserListCache();
         } catch (err) {
             throw handlePrismaError(err);
         }
+    }
+
+    private async invalidateUserListCache(): Promise<void> {
+        const indexKey = "users:all:keys";
+        const keys = await this.redis.sMembers(indexKey);
+        if (keys.length > 0) {
+            await Promise.all(keys.map((key) => this.redis.del(key)));
+        }
+        await this.redis.del(indexKey);
     }
 
     async completeActivation(userId: string, password: string, tokenId: string): Promise<void> {

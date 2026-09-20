@@ -64,8 +64,8 @@ export class TugasController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr))
             }
 
-            await this.tugasService.create(validate.data);
-            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data tugas"))
+            const response = await this.tugasService.create(validate.data);
+            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data tugas", response))
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))

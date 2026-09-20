@@ -73,8 +73,8 @@ export class RuanganController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
 
-            await this.ruanganService.create(validate.data);
-            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data ruangan"));
+            const response = await this.ruanganService.create(validate.data);
+            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data ruangan", response));
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))

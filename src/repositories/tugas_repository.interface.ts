@@ -23,7 +23,7 @@ export interface ITugasRepository {
     getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<TugasDetailPayload>>;
     getByID(tugasId: string): Promise<Tugas | null>
     getDetailByID(tugasId: string): Promise<TugasDetailPayload | null>
-    insert(req: TugasCreateInput): Promise<void>;
+    insert(req: TugasCreateInput): Promise<string>;
     update(tugasId: string, req: TugasUpdateInput): Promise<void>;
     delete(tugasId: string): Promise<void>;
     getAllTugasForOb(obId: string): Promise<Tugas[]>;

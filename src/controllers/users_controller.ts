@@ -118,8 +118,8 @@ export class UsersController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
             }
 
-            await this.usersService.create(validate.data)
-            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data user, link aktivasi sudah dikirim ke email user."));
+            const response = await this.usersService.create(validate.data)
+            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data user, link aktivasi sudah dikirim ke email user.", response));
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))

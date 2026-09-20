@@ -32,10 +32,12 @@ export class LantaiRepository implements ILantaiRepository {
         return data;
     }
 
-    async insert(req: LantaiCreateInput): Promise<void> {
-        await this.db.lantai.create({
-            data: req
-        })
+    async insert(req: LantaiCreateInput): Promise<string> {
+        const created = await this.db.lantai.create({
+            data: req,
+            select: { id: true },
+        });
+        return created.id;
     }
 
     async update(lokasiId: string | undefined, lantaiId: string, req: LantaiUpdateInput): Promise<void> {

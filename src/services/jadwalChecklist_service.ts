@@ -28,7 +28,7 @@ export class JadwalChecklistService implements IJadwalChecklistService {
         this.usersService = usersService;
     }
 
-    async create(userId: string, req: CreateJadwalChecklistReq): Promise<void> {
+    async create(userId: string, req: CreateJadwalChecklistReq): Promise<{ id: string }> {
         try {
             const dataToInsert: JadwalChecklistUncheckedCreateInput = {
                 nama_tugas: req.nama_tugas,
@@ -45,8 +45,8 @@ export class JadwalChecklistService implements IJadwalChecklistService {
             const hari: string[] = req.hari ?? [];
             const matching = hari.length === 0 || hari.includes(todayName);
 
-            await this.jadwalRepo.transaction(async (tx) => {
-                await tx.jadwalChecklist.create({ data: dataToInsert });
+            const jadwalId = await this.jadwalRepo.transaction(async (tx) => {
+                const jadwal = await tx.jadwalChecklist.create({ data: dataToInsert });
 
                 if (matching) {
                     // skipDuplicates = jadwal yang sama untuk hari yang sama tidak bikin instance dobel
@@ -63,11 +63,15 @@ export class JadwalChecklistService implements IJadwalChecklistService {
                         skipDuplicates: true,
                     });
                 }
+
+                return jadwal.id;
             });
 
             if (matching) {
                 await this.sendNotificationToAllOb(userId);
             }
+
+            return { id: jadwalId };
         } catch (err) {
             handlePrismaError(err);
         }

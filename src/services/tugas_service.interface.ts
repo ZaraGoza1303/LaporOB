@@ -9,7 +9,7 @@ export interface ITugasService {
     getAllPaginated(page: number, limit: number, search?: string): Promise<PaginatedResponse<TugasDetailRes>>;
     getByID(tugasId: string): Promise<Tugas | null>
     getDetailByID(tugasId: string): Promise<TugasDetailRes | null>
-    create(req: CreateTugasReq): Promise<void>;
+    create(req: CreateTugasReq): Promise<{ id: string }>;
     update(tugasId: string, req: UpdateTugasReq): Promise<void>;
     delete(tugasId: string): Promise<void>;
     

@@ -4,7 +4,7 @@ import type { KategoriCreateInput, KategoriUpdateInput } from "../generated/pris
 export interface IKategoriRepository {
     getAll(): Promise<Kategori[]>
     getByID(kategoriId: string): Promise<Kategori | null>
-    insert(req: KategoriCreateInput): Promise<void>;
+    insert(req: KategoriCreateInput): Promise<string>;
     update(kategoriId: string, req: KategoriUpdateInput): Promise<void>;
     delete(kategoriId: string): Promise<void>;
     

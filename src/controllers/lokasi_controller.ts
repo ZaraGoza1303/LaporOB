@@ -58,8 +58,8 @@ export class LokasiController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
 
-            await this.lokasiService.create(validate.data);
-            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data lokasi"));
+            const response = await this.lokasiService.create(validate.data);
+            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data lokasi", response));
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))

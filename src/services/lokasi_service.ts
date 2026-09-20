@@ -62,12 +62,13 @@ export class LokasiService implements ILokasiService {
         }
     }
 
-    async create(req: CreateLokasiReq): Promise<void> {
+    async create(req: CreateLokasiReq): Promise<{ id: string }> {
         try {
-            await this.lokasiRepo.insert({
+            const id = await this.lokasiRepo.insert({
                 nama_lokasi: req.nama_lokasi,
                 jumlah_lantai: req.jumlah_lantai
             });
+            return { id };
         } catch (err) {
             handlePrismaError(err);
         }

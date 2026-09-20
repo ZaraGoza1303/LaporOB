@@ -146,7 +146,7 @@ export class TugasService implements ITugasService {
         }
     }
 
-    async create(req: CreateTugasReq): Promise<void> {
+    async create(req: CreateTugasReq): Promise<{ id: string }> {
         try {
             const tugasReq: TugasCreateInput = {
                 kategori: {
@@ -163,9 +163,10 @@ export class TugasService implements ITugasService {
                 ...(req.catatan !== undefined && { catatan: req.catatan }),
             };
 
-            await this.tugasRepo.insert(tugasReq);
+            const id = await this.tugasRepo.insert(tugasReq);
             await this.redis.del(`tugas:all:${req.kategori_id}`);
             await this.redis.del("tugas:all:all");
+            return { id };
         } catch (err) {
             handlePrismaError(err)
         }

@@ -37,8 +37,8 @@ export class JadwalChecklistController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
 
-            await this.jadwalService.create(userId, validate.data);
-            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan jadwal checklist"));
+            const response = await this.jadwalService.create(userId, validate.data);
+            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan jadwal checklist", response));
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))

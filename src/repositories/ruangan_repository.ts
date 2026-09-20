@@ -32,10 +32,12 @@ export class RuanganRepository implements IRuanganRepository {
         return data;
     }
 
-    async insert(req: RuanganCreateInput): Promise<void> {
-        await this.db.ruangan.create({
-            data: req
-        })
+    async insert(req: RuanganCreateInput): Promise<string> {
+        const created = await this.db.ruangan.create({
+            data: req,
+            select: { id: true },
+        });
+        return created.id;
     }
 
     async update(lantaiId: string | undefined, ruanganId: string, req: RuanganUpdateInput): Promise<void> {

@@ -4,7 +4,7 @@ import type { Kategori } from "../generated/prisma/client.js";
 export interface IKategoriService {
     getAll(): Promise<Kategori[]>
     getByID(kategoriId: string): Promise<Kategori | null>
-    create(req: CreateKategoriReq): Promise<void>;
+    create(req: CreateKategoriReq): Promise<{ id: string }> ;
     update(kategoriId: string, req: UpdateKategoriReq): Promise<void>;
     delete(kategoriId: string): Promise<void>;
 
