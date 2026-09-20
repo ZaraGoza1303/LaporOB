@@ -83,13 +83,13 @@ export class AchievementRepository implements IAchievementRepository {
 
         return this.db.$queryRawUnsafe<ObCompletedTask[]>(`
             SELECT ob_id, nama_tugas, dikerjakan_at, selesai_at FROM tugas
-            WHERE status = 'SELESAI' ${filter}
+            WHERE status = 'SELESAI' AND ob_id IS NOT NULL ${filter}
             UNION ALL
             SELECT ob_id, nama_tugas, dikerjakan_at, selesai_at FROM checklist_harian
-            WHERE status = 'SELESAI' ${filter}
+            WHERE status = 'SELESAI' AND ob_id IS NOT NULL ${filter}
             UNION ALL
             SELECT ob_id, deskripsi_kendala AS nama_tugas, dikerjakan_at, selesai_at FROM laporan_karyawan
-            WHERE status = 'SELESAI' ${filter}
+            WHERE status = 'SELESAI' AND ob_id IS NOT NULL ${filter}
         `, ...params);
     }
 }

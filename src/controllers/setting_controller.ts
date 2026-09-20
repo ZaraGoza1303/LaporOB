@@ -67,9 +67,12 @@ export class SettingController {
           return res.status(processed.status).json(sendErrorResponse(processed.message));
         }
 
-        // Hapus file logo lama hanya kalau memang tersimpan di DB (bukan file default dari env LOGO_URL)
+        // Hapus file logo lama hanya kalau memang file upload sebelumnya,
+        // bukan file default dari env LOGO_URL (dalam bentuk relatif maupun absolut)
         const oldLogo = await this.settingService.getStoredLogoUrl();
-        payload.logo_url = oldLogo
+        const defaultLogo = process.env.LOGO_URL ?? null;
+        const isDefaultLogo = !!oldLogo && (oldLogo === defaultLogo || (!!defaultLogo && oldLogo === resolveFileUrl(defaultLogo)));
+        payload.logo_url = oldLogo && !isDefaultLogo
           ? await this.storageService.updateFile(logoFile, oldLogo)
           : await this.storageService.uploadFile(logoFile);
       }
