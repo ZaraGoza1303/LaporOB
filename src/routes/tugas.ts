@@ -6,7 +6,7 @@ import { USER_ROLE } from "../utils/constants.js";
 
 const tugasRouter = Router();
 tugasRouter.use(verifyJWTToken);
-tugasRouter.use(requireRole(USER_ROLE.ADMIN));
+tugasRouter.use(requireRole(USER_ROLE.ADMIN, USER_ROLE.HR));
 
 tugasRouter.get('/', (req, res) => tugasController.getAll(req, res));
 tugasRouter.get('/:tugas_id', (req, res) => tugasController.getByID(req, res));

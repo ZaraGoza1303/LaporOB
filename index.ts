@@ -25,6 +25,7 @@ import notifikasiRouter from './src/routes/notifikasi.js';
 import obKolaborasiRouter from './src/routes/obKolaborasi.js';
 import settingRouter from './src/routes/setting.js';
 import publicSettingRouter from './src/routes/publicSetting.js';
+import hrRouter from './src/routes/hr.js';
 import swaggerUi from 'swagger-ui-express';
 import path from 'node:path';
 import YAML from 'yamljs';
@@ -123,6 +124,7 @@ const initRouter = () => {
     app.use('/api/achievement', achievementRouter);
     app.use('/api/admin/settings', settingRouter);
     app.use('/api/settings', publicSettingRouter);
+    app.use('/api/hr', hrRouter);
 }
 
 const jobGenerateChecklistHarian = async (trigger: string) => {
