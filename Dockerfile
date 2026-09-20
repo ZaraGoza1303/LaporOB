@@ -14,6 +14,8 @@ RUN npm run build
 # JALANIN
 FROM node:26.5.0-alpine3.24 
 
+RUN apk add --no-cache tzdata
+
 WORKDIR /app
 
 COPY package*.json ./
