@@ -15,7 +15,8 @@ export interface ChecklistHarianRes {
     total_durasi?: number | null;
     is_approved: boolean;
     approved_at?: Date | null;
-    tanggal: Date;
+    /** String YYYY-MM-DD supaya frontend tidak membacanya mundur sehari */
+    tanggal: string;
     created_at: Date;
     updated_at: Date;
     kategori?: Kategori | null;

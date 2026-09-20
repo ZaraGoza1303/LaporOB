@@ -2,7 +2,7 @@ import type { CreateJadwalChecklistReq, UpdateJadwalChecklistReq } from "../dto/
 import type { IJadwalChecklistRepository } from "../repositories/jadwalChecklist_repository.interface.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { JadwalChecklist } from "../generated/prisma/client.js";
-import type { JadwalChecklistUncheckedCreateInput, JadwalChecklistUncheckedUpdateInput } from "../generated/prisma/models.js";
+import type { Checklist_harianUncheckedCreateInput, JadwalChecklistUncheckedCreateInput, JadwalChecklistUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { IJadwalChecklistService } from "./jadwalChecklist_service.interface.js";
 import type { INotificationService } from "./notification_service.interface.js";
@@ -38,10 +38,10 @@ export class JadwalChecklistService implements IJadwalChecklistService {
                 hari: req.hari ?? [],
             };
 
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            const todayName = HARI[today.getDay()] ?? '';
+            const now = new Date();
+            // Kolom tanggal bertipe date di Postgres, jadi simpan tengah malam UTC dari tanggal WIB
+            const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+            const todayName = HARI[now.getDay()] ?? '';
             const hari: string[] = req.hari ?? [];
             const matching = hari.length === 0 || hari.includes(todayName);
 
@@ -49,8 +49,9 @@ export class JadwalChecklistService implements IJadwalChecklistService {
                 await tx.jadwalChecklist.create({ data: dataToInsert });
 
                 if (matching) {
-                    await tx.checklist_harian.create({
-                        data: {
+                    // skipDuplicates = jadwal yang sama untuk hari yang sama tidak bikin instance dobel
+                    await tx.checklist_harian.createMany({
+                        data: [{
                             tanggal: today,
                             nama_tugas: dataToInsert.nama_tugas,
                             ob_id: dataToInsert.ob_id ?? null,
@@ -58,7 +59,8 @@ export class JadwalChecklistService implements IJadwalChecklistService {
                             kategori_id: dataToInsert.kategori_id,
                             status: CHECKLIST_STATUS.BELUM_DIKERJAKAN,
                             catatan: null,
-                        },
+                        }],
+                        skipDuplicates: true,
                     });
                 }
             });
@@ -112,29 +114,36 @@ export class JadwalChecklistService implements IJadwalChecklistService {
 
     async generateToday(): Promise<number> {
         try {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const now = new Date();
+            const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 
             const matching = await this.jadwalRepo.getMatchingToday(today);
             if (matching.length === 0) return 0;
 
-            const existing = await this.checklistHarianService.getExistingInstanceKeys(today);
-            const toCreate = matching.filter((j: JadwalChecklist) =>
-                !existing.some(e =>
-                    e.nama_tugas === j.nama_tugas &&
-                    e.lantai_id === j.lantai_id &&
-                    e.ob_id === j.ob_id
-                )
-            );
+            // Dedupe dalam batch = unique index DB memperlakukan ob_id NULL sebagai nilai berbeda,
+            // jadi jadwal tanpa OB yang isinya sama harus dibuang di sini dulu
+            const unik = new Map<string, Checklist_harianUncheckedCreateInput>();
+            for (const jadwal of matching) {
+                const key = `${jadwal.nama_tugas}|${jadwal.lantai_id}|${jadwal.ob_id ?? ""}`;
+                if (unik.has(key)) continue;
 
-            if (toCreate.length === 0) return 0;
-
-            for (const jadwal of toCreate) {
-                await this.checklistHarianService.insertFromJadwal(jadwal);
+                unik.set(key, {
+                    tanggal: today,
+                    nama_tugas: jadwal.nama_tugas,
+                    ob_id: jadwal.ob_id,
+                    lantai_id: jadwal.lantai_id,
+                    kategori_id: jadwal.kategori_id,
+                    status: CHECKLIST_STATUS.BELUM_DIKERJAKAN,
+                    catatan: null,
+                });
             }
 
+            // Insert sehari dalam satu statement yang sudah ada
+            const inserted = await this.checklistHarianService.insertMany([...unik.values()]);
+            if (inserted === 0) return 0;
+
             await this.sendNotificationToAllOb("system");
-            return toCreate.length;
+            return inserted;
         } catch (err) {
             handlePrismaError(err);
         }
