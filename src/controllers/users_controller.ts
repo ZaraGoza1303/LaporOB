@@ -7,7 +7,7 @@ import { CreateUserSchema, UpdateUserSchema, UpdateProfileSchema, ProfileLaporan
 import type { ProfileRes, ObProfileResponse, UserProfileResponse } from "../types/users.js";
 import { UserSearchQuerySchema, GetDashboardQuerySchema } from "../dto/admin.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
-import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
+import { processImageFile } from "../utils/validate_file.js";
 import type { Request, Response } from "express";
 import { AppError } from "../utils/error.js";
 import { calculatePeriodRange } from "../utils/date.js";
@@ -154,15 +154,9 @@ export class UsersController {
                 (file) => file.fieldname === "profile_picture"
             );
             if (profilePictureFile) {
-                const validation = await validateImageFile(profilePictureFile);
-                if (!validation.ok) {
-                    return res.status(400).json(sendErrorResponse(validation.message));
-                }
-
-                try {
-                    await compressImageIfNeeded(profilePictureFile);
-                } catch (err: unknown) {
-                    return res.status(500).json(sendErrorResponse("Gagal memproses/kompres gambar"));
+                const processed = await processImageFile(profilePictureFile, "Gagal memproses/kompres gambar");
+                if (!processed.ok) {
+                    return res.status(processed.status).json(sendErrorResponse(processed.message));
                 }
 
                 const oldFileUrlOrKey = existsUser.profile_picture;
@@ -212,15 +206,9 @@ export class UsersController {
                 (file) => file.fieldname === "profile_picture"
             );
             if (profilePictureFile) {
-                const validation = await validateImageFile(profilePictureFile);
-                if (!validation.ok) {
-                    return res.status(400).json(sendErrorResponse(validation.message));
-                }
-
-                try {
-                    await compressImageIfNeeded(profilePictureFile);
-                } catch (err: unknown) {
-                    return res.status(500).json(sendErrorResponse("Gagal memproses/kompres gambar"));
+                const processed = await processImageFile(profilePictureFile, "Gagal memproses/kompres gambar");
+                if (!processed.ok) {
+                    return res.status(processed.status).json(sendErrorResponse(processed.message));
                 }
 
                 const oldFileUrlOrKey = existsUser.profile_picture;

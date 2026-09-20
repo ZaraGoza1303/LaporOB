@@ -1,5 +1,5 @@
 import './utils/load_env.js';
-import express from 'express';
+import express, { type NextFunction, type Request, type Response } from 'express';
 import multer from 'multer';
 import cors from 'cors';
 import connectDB from './database/db.js';
@@ -33,6 +33,7 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { initWebSocket } from './services/websocket_service.js';
 import { setBaseUrlMiddleware } from './middleware/setBaseUrl.js';
+import { sendErrorResponse } from './utils/response.js';
 import { initCron } from './cron/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -43,7 +44,7 @@ const app = express();
 const server = createServer(app);
 initWebSocket(server)
 
-const upload = multer();
+const upload = multer({ limits: { fileSize: 15 * 1024 * 1024 } });
 const ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://localhost:5173',
@@ -124,6 +125,16 @@ const initRouter = () => {
     app.use('/api/admin/settings', settingRouter);
     app.use('/api/settings', publicSettingRouter);
     app.use('/api/hr', hrRouter);
+
+    app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
+        if (err instanceof multer.MulterError) {
+            if (err.code === "LIMIT_FILE_SIZE") {
+                return res.status(413).json(sendErrorResponse("Ukuran file terlalu besar (maksimal 15MB)"));
+            }
+            return res.status(400).json(sendErrorResponse("Gagal mengunggah file"));
+        }
+        return next(err);
+    });
 }
 
 const startApp = async () => {

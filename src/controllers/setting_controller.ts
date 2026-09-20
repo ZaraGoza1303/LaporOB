@@ -5,7 +5,7 @@ import type { IStorageService } from "../services/storage_service.interface.js";
 import { UpsertSettingSchema } from "../dto/app_setting.js";
 import { AppError } from "../utils/error.js";
 import { resolveFileUrl } from "../utils/url.js";
-import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
+import { processImageFile } from "../utils/validate_file.js";
 
 export class SettingController {
   private settingService: IAppSettingService;
@@ -62,15 +62,9 @@ export class SettingController {
       const payload = { ...validate.data };
 
       if (logoFile) {
-        const validation = await validateImageFile(logoFile);
-        if (!validation.ok) {
-          return res.status(400).json(sendErrorResponse(validation.message));
-        }
-
-        try {
-          await compressImageIfNeeded(logoFile);
-        } catch {
-          return res.status(500).json(sendErrorResponse("Gagal memproses gambar logo"));
+        const processed = await processImageFile(logoFile, "Gagal memproses gambar logo");
+        if (!processed.ok) {
+          return res.status(processed.status).json(sendErrorResponse(processed.message));
         }
 
         // Hapus file logo lama hanya kalau memang tersimpan di DB (bukan file default dari env LOGO_URL)

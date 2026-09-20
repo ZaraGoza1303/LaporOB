@@ -1801,6 +1801,22 @@ paths:
       responses:
         '201':
           description: Laporan berhasil dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                  message:
+                    type: string
 
 # OB
   /api/ob/dashboard:

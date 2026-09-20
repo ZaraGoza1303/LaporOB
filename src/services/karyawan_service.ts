@@ -80,7 +80,7 @@ export class KaryawanService implements IKaryawanService {
         }
     }
 
-    async createReport(userId: string, req: CreateLaporanKaryawanInput): Promise<void> {
+    async createReport(userId: string, req: CreateLaporanKaryawanInput): Promise<{ id: string }> {
         try {
             const laporanReq: Laporan_karyawanCreateInput = {
                 pelapor: {
@@ -115,7 +115,8 @@ export class KaryawanService implements IKaryawanService {
             }
 
             await this.notificationService.sendBulkNotification(notifReq)
-            
+
+            return { id: laporanId };
         } catch (err) {
             handlePrismaError(err);
         }

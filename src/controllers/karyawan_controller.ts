@@ -2,7 +2,7 @@ import { CreateLaporanKaryawanSchema } from "../dto/users.js";
 import type { IKaryawanService } from "../services/karyawan_service.interface.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import type { Request, Response } from "express";
-import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
+import { processImageFile } from "../utils/validate_file.js";
 import type { IStorageService } from "../services/storage_service.interface.js";
 import { AppError } from "../utils/error.js";
 
@@ -53,18 +53,17 @@ export class KaryawanController {
 
             // Validasi SEMUA file dulu, baru upload
             for (const file of fotoFiles) {
-                const validation = await validateImageFile(file);
-                if (!validation.ok) {
-                    return res.status(400).json(sendErrorResponse(validation.message));
+                const processed = await processImageFile(file);
+                if (!processed.ok) {
+                    return res.status(processed.status).json(sendErrorResponse(processed.message));
                 }
             }
 
             const fotoUrls: string[] = [];
             for (const file of fotoFiles) {
-                try {
-                    await compressImageIfNeeded(file);
-                } catch (err: unknown) {
-                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar"));
+                const processed = await processImageFile(file);
+                if (!processed.ok) {
+                    return res.status(processed.status).json(sendErrorResponse(processed.message));
                 }
 
                 const url = await this.storageService.uploadFile(file);

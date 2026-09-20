@@ -12,5 +12,5 @@ export interface IKaryawanService {
     getHomeStats(userId: string): Promise<UserHomeRes>
     getKaryawanPerformanceStats(userId: string): Promise<KaryawanPerformanceRes>;
     getRiwayat(userId: string, limit: number, params: RiwayatParams): Promise<PaginatedResponse<MappedProfileReport>>;
-    createReport(userId: string, req: CreateLaporanKaryawanInput): Promise<void>;
+    createReport(userId: string, req: CreateLaporanKaryawanInput): Promise<{ id: string }>;
 }
