@@ -5100,6 +5100,46 @@ paths:
         '400':
           description: Token invalid/kosong
 
+  /api/settings/branding:
+    get:
+      tags:
+        - Settings
+      summary: Ambil branding aplikasi (Publik)
+      description: |
+        Endpoint publik tanpa autentikasi untuk kebutuhan branding di halaman login/frontend.
+        Hanya mengembalikan app_name, company_name, dan logo_url (logo_url sudah berupa URL absolut).
+      responses:
+        '200':
+          description: Berhasil mengambil branding
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil mengambil branding
+                  data:
+                    type: object
+                    properties:
+                      app_name:
+                        type: string
+                        nullable: true
+                        example: LaporOB
+                      company_name:
+                        type: string
+                        nullable: true
+                        example: PT WGS
+                      logo_url:
+                        type: string
+                        nullable: true
+                        example: http://localhost:8000/uploads/wgs-logo.png
+        '500':
+          description: Gagal mengambil branding
+
   /api/admin/settings:
     get:
       tags:
@@ -5135,7 +5175,7 @@ paths:
                       logo_url:
                         type: string
                         nullable: true
-                        example: null
+                        example: http://localhost:8000/uploads/wgs-logo.png
     put:
       tags:
         - Admin
@@ -5163,7 +5203,34 @@ paths:
                   type: string
                   nullable: true
                   maxLength: 500
-                  description: URL logo perusahaan
+                  pattern: '^(https?://\S+|/?uploads/\S+)$'
+                  description: |
+                    URL logo perusahaan. Harus URL http(s) absolut atau path file di `uploads/`.
+                    Kirim `null` untuk mengosongkan (kembali ke default dari env `LOGO_URL`).
+                    Kalau mengirim file lewat `multipart/form-data` (field `logo`), field ini diabaikan.
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                app_name:
+                  type: string
+                  maxLength: 100
+                  description: Nama aplikasi
+                company_name:
+                  type: string
+                  maxLength: 200
+                  description: Nama perusahaan
+                logo_url:
+                  type: string
+                  maxLength: 500
+                  description: URL logo (opsional, hanya dipakai kalau field `logo` tidak dikirim)
+                logo:
+                  type: string
+                  format: binary
+                  description: |
+                    File logo (JPG/JPEG/PNG/WEBP asli, maks 1MB). Kalau dikirim, hasil upload disimpan
+                    sebagai `logo_url` (path lokal atau URL cloud sesuai `STORAGE_PROVIDER`), file logo
+                    lama dihapus otomatis, dan file ini menang atas field `logo_url`.
       responses:
         '200':
           description: Pengaturan berhasil disimpan
@@ -5192,7 +5259,7 @@ paths:
                       logo_url:
                         type: string
                         nullable: true
-                        example: null
+                        example: http://localhost:8000/uploads/wgs-logo.png
         '400':
           description: Validasi gagal
         '401':

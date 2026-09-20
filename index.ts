@@ -24,6 +24,7 @@ import tugasRouter from './src/routes/tugas.js';
 import notifikasiRouter from './src/routes/notifikasi.js';
 import obKolaborasiRouter from './src/routes/obKolaborasi.js';
 import settingRouter from './src/routes/setting.js';
+import publicSettingRouter from './src/routes/publicSetting.js';
 import swaggerUi from 'swagger-ui-express';
 import path from 'node:path';
 import YAML from 'yamljs';
@@ -74,8 +75,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Handle Chrome Private Network Access (PNA) preflight
-// Diperlukan saat Swagger diakses dari ngrok (HTTPS public) dan request ke localhost
 app.use((req, res, next) => {
     if (req.method === 'OPTIONS' && req.headers['access-control-request-private-network']) {
         res.setHeader('Access-Control-Allow-Private-Network', 'true');
@@ -123,27 +122,40 @@ const initRouter = () => {
     app.use('/api/skill', skillRouter);
     app.use('/api/achievement', achievementRouter);
     app.use('/api/admin/settings', settingRouter);
+    app.use('/api/settings', publicSettingRouter);
 }
+
+const jobGenerateChecklistHarian = async (trigger: string) => {
+    try {
+        const count = await jadwalChecklistService.generateToday();
+        if (count > 0) console.log(`[CRON] (${trigger}) Generated ${count} daily checklists`);
+    } catch (err) {
+        console.error(`[CRON] (${trigger}) Gagal generate checklist harian:`, err);
+    }
+};
+
+const jobUnlockSkillDanAchievement = async (trigger: string) => {
+    try {
+        const skillCount = await skillService.prosesSkillOtomatis();
+        if (skillCount > 0) console.log(`[CRON] (${trigger}) Unlocked ${skillCount} new OB skills`);
+    } catch (err) {
+        console.error(`[CRON] (${trigger}) Gagal unlock skill OB:`, err);
+    }
+
+    try {
+        const achievementCount = await achievementService.prosesOtomatis();
+        if (achievementCount > 0) console.log(`[CRON] (${trigger}) Unlocked ${achievementCount} new OB achievements`);
+    } catch (err) {
+        console.error(`[CRON] (${trigger}) Gagal unlock achievement OB:`, err);
+    }
+};
 
 const startApp = async () => {
     await connectDB();
     initRouter();
 
-    cron.schedule('0 0 * * *', async () => {
-        try {
-            const count = await jadwalChecklistService.generateToday();
-            if (count > 0) console.log(`[CRON] Generated ${count} daily checklists`);
-        } catch (err) {
-            console.error('[CRON] Gagal generate checklist harian:', err);
-        }
-    });
-
-    cron.schedule('0 1 * * *', async () => {
-        const skillCount = await skillService.prosesSkillOtomatis();
-        if (skillCount > 0) console.log(`[CRON] Unlocked ${skillCount} new OB skills`);
-        const achievementCount = await achievementService.prosesOtomatis();
-        if (achievementCount > 0) console.log(`[CRON] Unlocked ${achievementCount} new OB achievements`);
-    });
+    cron.schedule('0 0 * * *', () => jobGenerateChecklistHarian('cron 00:00'));
+    cron.schedule('0 1 * * *', () => jobUnlockSkillDanAchievement('cron 01:00'));
 
     server.listen(process.env.APP_PORT, () => { console.log("Server Nyala cik") })
 }

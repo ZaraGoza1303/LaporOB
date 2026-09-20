@@ -6,5 +6,6 @@ export interface AppSettingMap {
 
 export interface IAppSettingService {
   getAll(): Promise<AppSettingMap>;
+  getStoredLogoUrl(): Promise<string | null>;
   upsert(data: { [K in keyof AppSettingMap]?: AppSettingMap[K] | undefined }): Promise<void>;
 }

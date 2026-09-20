@@ -44,6 +44,11 @@ export class AppSettingService implements IAppSettingService {
     return settings;
   }
 
+  async getStoredLogoUrl(): Promise<string | null> {
+    const rows = await this.repo.getAll();
+    return rows.find(row => row.key === "logo_url")?.value ?? null;
+  }
+
   async upsert(data: { [K in keyof AppSettingMap]?: AppSettingMap[K] | undefined }): Promise<void> {
     for (const [key, value] of Object.entries(data)) {
       if (ALLOWED_KEYS.includes(key) && (value === null || value !== undefined)) {

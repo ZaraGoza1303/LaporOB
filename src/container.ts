@@ -138,7 +138,7 @@ export const usersController = new UsersController(
 );
 export const notificationController = new NotificationController(notificationService);
 export const kolaborasiController = new KolaborasiController(kolaborasiService);
-export const settingController = new SettingController(appSettingService);
+export const settingController = new SettingController(appSettingService, storageService);
 
 export const container = {
     sessionService,
