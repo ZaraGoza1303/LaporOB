@@ -2,6 +2,7 @@ import path from "node:path";
 import ejs from "ejs";
 import { fileURLToPath } from "node:url";
 import type { IEmailService } from "../services/email_service.interface.js";
+import { resolveFileUrl } from "./url.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -16,6 +17,19 @@ interface EmailSettings {
     logoUrl: string | null;
 }
 
+// Map hasil settingService.getAll() ke bentuk yang dibutuhkan template email
+export function toEmailSettings(settings: {
+    app_name: string | null;
+    company_name: string | null;
+    logo_url: string | null;
+}): EmailSettings {
+    return {
+        appName: settings.app_name,
+        companyName: settings.company_name,
+        logoUrl: settings.logo_url,
+    };
+}
+
 export async function sendRenderedEmail(
     emailService: IEmailService,
     to: string,
@@ -27,13 +41,15 @@ export async function sendRenderedEmail(
     try {
         let appName = process.env.APP_NAME || null;
         let companyName = process.env.COMPANY_NAME || null;
-        let logoUrl = process.env.LOGO_URL || null;
+        // Logo harus URL absolut, kalau tidak gambar tidak tampil di email client
+        let logoUrl = resolveFileUrl(process.env.LOGO_URL);
 
         if (fetchSettings) {
             const dbSettings = await fetchSettings();
             if (dbSettings.appName) appName = dbSettings.appName;
             if (dbSettings.companyName) companyName = dbSettings.companyName;
-            if (dbSettings.logoUrl) logoUrl = dbSettings.logoUrl;
+            const dbLogoUrl = resolveFileUrl(dbSettings.logoUrl);
+            if (dbLogoUrl) logoUrl = dbLogoUrl;
         }
 
         const html = await renderEmailTemplate(templateName, {

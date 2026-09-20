@@ -11,7 +11,7 @@ import type { IUsersService } from "./users_service.interface.js";
 import type { IUserSessionService } from "./userSession_service.interface.js";
 import type { IEmailService } from "./email_service.interface.js";
 import type { IAppSettingService } from "./appSetting_service.interface.js";
-import { sendRenderedEmail } from "../utils/email.js";
+import { sendRenderedEmail, toEmailSettings } from "../utils/email.js";
 import { buildResetPasswordUrl } from "../utils/url.js";
 
 export class AuthService implements IAuthService {
@@ -121,7 +121,7 @@ export class AuthService implements IAuthService {
                 userName: user.username,
                 resetUrl: resetUrl,
                 expiresInHours: 1,
-            });
+            }, async () => toEmailSettings(settings));
         } catch (err) {
             handlePrismaError(err);
         }
@@ -172,7 +172,7 @@ export class AuthService implements IAuthService {
             const subjectPw = `Password Akun ${settingsPw.app_name || "Aplikasi"} Berhasil Diubah`;
             await sendRenderedEmail(this.emailService, user.email, subjectPw, "password-changed", {
                 userName: user.username,
-            });
+            }, async () => toEmailSettings(settingsPw));
         } catch (err) {
             handlePrismaError(err);
         }
