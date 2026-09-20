@@ -8,7 +8,7 @@ export const loginLimiter = rateLimit({
         sendCommand: (...args: string[]) => redisClient.sendCommand(args),
     }),
     windowMs: 15 * 60 * 1000,
-    max: 5,
+    max: 20,
     standardHeaders: true,
     legacyHeaders: false,
     message: sendErrorResponse("Terlalu banyak percobaan login, coba lagi dalam 15 menit"),

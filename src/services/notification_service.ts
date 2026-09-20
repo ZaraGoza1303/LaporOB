@@ -18,9 +18,8 @@ export class NotificationService implements INotificationService {
             penerima: {
                 connect: {id: data.penerima_id}
             },
-            pengirim: {
-                connect: {id: data.pengirim_id}
-            },
+            // pengirim null = notifikasi dari sistem (kolom nullable, key dihilangkan)
+            ...(data.pengirim_id ? { pengirim: { connect: { id: data.pengirim_id } } } : {}),
             tipe: data.tipe,
             judul: data.judul,
         }
@@ -38,9 +37,8 @@ export class NotificationService implements INotificationService {
             penerima: {
                 connect: { id: penerima_id }
             },
-            pengirim: {
-                connect: { id: data.pengirim_id }
-            },
+            // pengirim null = notifikasi dari sistem (kolom nullable, key dihilangkan)
+            ...(data.pengirim_id ? { pengirim: { connect: { id: data.pengirim_id } } } : {}),
             tipe: data.tipe,
             judul: data.judul,
             ...(data.pesan !== undefined && { pesan: data.pesan }),

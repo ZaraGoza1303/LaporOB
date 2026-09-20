@@ -2,7 +2,7 @@ import type { NotifikasiWithPengirim } from "../repositories/notification_reposi
 
 export interface NotificationData {
     penerima_id: string;
-    pengirim_id: string;
+    pengirim_id: string | null;
     tipe: string;
     judul: string;
     pesan?: string;
@@ -12,7 +12,7 @@ export interface NotificationData {
 
 export interface BulkNotificationData {
     penerima_ids: string[];
-    pengirim_id: string;
+    pengirim_id: string | null;
     tipe: string;
     judul: string;
     pesan?: string;

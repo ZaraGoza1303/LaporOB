@@ -142,14 +142,14 @@ export class JadwalChecklistService implements IJadwalChecklistService {
             const inserted = await this.checklistHarianService.insertMany([...unik.values()]);
             if (inserted === 0) return 0;
 
-            await this.sendNotificationToAllOb("system");
+            await this.sendNotificationToAllOb(null);
             return inserted;
         } catch (err) {
             handlePrismaError(err);
         }
     }
 
-    private async sendNotificationToAllOb(pengirimId: string): Promise<void> {
+    private async sendNotificationToAllOb(pengirimId: string | null): Promise<void> {
         const allOb = await this.usersService.getByRole(USER_ROLE.OB);
         const notifData: BulkNotificationData = {
             penerima_ids: allOb.map(ob => ob.id),

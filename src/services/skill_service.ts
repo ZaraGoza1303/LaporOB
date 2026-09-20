@@ -216,13 +216,13 @@ export class SkillService implements ISkillService {
         }
 
         for (const n of notified) {
-            await this.sendNotification(n.ob_id, n.nama_skill, "system");
+            await this.sendNotification(n.ob_id, n.nama_skill, null);
         }
 
         return unlockedCount;
     }
 
-    private async sendNotification(penerimaId: string, namaSkill: string, pengirimId: string): Promise<void> {
+    private async sendNotification(penerimaId: string, namaSkill: string, pengirimId: string | null): Promise<void> {
         const notifData: BulkNotificationData = {
             penerima_ids: [penerimaId],
             pengirim_id: pengirimId,

@@ -382,7 +382,7 @@ model AppSetting {
 model Notifikasi {
   id          String    @id @default(uuid()) @db.Uuid
   penerima_id     String    @db.Uuid
-  pengirim_id String    @db.Uuid
+  pengirim_id String?   @db.Uuid
   tipe        String    @db.VarChar(50)
   judul       String    @db.VarChar(200)
   pesan       String?   @db.Text
@@ -393,7 +393,7 @@ model Notifikasi {
   created_at  DateTime  @default(now()) @db.Timestamp(6)
 
   penerima     User @relation("NotifikasiDiterima", fields: [penerima_id], references: [id], onDelete: Cascade)
-  pengirim User @relation("NotifikasiDikirim", fields: [pengirim_id], references: [id])
+  pengirim User? @relation("NotifikasiDikirim", fields: [pengirim_id], references: [id])
 
   @@map("notifikasi")
 }
