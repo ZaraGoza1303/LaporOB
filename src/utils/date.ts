@@ -86,3 +86,20 @@ export function toDateString(now: Date): string {
     const tanggal = String(now.getDate()).padStart(2, "0");
     return `${now.getFullYear()}-${bulan}-${tanggal}`;
 }
+
+// Rentang hari untuk filter kolom @db.Date dari hari kalender start sampai end inklusif. Batas akhir digeser satu hari dan bersifat eksklusif supaya dipakai dengan lt
+export function toCalendarDayExclusiveRange(startDate: Date, endDate: Date): PeriodRange {
+    const start = toCalendarDate(startDate);
+    const end = toCalendarDate(endDate);
+    end.setUTCDate(end.getUTCDate() + 1); // exclusive
+    return { start, end };
+}
+
+// Rentang hari untuk filter kolom @db.Date dari daysBack hari lalu sampai hari ini. Batas akhir digeser satu hari dan bersifat eksklusif supaya dipakai dengan lt 
+export function calculateCalendarDayRange(daysBack: number, now: Date = new Date()): PeriodRange {
+    const start = toCalendarDate(now);
+    start.setUTCDate(start.getUTCDate() - daysBack);
+    const end = toCalendarDate(now);
+    end.setUTCDate(end.getUTCDate() + 1); // exclusive
+    return { start, end };
+}
