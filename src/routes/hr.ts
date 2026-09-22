@@ -17,10 +17,11 @@ const hrRouter = Router();
 hrRouter.use(verifyJWTToken);
 hrRouter.use(requireRole(USER_ROLE.HR, USER_ROLE.ADMIN));
 
-// Data SDM 
+// Data SDM
+hrRouter.get("/users", (req, res) => usersController.getAll(req, res));
 hrRouter.get("/users/ob", (req, res) => usersController.getAllOb(req, res));
 hrRouter.get("/users/karyawan", (req, res) => usersController.getAllKaryawan(req, res));
-hrRouter.get("/users/:user_id", (req, res) => usersController.getByID(req, res));
+hrRouter.get("/user/:user_id", (req, res) => usersController.getByID(req, res));
 
 // Statistik & Monitoring Performa
 hrRouter.get("/performance/dashboard", (req, res) => adminController.getObPerformanceDashboard(req, res));
@@ -42,6 +43,7 @@ hrRouter.get("/laporan/:laporan_id", (req, res) => adminController.getReportDeta
 
 // Master Tugas (HR dapat membuat, melihat, & mengelola tugas)
 hrRouter.get("/tugas", (req, res) => tugasController.getAll(req, res));
+hrRouter.get("/tugas-combination", (req, res) => adminController.getListPekerjaan(req, res));
 hrRouter.get("/tugas/stats", (req, res) => adminController.getStatsTugas(req, res));
 hrRouter.get("/tugas/approval-list", (req, res) => adminController.getApprovalListTugas(req, res));
 hrRouter.get("/tugas/:tugas_id", (req, res) => tugasController.getByID(req, res));

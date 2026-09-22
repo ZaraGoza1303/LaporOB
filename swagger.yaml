@@ -5311,6 +5311,49 @@ paths:
           description: Tidak memiliki akses admin
 
 # HR
+  /api/hr/users:
+    get:
+      tags:
+        - HR
+      summary: 'List semua user (HR & Admin, read-only)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: role_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/PaginatedPublicUsers'
+
   /api/hr/users/ob:
     get:
       tags:
@@ -5361,7 +5404,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/PublicUser'
 
-  /api/hr/users/{user_id}:
+  /api/hr/user/{user_id}:
     get:
       tags:
         - HR
@@ -6019,6 +6062,34 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/ApprovalItemResponse'
+
+  /api/hr/tugas-combination:
+    get:
+      tags:
+        - HR
+      summary: 'List gabungan checklist harian & tugas (HR & Admin)'
+      description: |
+        Mengembalikan data checklist harian (instance) dan tugas dalam satu response, masing-masing dengan pagination terpisah.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Data checklist dan tugas
 
   /api/hr/tugas/{tugas_id}:
     get:

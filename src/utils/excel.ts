@@ -19,7 +19,9 @@ export interface ObPerformanceExportInput {
 }
 
 export function buildExportFilename(prefix: string, now: Date = new Date()): string {
+    // Helper func agar 2 digit, kalau udah 2 digit yaudah
     const pad = (n: number) => String(n).padStart(2, "0");
+    
     const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
     return `${prefix}-${stamp}.xlsx`;
 }
