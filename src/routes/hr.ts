@@ -38,9 +38,6 @@ hrRouter.get("/laporan", (req, res) => adminController.getAllLaporan(req, res));
 hrRouter.get("/laporan/history", (req, res) => adminController.getAllHistoryLaporan(req, res));
 hrRouter.get("/laporan/stats", (req, res) => adminController.getStatsLaporan(req, res));
 
-// Ekspor CSV
-hrRouter.get("/laporan/export", (req, res) => adminController.exportLaporanCsv(req, res));
-
 hrRouter.get("/laporan/:laporan_id", (req, res) => adminController.getReportDetail(req, res));
 
 // Master Tugas (HR dapat membuat, melihat, & mengelola tugas)

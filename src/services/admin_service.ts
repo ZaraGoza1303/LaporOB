@@ -10,12 +10,12 @@ import { AppError, handlePrismaError } from "../utils/error.js";
 import { calculateDateRanges, calculatePeriodRange } from "../utils/date.js"
 import { LAPORAN_STATUS, USER_ROLE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { resolveFileUrl } from "../utils/url.js";
-import { buildExportFilename, toLaporanCsv } from "../utils/csv.js";
 import type { IAdminService } from "./admin_service.interface.js";
 import type { Laporan_karyawan } from "../generated/prisma/client.js";
 import type { DailyChecklistObReport } from "../repositories/admin_repository.interface.js";
 import type { IRedisClient } from "../database/redis.interface.js";
 import type { PaginatedResponse } from "../types/response.js";
+import { buildExportFilename, toObPerformanceExcel } from "../utils/excel.js";
 
 
 export class AdminService implements IAdminService {
@@ -94,13 +94,27 @@ export class AdminService implements IAdminService {
         }
     }
 
-    async getLaporanExport(query: AdminLaporanQuery): Promise<{ filename: string; csv: string; total: number }> {
-        const page = await this.getAllLaporan(1, 5000, query);
-        const items = page.laporan.items;
+    async getObPerformanceExport(query: ObPerformanceDashboardQuery): Promise<{ filename: string; buffer: Buffer }> {
+        const dashboard = await this.getObPerformanceDashboard(query);
         return {
-            filename: buildExportFilename("laporan"),
-            csv: toLaporanCsv(items),
-            total: page.laporan.meta?.total_items ?? items.length,
+            filename: buildExportFilename("performa-ob"),
+            buffer: await toObPerformanceExcel({
+                produktivitas: dashboard.produktivitas,
+                tugas_selesai: dashboard.tugas_diselesaikan.selesai,
+                tugas_total: dashboard.tugas_diselesaikan.total,
+                laporan_menunggu: dashboard.laporan_menunggu,
+                perbandingan: dashboard.perbandingan_ob.map((o) => ({
+                    nama_ob: o.nama_ob,
+                    total_tugas: o.total_tugas,
+                    tugas_selesai: o.tugas_selesai,
+                    persentase: o.persentase,
+                })),
+                tren: dashboard.tren_laporan_bulanan.map((t) => ({
+                    label: t.label,
+                    total: t.total,
+                    selesai: t.selesai,
+                })),
+            }),
         };
     }
 

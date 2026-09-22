@@ -3034,6 +3034,33 @@ paths:
         '200':
           description: Daftar skill OB
 
+  /api/export/performance:
+    get:
+      tags:
+        - Export
+      summary: 'Ekspor Excel performa OB (HR & Admin)'
+      description: |
+        Mengunduh rekap performa OB sebagai file .xlsx (sheet Ringkasan,
+        Perbandingan OB, Tren Bulanan) dengan filter periode yang sama
+        seperti dashboard performa.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: bulanan
+      responses:
+        '200':
+          description: File Excel performa OB
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
   /api/admin/ob/performance-dashboard:
     get:
       tags:
@@ -5799,59 +5826,6 @@ paths:
                         type: integer
                       selesai_hari_ini:
                         type: integer
-
-  /api/hr/laporan/export:
-    get:
-      tags:
-        - HR
-      summary: 'Ekspor CSV laporan (HR & Admin)'
-      description: |
-        Mengunduh data laporan sebagai CSV dengan filter yang sama seperti list laporan
-        (search, status, prioritas, lokasi_id, lantai_id, rentang tanggal).
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: search
-          in: query
-          schema:
-            type: string
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [BELUM_DIKERJAKAN, SEDANG_DIKERJAKAN, PENDING, SELESAI, DIBATALKAN]
-        - name: prioritas
-          in: query
-          schema:
-            type: string
-            enum: [URGENT, STANDARD]
-        - name: lokasi_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: lantai_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: start_date
-          in: query
-          schema:
-            type: string
-            format: date
-        - name: end_date
-          in: query
-          schema:
-            type: string
-            format: date
-      responses:
-        '200':
-          description: File CSV laporan
-          content:
-            text/csv:
-              schema:
-                type: string
 
   /api/hr/laporan/{laporan_id}:
     get:

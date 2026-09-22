@@ -26,6 +26,7 @@ import obKolaborasiRouter from './routes/obKolaborasi.js';
 import settingRouter from './routes/setting.js';
 import publicSettingRouter from './routes/publicSetting.js';
 import hrRouter from './routes/hr.js';
+import exportRouter from './routes/export.js';
 import swaggerUi from 'swagger-ui-express';
 import path from 'node:path';
 import YAML from 'yamljs';
@@ -125,6 +126,7 @@ const initRouter = () => {
     app.use('/api/admin/settings', settingRouter);
     app.use('/api/settings', publicSettingRouter);
     app.use('/api/hr', hrRouter);
+    app.use('/api/export', exportRouter);
 
     app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
         if (err instanceof multer.MulterError) {
