@@ -25,7 +25,11 @@ import notifikasiRouter from './routes/notifikasi.js';
 import obKolaborasiRouter from './routes/obKolaborasi.js';
 import settingRouter from './routes/setting.js';
 import publicSettingRouter from './routes/publicSetting.js';
-import hrRouter from './routes/hr.js';
+import hrUsersRouter from './routes/hrUsers.js';
+import hrPerformanceRouter from './routes/hrPerformance.js';
+import hrLaporanRouter from './routes/hrLaporan.js';
+import hrTugasRouter from './routes/hrTugas.js';
+import hrChecklistRouter from './routes/hrChecklist.js';
 import exportRouter from './routes/export.js';
 import swaggerUi from 'swagger-ui-express';
 import path from 'node:path';
@@ -125,7 +129,11 @@ const initRouter = () => {
     app.use('/api/achievement', achievementRouter);
     app.use('/api/admin/settings', settingRouter);
     app.use('/api/settings', publicSettingRouter);
-    app.use('/api/hr', hrRouter);
+    app.use('/api/hr', hrUsersRouter);
+    app.use('/api/hr', hrPerformanceRouter);
+    app.use('/api/hr', hrLaporanRouter);
+    app.use('/api/hr', hrTugasRouter);
+    app.use('/api/hr', hrChecklistRouter);
     app.use('/api/export', exportRouter);
 
     app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
