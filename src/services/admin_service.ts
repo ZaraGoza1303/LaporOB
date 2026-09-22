@@ -10,6 +10,7 @@ import { AppError, handlePrismaError } from "../utils/error.js";
 import { calculateDateRanges, calculatePeriodRange } from "../utils/date.js"
 import { LAPORAN_STATUS, USER_ROLE, type LaporanPriority, type LaporanStatus } from "../utils/constants.js";
 import { resolveFileUrl } from "../utils/url.js";
+import { buildExportFilename, toLaporanCsv } from "../utils/csv.js";
 import type { IAdminService } from "./admin_service.interface.js";
 import type { Laporan_karyawan } from "../generated/prisma/client.js";
 import type { DailyChecklistObReport } from "../repositories/admin_repository.interface.js";
@@ -91,6 +92,16 @@ export class AdminService implements IAdminService {
         } catch (err) {
             handlePrismaError(err);
         }
+    }
+
+    async getLaporanExport(query: AdminLaporanQuery): Promise<{ filename: string; csv: string; total: number }> {
+        const page = await this.getAllLaporan(1, 5000, query);
+        const items = page.laporan.items;
+        return {
+            filename: buildExportFilename("laporan"),
+            csv: toLaporanCsv(items),
+            total: page.laporan.meta?.total_items ?? items.length,
+        };
     }
 
     async getAllHistoryLaporan(page: number, limit: number, query: AdminLaporanHistoryQuery): Promise<PaginatedResponse<Laporan_karyawan>> {

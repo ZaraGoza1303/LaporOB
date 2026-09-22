@@ -9,6 +9,7 @@ export interface IAdminService {
     getUserStats(): Promise<UserStatsRes>;
     getDashboardData(query: GetDashboardQuery, page_laporan: number, limit_laporan: number, page_tugas: number, limit_tugas: number): Promise<DashboardMainResponse>;
     getAllLaporan(page: number, limit: number, query: AdminLaporanQuery): Promise<AdminLaporanPageResponse>;
+    getLaporanExport(query: AdminLaporanQuery): Promise<{ filename: string; csv: string; total: number }>;
     getAllHistoryLaporan(page: number, limit: number, query: AdminLaporanHistoryQuery): Promise<PaginatedResponse<Laporan_karyawan>>;
     getReportDetail(id: string): Promise<AdminReportDetailResponse>;
     patchLaporan(laporanId: string, dto: PatchLaporanReq): Promise<void>;

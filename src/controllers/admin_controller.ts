@@ -295,6 +295,26 @@ export class AdminController {
         }
     }
 
+    async exportLaporanCsv(req: Request, res: Response) {
+        try {
+            const validate = AdminLaporanQuerySchema.safeParse(req.query);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const result = await this.adminService.getLaporanExport(validate.data);
+            res.setHeader("Content-Type", "text/csv; charset=utf-8");
+            res.setHeader("Content-Disposition", `attachment; filename="${result.filename}"`);
+            return res.status(200).send(result.csv);
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengekspor data laporan"));
+        }
+    }
+
     async getStatsTugas(req: Request, res: Response) {
         try {
             const validate = StatsTugasQuerySchema.safeParse(req.query);

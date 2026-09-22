@@ -5800,6 +5800,59 @@ paths:
                       selesai_hari_ini:
                         type: integer
 
+  /api/hr/laporan/export:
+    get:
+      tags:
+        - HR
+      summary: 'Ekspor CSV laporan (HR & Admin)'
+      description: |
+        Mengunduh data laporan sebagai CSV dengan filter yang sama seperti list laporan
+        (search, status, prioritas, lokasi_id, lantai_id, rentang tanggal).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [BELUM_DIKERJAKAN, SEDANG_DIKERJAKAN, PENDING, SELESAI, DIBATALKAN]
+        - name: prioritas
+          in: query
+          schema:
+            type: string
+            enum: [URGENT, STANDARD]
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: lantai_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: File CSV laporan
+          content:
+            text/csv:
+              schema:
+                type: string
+
   /api/hr/laporan/{laporan_id}:
     get:
       tags:
@@ -5953,6 +6006,46 @@ paths:
                   data:
                     $ref: '#/components/schemas/StatsTugasResponse'
 
+  /api/hr/tugas/approval-list:
+    get:
+      tags:
+        - HR
+      summary: 'Daftar tugas non-rutin menunggu persetujuan (HR & Admin)'
+      description: |
+        Tugas yang statusnya SELESAI tapi belum di-approve admin.
+        Bisa difilter per periode dan gedung.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: harian
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar tugas menunggu persetujuan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApprovalItemResponse'
+
   /api/hr/tugas/{tugas_id}:
     get:
       tags:
@@ -6060,6 +6153,46 @@ paths:
       responses:
         '200':
           description: Tugas berhasil dihapus
+
+  /api/hr/checklist-harian/approval-list:
+    get:
+      tags:
+        - HR
+      summary: 'Daftar checklist rutin menunggu persetujuan (HR & Admin)'
+      description: |
+        Checklist harian yang statusnya SELESAI tapi belum di-approve admin.
+        Bisa difilter per periode dan gedung.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: harian
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar checklist menunggu persetujuan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApprovalItemResponse'
 
   /api/hr/jadwal-checklist:
     get:
