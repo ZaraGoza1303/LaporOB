@@ -223,3 +223,48 @@ describe('UsersService.getByID', () => {
     expect(data?.role?.nama_role).toBe('ADMIN');
   });
 });
+
+describe('UsersService.getByEmail', () => {
+  it('mengembalikan data user jika email ditemukan', async () => {
+    const email = 'farhan@gmail.com';
+    const fakeUser = createFakePublicUser({ email });
+
+    // "as User" karena findmany/findfirst prisma gak omit password, sedangkan ini fake data menggunakan type PublicUser
+    // Jadi harus di convert ke model User agar bisa meskipun gak provide password
+    mockDB.user.findFirst.mockResolvedValue(fakeUser as unknown as User);
+
+    const data = await mockUsersService.getByEmail(email);
+
+    expect(data).toEqual(fakeUser);
+    expect(mockDB.user.findFirst).toHaveBeenCalledWith({
+      where: { email, is_deleted: false },
+      omit: { password: true },
+    });
+  });
+
+  it('mengembalikan null jika user tidak ditemukan', async () => {
+    const email = 'notfound@gmail.com';
+
+    mockDB.user.findFirst.mockResolvedValue(null);
+
+    const data = await mockUsersService.getByEmail(email);
+
+    expect(data).toBeNull();
+  });
+});
+
+describe('UsersService.delete', () => {
+  it('berhasil melakukan soft delete user dan menghapus cache', async () => {
+    const userId = 'e2fbdc6f-ec0d-4547-a51d-a81b69741ed2';
+
+    mockDB.user.update.mockResolvedValue({} as User);
+
+    await mockUsersService.delete(userId);
+
+    expect(mockDB.user.update).toHaveBeenCalledWith({
+      where: { id: userId },
+      data: { is_deleted: true },
+    });
+    expect(mockRedis.del).toHaveBeenCalledWith('users:all:*');
+  });
+});
