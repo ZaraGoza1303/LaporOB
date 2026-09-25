@@ -9,9 +9,8 @@ adminUserManagementRouter.use(verifyJWTToken);
 adminUserManagementRouter.use(requireRole(USER_ROLE.ADMIN));
 
 // user crud
-adminUserManagementRouter.get("/user", (req, res) => usersController.getAll(req, res));
+adminUserManagementRouter.get("/users", (req, res) => usersController.getAll(req, res));
 adminUserManagementRouter.post("/user", (req, res) => usersController.create(req, res));
-adminUserManagementRouter.get("/role", (req, res) => usersController.getRoles(req, res));
 
 // ob
 adminUserManagementRouter.get("/user/all-ob", (req, res) => usersController.getAllOb(req, res));

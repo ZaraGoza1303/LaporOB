@@ -30,6 +30,7 @@ import hrPerformanceRouter from './routes/hrPerformance.js';
 import hrLaporanRouter from './routes/hrLaporan.js';
 import hrTugasRouter from './routes/hrTugas.js';
 import hrChecklistRouter from './routes/hrChecklist.js';
+import rolesRouter from './routes/roles.js';
 import exportRouter from './routes/export.js';
 import swaggerUi from 'swagger-ui-express';
 import path from 'node:path';
@@ -45,7 +46,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const swaggerDocument = YAML.load(path.join(__dirname, '../swagger.yaml'));
 
-const app = express();
+export const app = express();
 const server = createServer(app);
 initWebSocket(server)
 
@@ -134,6 +135,7 @@ const initRouter = () => {
     app.use('/api/hr', hrLaporanRouter);
     app.use('/api/hr', hrTugasRouter);
     app.use('/api/hr', hrChecklistRouter);
+    app.use('/api/roles', rolesRouter);
     app.use('/api/export', exportRouter);
 
     app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {

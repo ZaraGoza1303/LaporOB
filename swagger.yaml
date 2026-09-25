@@ -2490,11 +2490,12 @@ paths:
           description: Checklist tidak ditemukan
 
 # ADMIN
-  /api/admin/role:
+  /api/roles:
     get:
       tags:
         - Admin
-      summary: 'List semua role (Admin)'
+        - HR
+      summary: 'List semua role (Admin & HR)'
       security:
         - BearerAuth: []
       responses:
@@ -2528,7 +2529,7 @@ paths:
                           format: date-time
                           example: '2026-07-17T11:26:38.000Z'
 
-  /api/admin/user:
+  /api/admin/users:
     get:
       tags:
         - Admin
@@ -2571,6 +2572,7 @@ paths:
                   data:
                     $ref: '#/components/schemas/PaginatedPublicUsers'
 
+  /api/admin/user:
     post:
       tags:
         - Admin
