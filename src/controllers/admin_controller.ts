@@ -457,4 +457,25 @@ export class AdminController {
             return res.status(500).json(sendErrorResponse("Gagal menyetujui checklist"));
         }
     }
+
+    async exportObPerformanceExcel(req: Request, res: Response) {
+        try {
+            const validate = ObPerformanceDashboardQuerySchema.safeParse(req.query);
+            if (!validate.success) {
+                const formattedErr = validate.error.flatten().fieldErrors;
+                return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
+            }
+
+            const result = await this.adminService.getObPerformanceExport(validate.data);
+            res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            res.setHeader("Content-Disposition", `attachment; filename="${result.filename}"`);
+            
+            return res.status(200).send(result.buffer);
+        } catch (err: unknown) {
+            if (err instanceof AppError) {
+                return res.status(err.statusCode).json(sendErrorResponse(err.message));
+            }
+            return res.status(500).json(sendErrorResponse("Gagal mengekspor performa OB"));
+        }
+    }
 }

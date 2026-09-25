@@ -1,23 +1,19 @@
 import type { IUsersService } from "../services/users_service.interface.js";
 import type { IProfileService } from "../services/profile_service.interface.js";
-import type { IObService } from "../services/ob_service.interface.js";
 import type { ILaporanService } from "../services/laporan_service.interface.js";
 import type { IStorageService } from "../services/storage_service.interface.js";
 import { CreateUserSchema, UpdateUserSchema, UpdateProfileSchema, ProfileLaporanQuerySchema, UserIdParamSchema, LaporanIdParamSchema } from "../dto/users.js";
-import type { ProfileRes, ObProfileResponse, UserProfileResponse } from "../types/users.js";
 import { UserSearchQuerySchema, GetDashboardQuerySchema } from "../dto/admin.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
 import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
 import type { Request, Response } from "express";
 import { AppError } from "../utils/error.js";
-import { calculatePeriodRange } from "../utils/date.js";
 import type { IKaryawanService } from "../services/karyawan_service.interface.js";
 import { USER_ROLE } from "../utils/constants.js";
 
 export class UsersController {
     private usersService: IUsersService;
     private profileService: IProfileService;
-    private obService: IObService;
     private karyawanService: IKaryawanService;
     private laporanService: ILaporanService;
     private storageService: IStorageService;
@@ -25,14 +21,12 @@ export class UsersController {
     constructor(
         usersService: IUsersService,
         profileService: IProfileService,
-        obService: IObService,
         karyawanService: IKaryawanService,
         laporanService: ILaporanService,
         storageService: IStorageService
     ) {
         this.usersService = usersService;
         this.profileService = profileService;
-        this.obService = obService;
         this.karyawanService = karyawanService;
         this.laporanService = laporanService;
         this.storageService = storageService;

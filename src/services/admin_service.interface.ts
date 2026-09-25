@@ -22,5 +22,6 @@ export interface IAdminService {
     getAdminStats(userId: string): Promise<AdminProfileData>;
     getObRanking(): Promise<ObRankingItem[]>;
     getObPerformanceDashboard(query: ObPerformanceDashboardQuery): Promise<ObPerformanceDashboardResponse>;
+    getObPerformanceExport(query: ObPerformanceDashboardQuery): Promise<{ filename: string; buffer: Buffer }>;
 }
 

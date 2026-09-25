@@ -2474,11 +2474,12 @@ paths:
           description: Checklist tidak ditemukan
 
 # ADMIN
-  /api/admin/role:
+  /api/roles:
     get:
       tags:
         - Admin
-      summary: 'List semua role (Admin)'
+        - HR
+      summary: 'List semua role (Admin & HR)'
       security:
         - BearerAuth: []
       responses:
@@ -2512,7 +2513,7 @@ paths:
                           format: date-time
                           example: '2026-07-17T11:26:38.000Z'
 
-  /api/admin/user:
+  /api/admin/users:
     get:
       tags:
         - Admin
@@ -2555,6 +2556,7 @@ paths:
                   data:
                     $ref: '#/components/schemas/PaginatedPublicUsers'
 
+  /api/admin/user:
     post:
       tags:
         - Admin
@@ -3017,6 +3019,33 @@ paths:
       responses:
         '200':
           description: Daftar skill OB
+
+  /api/export/performance:
+    get:
+      tags:
+        - Export
+      summary: 'Ekspor Excel performa OB (HR & Admin)'
+      description: |
+        Mengunduh rekap performa OB sebagai file .xlsx (sheet Ringkasan,
+        Perbandingan OB, Tren Bulanan) dengan filter periode yang sama
+        seperti dashboard performa.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: bulanan
+      responses:
+        '200':
+          description: File Excel performa OB
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
 
   /api/admin/ob/performance-dashboard:
     get:
@@ -5199,3 +5228,1029 @@ paths:
           description: Tidak terautentikasi
         '403':
           description: Tidak memiliki akses admin
+
+# HR
+  /api/hr/users:
+    get:
+      tags:
+        - HR
+      summary: 'List semua user (HR & Admin, read-only)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: role_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/PaginatedPublicUsers'
+
+  /api/hr/users/ob:
+    get:
+      tags:
+        - HR
+      summary: 'List semua OB (HR & Admin)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar OB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicUser'
+
+  /api/hr/users/karyawan:
+    get:
+      tags:
+        - HR
+      summary: 'List semua karyawan (HR & Admin)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar karyawan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicUser'
+
+  /api/hr/user/{user_id}:
+    get:
+      tags:
+        - HR
+      summary: 'Detail user (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/PublicUser'
+        '404':
+          description: User tidak ditemukan
+
+  /api/hr/performance/dashboard:
+    get:
+      tags:
+        - HR
+      summary: 'Dashboard performa OB (HR & Admin)'
+      description: |
+        Mengembalikan data performa semua OB yang meliputi:
+        - `produktivitas`: persentase tugas selesai dari total diklaim
+        - `tugas_diselesaikan`: jumlah tugas selesai / total diklaim
+        - `laporan_menunggu`: laporan yang belum dikerjakan
+        - `perbandingan_ob`: perbandingan penyelesaian tugas per OB
+        - `tren_laporan_bulanan`: statistik laporan per bulan (12 bulan terakhir)
+        Dapat difilter dengan parameter `period` (harian/mingguan/bulanan/tahunan).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: bulanan
+      responses:
+        '200':
+          description: Data dashboard performa OB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ObPerformanceDashboardResponse'
+
+  /api/hr/performance/ranking:
+    get:
+      tags:
+        - HR
+      summary: 'Ranking OB berdasarkan performa (HR & Admin)'
+      description: |
+        Mengembalikan daftar OB diurutkan dari total tugas selesai terbanyak.
+        Setiap item mencakup data OB, skill yang diperoleh, total tugas diklaim,
+        total tugas selesai, dan rata-rata kecepatan dalam detik.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Data ranking OB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ObRankingItem'
+
+  /api/hr/performance/ob/{user_id}:
+    get:
+      tags:
+        - HR
+      summary: 'Statistik performa OB (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID OB yang ingin dilihat performanya
+      responses:
+        '200':
+          description: Statistik performa OB berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil mendapatkan statistik performa OB
+                  data:
+                    type: object
+                    description: Data statistik performa OB
+        '404':
+          description: OB tidak ditemukan
+
+  /api/hr/performance/karyawan/{user_id}:
+    get:
+      tags:
+        - HR
+      summary: 'Statistik performa karyawan (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID karyawan yang ingin dilihat performanya
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - mingguan
+              - bulanan
+              - tahunan
+            default: mingguan
+          description: Periode statistik performa
+      responses:
+        '200':
+          description: Statistik performa karyawan berhasil diambil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil mendapatkan statistik performa karyawan
+                  data:
+                    type: object
+                    properties:
+                      laporan_terkirim:
+                        type: integer
+                        example: 15
+                    description: Data statistik performa karyawan
+        '404':
+          description: Karyawan tidak ditemukan
+
+  /api/hr/ob/{ob_id}/skills:
+    get:
+      tags:
+        - HR
+      summary: 'Skill OB (HR & Admin)'
+      description: Mengembalikan daftar skill yang sudah diperoleh seorang OB
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ob_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar skill OB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ObSkillResponse'
+
+  /api/hr/ob/{ob_id}/achievements:
+    get:
+      tags:
+        - HR
+      summary: 'Achievement OB (HR & Admin)'
+      description: Mengembalikan daftar achievement yang sudah diperoleh seorang OB
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ob_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar achievement OB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ObAchievementResponse'
+
+  /api/hr/laporan:
+    get:
+      tags:
+        - HR
+      summary: 'List laporan dengan filter (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: prioritas
+          in: query
+          schema:
+            type: string
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: lantai_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - created_at
+              - updated_at
+              - prioritas
+              - status
+              - nama_karyawan
+              - lokasi
+            default: created_at
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+      responses:
+        '200':
+          description: |
+            Daftar laporan. Response body berisi:
+            - `laporan` (paginated): item laporan beserta meta pagination
+            - `ruangan_terpopuler`: array ruangan dengan laporan terbanyak
+            - `laporan_aktif`: total laporan aktif
+    post:
+      tags:
+        - HR
+      summary: 'Buat laporan baru (HR)'
+      description: |
+        HR membuat laporan masalah/kendala baru.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - lantai_id
+                - ruangan_id
+                - kategori_id
+                - deskripsi_kendala
+                - prioritas
+                - foto_masalah
+              properties:
+                lantai_id:
+                  type: string
+                  format: uuid
+                ruangan_id:
+                  type: string
+                  format: uuid
+                kategori_id:
+                  type: string
+                  format: uuid
+                deskripsi_kendala:
+                  type: string
+                prioritas:
+                  type: string
+                  enum:
+                    - STANDARD
+                    - URGENT
+                foto_masalah:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Foto masalah (max 5)
+      responses:
+        '201':
+          description: Laporan berhasil dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                  message:
+                    type: string
+
+  /api/hr/laporan/history:
+    get:
+      tags:
+        - HR
+      summary: 'History laporan dengan filter search & user_id (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: |
+            Daftar history laporan. Response body paginated berisi laporan dengan kategori, lantai, dan lokasi.
+
+  /api/hr/laporan/stats:
+    get:
+      tags:
+        - HR
+      summary: 'Statistik laporan (HR & Admin)'
+      description: |
+        Mengembalikan statistik laporan: baru (BELUM_DIKERJAKAN), sedang dikerjakan (PENDING), selesai dalam periode.
+        Bisa difilter per periode dan gedung.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: harian
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data statistik laporan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      laporan_baru:
+                        type: integer
+                      sedang_dikerjakan:
+                        type: integer
+                      selesai_hari_ini:
+                        type: integer
+
+  /api/hr/laporan/{laporan_id}:
+    get:
+      tags:
+        - HR
+      summary: 'Detail laporan (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: laporan_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Berhasil mendapatkan detail laporan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil mendapatkan detail laporan
+                  data:
+                    $ref: '#/components/schemas/AdminReportDetail'
+
+  /api/hr/tugas:
+    get:
+      tags:
+        - HR
+      summary: 'List tugas (HR & Admin)'
+      description: |
+        Menampilkan daftar tugas
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: kategori_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter berdasarkan kategori id (optional)
+      responses:
+        '200':
+          description: Daftar tugas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TugasResponse'
+    post:
+      tags:
+        - HR
+      summary: 'Tambah tugas (HR & Admin)'
+      description: |
+        Membuat tugas baru.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - kategori_id
+                - nama_tugas
+                - tanggal_selesai
+              properties:
+                kategori_id:
+                  type: string
+                  format: uuid
+                nama_tugas:
+                  type: string
+                lantai_id:
+                  type: string
+                  format: uuid
+                  description: Lantai lokasi tugas (opsional)
+                catatan:
+                  type: string
+                  description: Catatan tambahan untuk OB (opsional)
+                tanggal_selesai:
+                  type: string
+                  format: date-time
+                  description: Akhir rentang tugas (ISO 8601, wajib)
+      responses:
+        '201':
+          description: Tugas berhasil dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Tugas berhasil dibuat
+                  data:
+                    $ref: '#/components/schemas/TugasResponse'
+
+  /api/hr/tugas/stats:
+    get:
+      tags:
+        - HR
+      summary: 'Statistik tugas & checklist (HR & Admin)'
+      description: |
+        Mengembalikan statistik gabungan tugas (non-rutin) dan checklist harian (rutin).
+        Mencakup total, yang sedang diproses OB, dan yang menunggu persetujuan admin. Bisa difilter per periode dan gedung.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: harian
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data statistik tugas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/StatsTugasResponse'
+
+  /api/hr/tugas/approval-list:
+    get:
+      tags:
+        - HR
+      summary: 'Daftar tugas non-rutin menunggu persetujuan (HR & Admin)'
+      description: |
+        Tugas yang statusnya SELESAI tapi belum di-approve admin.
+        Bisa difilter per periode dan gedung.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: harian
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar tugas menunggu persetujuan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApprovalItemResponse'
+
+  /api/hr/tugas-combination:
+    get:
+      tags:
+        - HR
+      summary: 'List gabungan checklist harian & tugas (HR & Admin)'
+      description: |
+        Mengembalikan data checklist harian (instance) dan tugas dalam satu response, masing-masing dengan pagination terpisah.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Data checklist dan tugas
+
+  /api/hr/tugas/{tugas_id}:
+    get:
+      tags:
+        - HR
+      summary: 'Detail tugas (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tugas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Data tugas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/TugasResponse'
+    patch:
+      tags:
+        - HR
+      summary: 'Edit tugas (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tugas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kategori_id:
+                  type: string
+                  format: uuid
+                  description: UUID kategori (opsional)
+                nama_tugas:
+                  type: string
+                  description: Nama tugas (opsional)
+                lantai_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: Lantai lokasi tugas (opsional, null untuk hapus)
+                catatan:
+                  type: string
+                  nullable: true
+                  description: Catatan tambahan untuk OB (opsional, null untuk hapus)
+                is_active:
+                  type: boolean
+                  description: Aktif/nonaktif (opsional)
+                status:
+                  type: string
+                  enum: [BELUM_DIKERJAKAN, SEDANG_DIKERJAKAN, SELESAI, TERLEWAT]
+                  description: Status tugas (opsional)
+                ob_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: UUID OB yang ditugaskan (opsional)
+      responses:
+        '200':
+          description: Tugas berhasil diupdate
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Tugas berhasil diupdate
+                  data:
+                    $ref: '#/components/schemas/TugasResponse'
+    delete:
+      tags:
+        - HR
+      summary: 'Hapus tugas (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tugas_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tugas berhasil dihapus
+
+  /api/hr/checklist-harian/approval-list:
+    get:
+      tags:
+        - HR
+      summary: 'Daftar checklist rutin menunggu persetujuan (HR & Admin)'
+      description: |
+        Checklist harian yang statusnya SELESAI tapi belum di-approve admin.
+        Bisa difilter per periode dan gedung.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [harian, mingguan, bulanan, tahunan]
+            default: harian
+        - name: lokasi_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Daftar checklist menunggu persetujuan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApprovalItemResponse'
+
+  /api/hr/jadwal-checklist:
+    get:
+      tags:
+        - HR
+      summary: 'List semua jadwal checklist (HR & Admin)'
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar jadwal checklist
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JadwalChecklistResponse'
+    post:
+      tags:
+        - HR
+      summary: 'Buat jadwal checklist (HR & Admin)'
+      description: |
+        HR membuat jadwal checklist (template). Jika jadwal cocok dengan hari ini,
+        instance langsung dibuat di checklist harian dan notifikasi dikirim ke semua OB.
+
+        **WebSocket Notification**: Notifikasi real-time dikirim ke semua OB via WebSocket dengan tipe `PENUGASAN_CHECKLIST`
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JadwalChecklistRequest'
+      responses:
+        '201':
+          description: Jadwal checklist berhasil dibuat
+
+  /api/hr/jadwal-checklist/{jadwal_checklist_id}:
+    get:
+      tags:
+        - HR
+      summary: 'Detail jadwal checklist (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: jadwal_checklist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Detail jadwal checklist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JadwalChecklistResponse'
+    patch:
+      tags:
+        - HR
+      summary: 'Update jadwal checklist (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: jadwal_checklist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JadwalChecklistRequest'
+      responses:
+        '200':
+          description: Jadwal checklist berhasil diupdate
+    delete:
+      tags:
+        - HR
+      summary: 'Hapus jadwal checklist (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: jadwal_checklist_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Jadwal checklist berhasil dihapus

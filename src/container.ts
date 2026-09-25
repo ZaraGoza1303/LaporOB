@@ -131,7 +131,6 @@ export const tugasController = new TugasController(tugasService);
 export const usersController = new UsersController(
     usersService,
     profileService,
-    obService,
     karyawanService,
     laporanService,
     storageService

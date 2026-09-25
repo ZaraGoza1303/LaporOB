@@ -15,6 +15,7 @@ import type { Laporan_karyawan } from "../generated/prisma/client.js";
 import type { DailyChecklistObReport } from "../repositories/admin_repository.interface.js";
 import type { IRedisClient } from "../database/redis.interface.js";
 import type { PaginatedResponse } from "../types/response.js";
+import { buildExportFilename, toObPerformanceExcel } from "../utils/excel.js";
 
 
 export class AdminService implements IAdminService {
@@ -91,6 +92,30 @@ export class AdminService implements IAdminService {
         } catch (err) {
             handlePrismaError(err);
         }
+    }
+
+    async getObPerformanceExport(query: ObPerformanceDashboardQuery): Promise<{ filename: string; buffer: Buffer }> {
+        const dashboard = await this.getObPerformanceDashboard(query);
+        return {
+            filename: buildExportFilename("performa-ob"),
+            buffer: await toObPerformanceExcel({
+                produktivitas: dashboard.produktivitas,
+                tugas_selesai: dashboard.tugas_diselesaikan.selesai,
+                tugas_total: dashboard.tugas_diselesaikan.total,
+                laporan_menunggu: dashboard.laporan_menunggu,
+                perbandingan: dashboard.perbandingan_ob.map((o) => ({
+                    nama_ob: o.nama_ob,
+                    total_tugas: o.total_tugas,
+                    tugas_selesai: o.tugas_selesai,
+                    persentase: o.persentase,
+                })),
+                tren: dashboard.tren_laporan_bulanan.map((t) => ({
+                    label: t.label,
+                    total: t.total,
+                    selesai: t.selesai,
+                })),
+            }),
+        };
     }
 
     async getAllHistoryLaporan(page: number, limit: number, query: AdminLaporanHistoryQuery): Promise<PaginatedResponse<Laporan_karyawan>> {
