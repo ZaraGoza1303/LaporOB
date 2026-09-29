@@ -2,6 +2,8 @@ node_modules
 dist
 /src/generated/prisma
 .env
+.env.*
+!.env.example
 /uploads/*
 !/uploads/wgs-logo.png
 !/uploads/.gitkeep

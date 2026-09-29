@@ -1,5 +1,6 @@
 # STAGING — image prod-like (Dockerfile), TANPA seed, TANPA volume source code.
-# Pakai: docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --build
+# Nilai env dari platform deploy / secret manager (file lokal: salin .env.example jadi .env).
+# Pakai: docker compose -f docker-compose.staging.yml up -d --build
 # Alur: dev -> staging (MR) -> QA di sini -> staging -> prod (MR + tag).
 
 services:
@@ -10,7 +11,7 @@ services:
     ports:
       - "${APP_PORT:-8000}:${APP_PORT:-8000}"
     env_file:
-      - .env.staging
+      - .env
     environment:
       - APP_PORT=${APP_PORT:-8000}
       - TZ=${TZ:-Asia/Jakarta}
