@@ -11,6 +11,8 @@ import { AppError } from "../utils/error.js";
 import type { IKaryawanService } from "../services/karyawan_service.interface.js";
 import { USER_ROLE } from "../utils/constants.js";
 
+const HR_PROTECTED_ROLES: string[] = [USER_ROLE.ADMIN, USER_ROLE.HR];
+
 export class UsersController {
     private usersService: IUsersService;
     private profileService: IProfileService;
@@ -30,6 +32,18 @@ export class UsersController {
         this.karyawanService = karyawanService;
         this.laporanService = laporanService;
         this.storageService = storageService;
+    }
+
+    private isHrActor(role?: string): boolean {
+        return role?.toLowerCase() === USER_ROLE.HR;
+    }
+
+    private isProtectedRole(nama_role?: string | null): boolean {
+        return HR_PROTECTED_ROLES.includes(nama_role?.toLowerCase() ?? "");
+    }
+
+    private hrForbidden(res: Response) {
+        return res.status(403).json(sendErrorResponse("HR tidak diizinkan mengelola akun dengan role admin atau hr"));
     }
 
     async getAll(req: Request, res: Response) {
@@ -112,8 +126,16 @@ export class UsersController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formatedErr));
             }
 
-            await this.usersService.create(validate.data)
-            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data user, link aktivasi sudah dikirim ke email user."));
+            if (this.isHrActor(req.user?.role)) {
+                const roles = await this.usersService.getRoles();
+                const targetRole = roles.find((role) => role.id === validate.data.role_id);
+                if (this.isProtectedRole(targetRole?.nama_role)) {
+                    return this.hrForbidden(res);
+                }
+            }
+
+            const response = await this.usersService.create(validate.data)
+            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data user, link aktivasi sudah dikirim ke email user.", response));
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))
@@ -142,6 +164,20 @@ export class UsersController {
             const existsUser = await this.usersService.getByID(userId);
             if (!existsUser) {
                 return res.status(404).json(sendErrorResponse("User tidak ditemukan"));
+            }
+
+            if (this.isHrActor(req.user?.role)) {
+                if (this.isProtectedRole(existsUser.role?.nama_role)) {
+                    return this.hrForbidden(res);
+                }
+
+                if (validate.data.role_id) {
+                    const roles = await this.usersService.getRoles();
+                    const targetRole = roles.find((role) => role.id === validate.data.role_id);
+                    if (this.isProtectedRole(targetRole?.nama_role)) {
+                        return this.hrForbidden(res);
+                    }
+                }
             }
 
             const profilePictureFile = ((req.files || []) as Express.Multer.File[]).find(
@@ -249,6 +285,14 @@ export class UsersController {
             }
 
             const userId = validate.data.user_id;
+
+            if (this.isHrActor(req.user?.role)) {
+                const targetUser = await this.usersService.getByID(userId);
+                if (targetUser && this.isProtectedRole(targetUser.role?.nama_role)) {
+                    return this.hrForbidden(res);
+                }
+            }
+
             await this.usersService.delete(userId)
             return res.status(200).json(sendSuccessfullResponse("Berhasil menghapus data user"));
         } catch (err: unknown) {
@@ -352,6 +396,14 @@ export class UsersController {
             }
 
             const userId = validateParams.data.user_id;
+
+            if (this.isHrActor(req.user?.role)) {
+                const targetUser = await this.usersService.getByID(userId);
+                if (targetUser && this.isProtectedRole(targetUser.role?.nama_role)) {
+                    return this.hrForbidden(res);
+                }
+            }
+
             await this.usersService.renewActivationToken(userId);
 
             return res.status(200).json(sendSuccessfullResponse("Berhasil memperbarui token aktivasi, link aktivasi baru sudah dikirim ke email user."));

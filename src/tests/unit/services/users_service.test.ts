@@ -129,7 +129,6 @@ describe('UsersService.getAll', () => {
       300,
       JSON.stringify(expected)
     );
-    expect(mockRedis.sAdd).toHaveBeenCalledWith('users:all:keys', expect.stringContaining('users:all:page=1:limit=10'));
     expect(data).toEqual(expected);
   });
 

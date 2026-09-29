@@ -21,6 +21,16 @@ export class SettingController {
     }
   }
 
+  async getPublic(_req: Request, res: Response) {
+    try {
+      const settings = await this.settingService.getAll();
+      return res.status(200).json(sendSuccessfullResponse("Berhasil mengambil branding", settings));
+    } catch (err: unknown) {
+      if (err instanceof AppError) return res.status(err.statusCode).json(sendErrorResponse(err.message));
+      return res.status(500).json(sendErrorResponse("Gagal mengambil branding"));
+    }
+  }
+
   async upsert(req: Request, res: Response) {
     try {
       const validate = UpsertSettingSchema.safeParse(req.body);

@@ -5,7 +5,7 @@ import type { NotifikasiCreateInput } from "../generated/prisma/models.js";
 export interface NotifikasiWithPengirim {
     id: string;
     penerima_id: string;
-    pengirim_id: string;
+    pengirim_id: string | null;
     tipe: string;
     judul: string;
     pesan: string | null;
@@ -17,7 +17,7 @@ export interface NotifikasiWithPengirim {
     pengirim: {
         id: string;
         nama_lengkap: string;
-    };
+    } | null;
 }
 
 export interface INotificationRepository {

@@ -23,6 +23,7 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/src/generated /app/src/generated
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/swagger.yaml ./swagger.yaml
 
 EXPOSE 8000
 
