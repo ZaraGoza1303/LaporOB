@@ -26,6 +26,7 @@ import obKolaborasiRouter from './routes/obKolaborasi.js';
 import settingRouter from './routes/setting.js';
 import publicSettingRouter from './routes/publicSetting.js';
 import hrUsersRouter from './routes/hrUsers.js';
+import hrUserManagementRouter from './routes/hrUserManagement.js';
 import hrPerformanceRouter from './routes/hrPerformance.js';
 import hrLaporanRouter from './routes/hrLaporan.js';
 import hrTugasRouter from './routes/hrTugas.js';
@@ -48,7 +49,6 @@ const swaggerDocument = YAML.load(path.join(__dirname, '../swagger.yaml'));
 
 export const app = express();
 const server = createServer(app);
-initWebSocket(server)
 
 const upload = multer({ limits: { fileSize: 15 * 1024 * 1024 } });
 const ALLOWED_ORIGINS = [
@@ -130,6 +130,7 @@ const initRouter = () => {
     app.use('/api/achievement', achievementRouter);
     app.use('/api/admin/settings', settingRouter);
     app.use('/api/settings', publicSettingRouter);
+    app.use('/api/hr', hrUserManagementRouter);
     app.use('/api/hr', hrUsersRouter);
     app.use('/api/hr', hrPerformanceRouter);
     app.use('/api/hr', hrLaporanRouter);
@@ -152,9 +153,12 @@ const initRouter = () => {
 const startApp = async () => {
     await connectDB();
     initRouter();
+    initWebSocket(server);
     initCron();
 
     server.listen(process.env.APP_PORT, () => { console.log("Server Nyala cik") })
 }
 
-startApp();
+if (process.env.NODE_ENV !== 'test') {
+    startApp();
+}
