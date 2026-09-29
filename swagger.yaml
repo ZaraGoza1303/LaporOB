@@ -5317,7 +5317,7 @@ paths:
     get:
       tags:
         - HR
-      summary: 'List semua user (HR & Admin, read-only)'
+      summary: 'List semua user (HR & Admin)'
       security:
         - BearerAuth: []
       parameters:
@@ -5406,6 +5406,61 @@ paths:
                     items:
                       $ref: '#/components/schemas/PublicUser'
 
+  /api/hr/user:
+    post:
+      tags:
+        - HR
+      summary: 'Buat user baru (HR & Admin)'
+      description: HR hanya boleh membuat user dengan role selain admin dan hr.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - nama_lengkap
+                - role_id
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                nama_lengkap:
+                  type: string
+                role_id:
+                  type: string
+                  format: uuid
+                lokasi_ids:
+                  type: array
+                  description: 'Daftar ID lokasi aktif untuk user dengan role OB'
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '201':
+          description: User berhasil dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil menambahkan data user, link aktivasi sudah dikirim ke email user.
+        '400':
+          description: Validasi gagal
+        '403':
+          description: HR tidak diizinkan mengelola akun dengan role admin atau hr
+
   /api/hr/user/{user_id}:
     get:
       tags:
@@ -5437,6 +5492,264 @@ paths:
                     $ref: '#/components/schemas/PublicUser'
         '404':
           description: User tidak ditemukan
+    patch:
+      tags:
+        - HR
+      summary: 'Update user (HR & Admin)'
+      description: HR hanya boleh mengubah user dengan role selain admin dan hr, dan tidak boleh mengubah role user menjadi admin atau hr.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                nama_lengkap:
+                  type: string
+                role_id:
+                  type: string
+                  format: uuid
+                profile_picture:
+                  type: string
+                  format: binary
+                is_active:
+                  type: boolean
+                lokasi_ids:
+                  type: array
+                  description: 'Daftar ID lokasi aktif untuk user dengan role OB'
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '200':
+          description: User berhasil diupdate
+        '403':
+          description: HR tidak diizinkan mengelola akun dengan role admin atau hr
+        '404':
+          description: User tidak ditemukan
+    delete:
+      tags:
+        - HR
+      summary: 'Hapus user (HR & Admin)'
+      description: HR hanya boleh menghapus user dengan role selain admin dan hr.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User berhasil dihapus
+        '403':
+          description: HR tidak diizinkan mengelola akun dengan role admin atau hr
+
+  /api/hr/user/{user_id}/renew-token:
+    post:
+      tags:
+        - HR
+      summary: 'Perpanjang token aktivasi user (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Token aktivasi berhasil diperbarui dan dikirim ulang ke email user.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil memperbarui token aktivasi, link aktivasi baru sudah dikirim ke email user.
+        '403':
+          description: HR tidak diizinkan mengelola akun dengan role admin atau hr
+        '404':
+          description: User tidak ditemukan
+
+  /api/hr/user/{user_id}/performance/ob:
+    get:
+      tags:
+        - HR
+      summary: 'Statistik performa OB (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Statistik performa OB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+
+  /api/hr/user/{user_id}/performance/karyawan:
+    get:
+      tags:
+        - HR
+      summary: 'Statistik performa karyawan (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Statistik performa karyawan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+
+  /api/hr/user/assign-locations:
+    post:
+      tags:
+        - HR
+      summary: 'Assign OB ke lokasi (HR & Admin)'
+      description: Menugaskan OB ke satu atau lebih lokasi untuk periode bulan/tahun tertentu. Logic sama dengan /api/admin/user/assign-locations, hanya pengecekan role-nya yang berbeda.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ob_id
+                - lokasi_ids
+              properties:
+                ob_id:
+                  type: string
+                  format: uuid
+                lokasi_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                bulan:
+                  type: integer
+                  minimum: 1
+                  maximum: 12
+                  description: Default ke bulan sekarang
+                tahun:
+                  type: integer
+                  minimum: 2000
+                  description: Default ke tahun sekarang
+      responses:
+        '200':
+          description: Berhasil memperbarui penugasan OB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Berhasil memperbarui penugasan OB
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '400':
+          description: Validasi gagal atau user bukan merupakan OB
+        '403':
+          description: Tidak memiliki akses HR atau admin
+        '404':
+          description: OB user tidak ditemukan
+
+  /api/hr/user/assignments:
+    get:
+      tags:
+        - HR
+      summary: 'List penugasan OB per periode (HR & Admin)'
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: bulan
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+        - name: tahun
+          in: query
+          schema:
+            type: integer
+            minimum: 2000
+      responses:
+        '200':
+          description: Daftar penugasan OB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '403':
+          description: Tidak memiliki akses HR atau admin
 
   /api/hr/performance/dashboard:
     get:
