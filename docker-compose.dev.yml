@@ -1,0 +1,20 @@
+# Override DEV saja. Dipakai:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# Isinya cuma yang beda dari base: target dev, volume source, expose port DB.
+
+services:
+  backend:
+    build:
+      target: dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./uploads:/app/uploads
+
+  postgres_db:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
