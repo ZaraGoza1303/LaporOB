@@ -2,7 +2,7 @@ import type { CreateJadwalChecklistReq, UpdateJadwalChecklistReq } from "../dto/
 import type { JadwalChecklist } from "../generated/prisma/client.js";
 
 export interface IJadwalChecklistService {
-    create(userId: string, req: CreateJadwalChecklistReq): Promise<{ id: string }>;
+    create(userId: string, req: CreateJadwalChecklistReq): Promise<void>;
     getByID(jadwalId: string): Promise<JadwalChecklist | null>;
     getAll(): Promise<JadwalChecklist[]>;
     update(jadwalId: string, req: UpdateJadwalChecklistReq): Promise<void>;

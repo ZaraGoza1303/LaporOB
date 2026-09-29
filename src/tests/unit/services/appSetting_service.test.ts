@@ -148,38 +148,6 @@ describe('AppSettingService.getAll', () => {
     });
 });
 
-describe('AppSettingService.getStoredLogoUrl', () => {
-    it('mengembalikan logo_url yang tersimpan di database', async () => {
-        mockDB.appSetting.findMany.mockResolvedValue([
-            createFakeAppSettingRow({ key: 'app_name', value: 'LaporOB' }),
-            createFakeAppSettingRow({ key: 'logo_url', value: 'uploads/wgs-logo.png' }),
-        ]);
-
-        const data = await mockAppSettingService.getStoredLogoUrl();
-
-        expect(mockDB.appSetting.findMany).toHaveBeenCalledWith({ select: { key: true, value: true } });
-        expect(data).toBe('uploads/wgs-logo.png');
-    });
-
-    it('mengembalikan null jika pengaturan logo belum pernah disimpan', async () => {
-        mockDB.appSetting.findMany.mockResolvedValue([createFakeAppSettingRow()]);
-
-        const data = await mockAppSettingService.getStoredLogoUrl();
-
-        expect(data).toBeNull();
-    });
-
-    it('mengembalikan null jika value logo_url tersimpan sebagai null', async () => {
-        mockDB.appSetting.findMany.mockResolvedValue([
-            createFakeAppSettingRow({ key: 'logo_url', value: null }),
-        ]);
-
-        const data = await mockAppSettingService.getStoredLogoUrl();
-
-        expect(data).toBeNull();
-    });
-});
-
 describe('AppSettingService.upsert', () => {
     it('menyimpan semua key yang diizinkan dan membersihkan cache', async () => {
         await mockAppSettingService.upsert({

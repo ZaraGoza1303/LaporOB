@@ -58,8 +58,8 @@ export class KategoriController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr))
             }
 
-            const response = await this.kategoriService.create(validate.data);
-            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data kategori", response))
+            await this.kategoriService.create(validate.data);
+            return res.status(201).json(sendSuccessfullResponse("Berhasil menambahkan data kategori"))
         } catch (err: unknown) {
             if (err instanceof AppError) {
                 return res.status(err.statusCode).json(sendErrorResponse(err.message))

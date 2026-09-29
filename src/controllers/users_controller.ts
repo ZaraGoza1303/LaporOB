@@ -5,7 +5,7 @@ import type { IStorageService } from "../services/storage_service.interface.js";
 import { CreateUserSchema, UpdateUserSchema, UpdateProfileSchema, ProfileLaporanQuerySchema, UserIdParamSchema, LaporanIdParamSchema } from "../dto/users.js";
 import { UserSearchQuerySchema, GetDashboardQuerySchema } from "../dto/admin.js";
 import { sendErrorResponse, sendSuccessfullResponse } from "../utils/response.js";
-import { processImageFile } from "../utils/validate_file.js";
+import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
 import type { Request, Response } from "express";
 import { AppError } from "../utils/error.js";
 import type { IKaryawanService } from "../services/karyawan_service.interface.js";
@@ -184,9 +184,15 @@ export class UsersController {
                 (file) => file.fieldname === "profile_picture"
             );
             if (profilePictureFile) {
-                const processed = await processImageFile(profilePictureFile, "Gagal memproses/kompres gambar");
-                if (!processed.ok) {
-                    return res.status(processed.status).json(sendErrorResponse(processed.message));
+                const validation = await validateImageFile(profilePictureFile);
+                if (!validation.ok) {
+                    return res.status(400).json(sendErrorResponse(validation.message));
+                }
+
+                try {
+                    await compressImageIfNeeded(profilePictureFile);
+                } catch (err: unknown) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses/kompres gambar"));
                 }
 
                 const oldFileUrlOrKey = existsUser.profile_picture;
@@ -236,9 +242,15 @@ export class UsersController {
                 (file) => file.fieldname === "profile_picture"
             );
             if (profilePictureFile) {
-                const processed = await processImageFile(profilePictureFile, "Gagal memproses/kompres gambar");
-                if (!processed.ok) {
-                    return res.status(processed.status).json(sendErrorResponse(processed.message));
+                const validation = await validateImageFile(profilePictureFile);
+                if (!validation.ok) {
+                    return res.status(400).json(sendErrorResponse(validation.message));
+                }
+
+                try {
+                    await compressImageIfNeeded(profilePictureFile);
+                } catch (err: unknown) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses/kompres gambar"));
                 }
 
                 const oldFileUrlOrKey = existsUser.profile_picture;

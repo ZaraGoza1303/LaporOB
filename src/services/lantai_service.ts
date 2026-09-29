@@ -43,7 +43,7 @@ export class LantaiService implements ILantaiService {
         }
     }
 
-    async create(req: CreateLantaiReq): Promise<{ id: string }> {
+    async create(req: CreateLantaiReq): Promise<void> {
         try {
             const lantaiReq: LantaiCreateInput = {
                 lokasi: {
@@ -53,8 +53,7 @@ export class LantaiService implements ILantaiService {
                 nomor_lantai: req.nomor_lantai
             }
 
-            const id = await this.lantaiRepo.insert(lantaiReq);
-            return { id };
+            await this.lantaiRepo.insert(lantaiReq)
         } catch (err) {
             handlePrismaError(err)
         }

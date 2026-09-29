@@ -399,7 +399,7 @@ describe('SkillService.prosesSkillOtomatis', () => {
         });
         expect(mockNotificationService.sendBulkNotification).toHaveBeenCalledWith({
             penerima_ids: [obId],
-            pengirim_id: null,
+            pengirim_id: "system",
             tipe: 'SKILL_DI_PEROLEH',
             judul: 'Skill baru diperoleh',
             pesan: 'Selamat! Anda memperoleh skill baru: Kebersihan Dasar',

@@ -1,10 +1,10 @@
 import type { UserSearchQuery } from "../dto/admin.js";
-import type { CreateUserReq, UpdateUserReq } from "../dto/users.js";
+import type { CreateUserReq, UpdateProfileReq, UpdateUserReq } from "../dto/users.js";
 import type { UserProfileResponse, PublicUser } from "../types/users.js";
 import type { PaginatedResponse } from "../types/response.js";
 import type { User, Role } from "../generated/prisma/client.js";
-import type { UserUpdateInput } from "../generated/prisma/models.js";
-import type { IUsersRepository, UserDetailWithPenugasan } from "../repositories/users_repository.interface.js";
+import type { UserTokenCreateInput, UserUpdateInput } from "../generated/prisma/models.js";
+import type { IUsersRepository, UserWithRoleAndToken, UserDetailWithPenugasan } from "../repositories/users_repository.interface.js";
 import { AppError, handlePrismaError } from "../utils/error.js";
 import { generateActivationToken } from "../utils/token.js";
 import { buildActivationUrl, resolveFileUrl } from "../utils/url.js";
@@ -13,9 +13,8 @@ import bcrypt from 'bcrypt';
 import type { IRedisClient } from "../database/redis.interface.js";
 import type { IEmailService } from "./email_service.interface.js";
 import type { IAppSettingService } from "./appSetting_service.interface.js";
-import { sendRenderedEmail, toEmailSettings } from "../utils/email.js";
+import { sendRenderedEmail } from "../utils/email.js";
 import { USER_ROLE } from "../utils/constants.js";
-import type { PenugasanWithLokasi } from "../repositories/ob_repository.interface.js";
 
 export class UsersService implements IUsersService {
     private usersRepo: IUsersRepository;
@@ -42,7 +41,6 @@ export class UsersService implements IUsersService {
 
             const data = await this.usersRepo.getAll(page, limit, query);
             await this.redis.setEx(cacheKey, 300, JSON.stringify(data))
-            await this.redis.sAdd("users:all:keys", cacheKey);
             return data;
         } catch (err) {
             throw handlePrismaError(err)
@@ -54,7 +52,7 @@ export class UsersService implements IUsersService {
             const user = await this.usersRepo.getByID(userId);
             if (!user) return null;
 
-            let penugasan: PenugasanWithLokasi[] = [];
+            let penugasan: import("../repositories/ob_repository.interface.js").PenugasanWithLokasi[] = [];
             const isOb = user.role?.nama_role?.toLowerCase() === USER_ROLE.OB;
             if (isOb) {
                 const today = new Date();
@@ -121,11 +119,11 @@ export class UsersService implements IUsersService {
         }
     }
 
-    async create(req: CreateUserReq): Promise<{ id: string }> {
+    async create(req: CreateUserReq): Promise<void> {
         try {
             const activationToken = generateActivationToken(5);
 
-            const user = await this.usersRepo.transaction(async (tx) => {
+            await this.usersRepo.transaction(async (tx) => {
                 const user = await tx.user.create({
                     data: {
                         role: { connect: { id: req.role_id } },
@@ -166,11 +164,9 @@ export class UsersService implements IUsersService {
             await sendRenderedEmail(this.emailService, req.email, subjectCreate, "activation", {
                 userName: req.nama_lengkap,
                 activationUrl,
-            }, async () => toEmailSettings(settingsCreate));
+            });
 
-            await this.invalidateUserListCache();
-
-            return { id: user.id };
+            await this.redis.del("users:all:*");
         } catch (err) {
             throw handlePrismaError(err);
         }
@@ -213,7 +209,7 @@ export class UsersService implements IUsersService {
                 }
             });
 
-            await this.invalidateUserListCache();
+            await this.redis.del("users:all:*");
         } catch (err) {
             throw handlePrismaError(err);
         }
@@ -222,19 +218,10 @@ export class UsersService implements IUsersService {
     async delete(userId: string): Promise<void> {
         try {
             await this.usersRepo.delete(userId);
-            await this.invalidateUserListCache();
+            await this.redis.del("users:all:*");
         } catch (err) {
             throw handlePrismaError(err);
         }
-    }
-
-    private async invalidateUserListCache(): Promise<void> {
-        const indexKey = "users:all:keys";
-        const keys = await this.redis.sMembers(indexKey);
-        if (keys.length > 0) {
-            await Promise.all(keys.map((key) => this.redis.del(key)));
-        }
-        await this.redis.del(indexKey);
     }
 
     async completeActivation(userId: string, password: string, tokenId: string): Promise<void> {
@@ -296,7 +283,7 @@ export class UsersService implements IUsersService {
             await sendRenderedEmail(this.emailService, user.email, subjectRenew, "activation", {
                 user: { nama_lengkap: user.nama_lengkap },
                 activationUrl,
-            }, async () => toEmailSettings(settingsRenew));
+            });
         } catch (err) {
             throw handlePrismaError(err);
         }

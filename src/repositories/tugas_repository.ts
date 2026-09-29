@@ -96,12 +96,10 @@ export class TugasRepository implements ITugasRepository {
         return tugas;
     }
 
-    async insert(req: TugasCreateInput): Promise<string> {
-        const created = await this.db.tugas.create({
-            data: req,
-            select: { id: true },
-        });
-        return created.id;
+    async insert(req: TugasCreateInput): Promise<void> {
+        await this.db.tugas.create({
+            data: req
+        })
     }
 
     async update(tugasId: string, req: TugasUpdateInput): Promise<void> {

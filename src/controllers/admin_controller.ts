@@ -447,7 +447,8 @@ export class AdminController {
                 return res.status(400).json(sendErrorResponse("Validation Failed", formattedErr));
             }
 
-            await this.checklistHarianService.approveChecklist(validateParams.data.checklist_harian_id);
+            const adminId = req.user?.id ?? '';
+            await this.checklistHarianService.approveChecklist(validateParams.data.checklist_harian_id, adminId);
             return res.status(200).json(sendSuccessfullResponse("Checklist berhasil disetujui"));
         } catch (err: unknown) {
             if (err instanceof AppError) {

@@ -1,9 +1,9 @@
 import { Prisma, type PrismaClient } from "../generated/prisma/client.js";
+import type { JadwalChecklist } from "../generated/prisma/client.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
-import { AppError } from "../utils/error.js";
 import type { IChecklistHarianRepository, ChecklistHarianWithRelations, ChecklistHarianWithDetails, ChecklistHarianApprovalItem } from "./checklistHarian_repository.interface.js";
-import { calculateCalendarDayRange, toCalendarDayExclusiveRange, type PeriodRange } from "../utils/date.js";
+import type { PeriodRange } from "../utils/date.js";
 import type { PaginatedResponse } from "../types/response.js";
 
 export class ChecklistHarianRepository implements IChecklistHarianRepository {
@@ -14,7 +14,10 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
     }
 
     async getTodayChecklists(obId: string, tanggal: Date): Promise<ChecklistHarianWithDetails[]> {
-        const { start: startOfDay, end: endOfDay } = calculateCalendarDayRange(0, tanggal);
+        const startOfDay = new Date(tanggal);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(tanggal);
+        endOfDay.setHours(23, 59, 59, 999);
 
         const assignments = await this.db.penugasanOb.findMany({
             where: { ob_id: obId, bulan: tanggal.getMonth() + 1, tahun: tanggal.getFullYear() },
@@ -28,7 +31,7 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
                     { ob_id: obId },
                     { ob_id: null, lantai: { lokasi_id: { in: lokasiIds } } }
                 ],
-                tanggal: { gte: startOfDay, lt: endOfDay }
+                tanggal: { gte: startOfDay, lte: endOfDay }
             },
             include: { kategori: true, lantai: { include: { lokasi: true } } },
             orderBy: { created_at: 'asc' },
@@ -43,7 +46,7 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
             where: {
                 ob_id: null,
                 lantai: { lokasi_id: { notIn: lokasiIds } },
-                tanggal: { gte: startOfDay, lt: endOfDay }
+                tanggal: { gte: startOfDay, lte: endOfDay }
             },
             include: { kategori: true, lantai: { include: { lokasi: true } } },
             orderBy: { created_at: 'asc' },
@@ -55,7 +58,10 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
     }
 
     async countTodayChecklists(obId: string, tanggal: Date): Promise<number> {
-        const { start: startOfDay, end: endOfDay } = calculateCalendarDayRange(0, tanggal);
+        const startOfDay = new Date(tanggal);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(tanggal);
+        endOfDay.setHours(23, 59, 59, 999);
 
         const assignments = await this.db.penugasanOb.findMany({
             where: { ob_id: obId, bulan: tanggal.getMonth() + 1, tahun: tanggal.getFullYear() },
@@ -69,29 +75,17 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
                     { ob_id: obId },
                     { ob_id: null, lantai: { lokasi_id: { in: lokasiIds } } }
                 ],
-                tanggal: { gte: startOfDay, lt: endOfDay }
+                tanggal: { gte: startOfDay, lte: endOfDay }
             }
         });
         return count;
     }
 
-    // Claim atomik: cek dan tulis dalam satu statement supaya dua OB yang
-    // berebut slot yang sama tidak bisa sama-sama berhasil (pemenang = penulis pertama).
     async ambilChecklist(checklistId: string, obId: string): Promise<void> {
-        const result = await this.db.checklist_harian.updateMany({
-            where: { id: checklistId, ob_id: null },
+        await this.db.checklist_harian.update({
+            where: { id: checklistId },
             data: { ob_id: obId },
         });
-        if (result.count > 0) return;
-
-        const existing = await this.db.checklist_harian.findUnique({
-            where: { id: checklistId },
-            select: { ob_id: true },
-        });
-        if (!existing) {
-            throw new AppError("Checklist tidak ditemukan", 404);
-        }
-        throw new AppError("Checklist sudah diambil oleh OB lain", 409);
     }
 
     async getCompletedChecklistByOb(): Promise<Array<{ ob_id: string; nama_tugas: string }>> {
@@ -104,15 +98,11 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
             .map(r => ({ ob_id: r.ob_id, nama_tugas: r.nama_tugas }));
     }
 
-    // kolom tanggal bertipe date dan tersimpan sebagai tengah malam UTC,
-    // period WIB diterjemahkan ke hari kalender supaya filter harian tetap ada hasilnya saat subuh
     async getPendingApproval(period: PeriodRange, lokasiId?: string): Promise<ChecklistHarianApprovalItem[]> {
-        const { start: startDay, end: endDay } = toCalendarDayExclusiveRange(period.start, period.end);
-
         const where: Prisma.Checklist_harianWhereInput = {
             status: CHECKLIST_STATUS.SELESAI,
             is_approved: false,
-            tanggal: { gte: startDay, lt: endDay },
+            tanggal: { gte: period.start, lte: period.end },
         };
 
         if (lokasiId) {
@@ -132,7 +122,7 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
         return items;
     }
 
-    async approve(checklistId: string): Promise<void> {
+    async approve(checklistId: string, adminId: string): Promise<void> {
         const now = new Date();
         const existing = await this.db.checklist_harian.findUnique({
             where: { id: checklistId },
@@ -213,15 +203,12 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
         return data;
     }
 
-    async insertMany(data: Checklist_harianUncheckedCreateInput[]): Promise<number> {
-        if (data.length === 0) return 0;
+    async insertMany(data: Checklist_harianUncheckedCreateInput[]): Promise<void> {
+        if (data.length === 0) return;
 
-        const result = await this.db.checklist_harian.createMany({
+        await this.db.checklist_harian.createMany({
             data,
-            skipDuplicates: true,
         });
-
-        return result.count;
     }
 
     async insert(req: Checklist_harianUncheckedCreateInput): Promise<void> {
@@ -247,4 +234,29 @@ export class ChecklistHarianRepository implements IChecklistHarianRepository {
         })
     }
 
+    async insertFromJadwal(jadwal: JadwalChecklist): Promise<void> {
+        await this.db.checklist_harian.create({
+            data: {
+                tanggal: new Date(),
+                nama_tugas: jadwal.nama_tugas,
+                ob_id: jadwal.ob_id,
+                lantai_id: jadwal.lantai_id,
+                kategori_id: jadwal.kategori_id,
+                status: CHECKLIST_STATUS.BELUM_DIKERJAKAN,
+                catatan: null,
+            },
+        });
+    }
+
+    async getExistingInstanceKeys(today: Date): Promise<Array<{ nama_tugas: string; lantai_id: string; ob_id: string | null }>> {
+        const startOfDay = new Date(today);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(today);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        return this.db.checklist_harian.findMany({
+            where: { tanggal: { gte: startOfDay, lte: endOfDay } },
+            select: { nama_tugas: true, lantai_id: true, ob_id: true },
+        });
+    }
 }

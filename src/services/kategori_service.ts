@@ -43,14 +43,13 @@ export class KategoriService implements IKategoriService {
         }
     }
 
-    async create(req: CreateKategoriReq): Promise<{ id: string }> {
+    async create(req: CreateKategoriReq): Promise<void> {
         try {
             const kategoriReq: KategoriCreateInput = {
                 nama_kategori: req.nama_kategori,
             }
 
-            const id = await this.kategoriRepo.insert(kategoriReq);
-            return { id };
+            await this.kategoriRepo.insert(kategoriReq);
         } catch (err) {
             handlePrismaError(err)
         }

@@ -2,7 +2,7 @@ import type { CreateJadwalChecklistReq, UpdateJadwalChecklistReq } from "../dto/
 import type { IJadwalChecklistRepository } from "../repositories/jadwalChecklist_repository.interface.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { JadwalChecklist } from "../generated/prisma/client.js";
-import type { Checklist_harianUncheckedCreateInput, JadwalChecklistUncheckedCreateInput, JadwalChecklistUncheckedUpdateInput } from "../generated/prisma/models.js";
+import type { JadwalChecklistUncheckedCreateInput, JadwalChecklistUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { handlePrismaError } from "../utils/error.js";
 import type { IJadwalChecklistService } from "./jadwalChecklist_service.interface.js";
 import type { INotificationService } from "./notification_service.interface.js";
@@ -28,7 +28,7 @@ export class JadwalChecklistService implements IJadwalChecklistService {
         this.usersService = usersService;
     }
 
-    async create(userId: string, req: CreateJadwalChecklistReq): Promise<{ id: string }> {
+    async create(userId: string, req: CreateJadwalChecklistReq): Promise<void> {
         try {
             const dataToInsert: JadwalChecklistUncheckedCreateInput = {
                 nama_tugas: req.nama_tugas,
@@ -38,20 +38,19 @@ export class JadwalChecklistService implements IJadwalChecklistService {
                 hari: req.hari ?? [],
             };
 
-            const now = new Date();
-            // Kolom tanggal bertipe date di Postgres, jadi simpan tengah malam UTC dari tanggal WIB
-            const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-            const todayName = HARI[now.getDay()] ?? '';
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const todayName = HARI[today.getDay()] ?? '';
             const hari: string[] = req.hari ?? [];
             const matching = hari.length === 0 || hari.includes(todayName);
 
-            const jadwalId = await this.jadwalRepo.transaction(async (tx) => {
-                const jadwal = await tx.jadwalChecklist.create({ data: dataToInsert });
+            await this.jadwalRepo.transaction(async (tx) => {
+                await tx.jadwalChecklist.create({ data: dataToInsert });
 
                 if (matching) {
-                    // skipDuplicates = jadwal yang sama untuk hari yang sama tidak bikin instance dobel
-                    await tx.checklist_harian.createMany({
-                        data: [{
+                    await tx.checklist_harian.create({
+                        data: {
                             tanggal: today,
                             nama_tugas: dataToInsert.nama_tugas,
                             ob_id: dataToInsert.ob_id ?? null,
@@ -59,19 +58,14 @@ export class JadwalChecklistService implements IJadwalChecklistService {
                             kategori_id: dataToInsert.kategori_id,
                             status: CHECKLIST_STATUS.BELUM_DIKERJAKAN,
                             catatan: null,
-                        }],
-                        skipDuplicates: true,
+                        },
                     });
                 }
-
-                return jadwal.id;
             });
 
             if (matching) {
                 await this.sendNotificationToAllOb(userId);
             }
-
-            return { id: jadwalId };
         } catch (err) {
             handlePrismaError(err);
         }
@@ -118,42 +112,35 @@ export class JadwalChecklistService implements IJadwalChecklistService {
 
     async generateToday(): Promise<number> {
         try {
-            const now = new Date();
-            const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
             const matching = await this.jadwalRepo.getMatchingToday(today);
             if (matching.length === 0) return 0;
 
-            // Dedupe dalam batch = unique index DB memperlakukan ob_id NULL sebagai nilai berbeda,
-            // jadi jadwal tanpa OB yang isinya sama harus dibuang di sini dulu
-            const unik = new Map<string, Checklist_harianUncheckedCreateInput>();
-            for (const jadwal of matching) {
-                const key = `${jadwal.nama_tugas}|${jadwal.lantai_id}|${jadwal.ob_id ?? ""}`;
-                if (unik.has(key)) continue;
+            const existing = await this.checklistHarianService.getExistingInstanceKeys(today);
+            const toCreate = matching.filter((j: JadwalChecklist) =>
+                !existing.some(e =>
+                    e.nama_tugas === j.nama_tugas &&
+                    e.lantai_id === j.lantai_id &&
+                    e.ob_id === j.ob_id
+                )
+            );
 
-                unik.set(key, {
-                    tanggal: today,
-                    nama_tugas: jadwal.nama_tugas,
-                    ob_id: jadwal.ob_id,
-                    lantai_id: jadwal.lantai_id,
-                    kategori_id: jadwal.kategori_id,
-                    status: CHECKLIST_STATUS.BELUM_DIKERJAKAN,
-                    catatan: null,
-                });
+            if (toCreate.length === 0) return 0;
+
+            for (const jadwal of toCreate) {
+                await this.checklistHarianService.insertFromJadwal(jadwal);
             }
 
-            // Insert sehari dalam satu statement yang sudah ada
-            const inserted = await this.checklistHarianService.insertMany([...unik.values()]);
-            if (inserted === 0) return 0;
-
-            await this.sendNotificationToAllOb(null);
-            return inserted;
+            await this.sendNotificationToAllOb("system");
+            return toCreate.length;
         } catch (err) {
             handlePrismaError(err);
         }
     }
 
-    private async sendNotificationToAllOb(pengirimId: string | null): Promise<void> {
+    private async sendNotificationToAllOb(pengirimId: string): Promise<void> {
         const allOb = await this.usersService.getByRole(USER_ROLE.OB);
         const notifData: BulkNotificationData = {
             penerima_ids: allOb.map(ob => ob.id),

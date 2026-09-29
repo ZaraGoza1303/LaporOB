@@ -4,10 +4,10 @@ import type { IChecklistHarianRepository } from "../repositories/checklistHarian
 import { handlePrismaError, AppError } from "../utils/error.js";
 import type { IChecklistHarianService } from "./checklistHarian_service.interface.js";
 import type { ChecklistHarianWithRelations, ChecklistHarianWithDetails, ChecklistHarianApprovalItem } from "../repositories/checklistHarian_repository.interface.js";
-import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
+import type { Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
 import { CHECKLIST_STATUS } from "../utils/constants.js";
 import type { PaginatedResponse } from "../types/response.js";
-import { toDateString } from "../utils/date.js";
+import type { JadwalChecklist } from "../generated/prisma/client.js";
 import type { ISkillService } from "./skill_service.interface.js";
 import type { IAchievementService } from "./achievement_service.interface.js";
 
@@ -144,16 +144,20 @@ export class ChecklistHarianService implements IChecklistHarianService {
         }
     }
 
-    async approveChecklist(checklistId: string): Promise<void> {
+    async approveChecklist(checklistId: string, adminId: string): Promise<void> {
         try {
-            await this.checklistRepo.approve(checklistId);
+            await this.checklistRepo.approve(checklistId, adminId);
         } catch (err) {
             throw handlePrismaError(err);
         }
     }
 
-    async insertMany(data: Checklist_harianUncheckedCreateInput[]): Promise<number> {
-        return this.checklistRepo.insertMany(data);
+    async getExistingInstanceKeys(today: Date): Promise<Array<{ nama_tugas: string; lantai_id: string; ob_id: string | null }>> {
+        return this.checklistRepo.getExistingInstanceKeys(today);
+    }
+
+    async insertFromJadwal(jadwal: JadwalChecklist): Promise<void> {
+        await this.checklistRepo.insertFromJadwal(jadwal);
     }
 
     private mapToResponse(item: ChecklistHarianWithRelations): ChecklistHarianRes {
@@ -175,7 +179,7 @@ export class ChecklistHarianService implements IChecklistHarianService {
             total_durasi,
             is_approved: item.is_approved,
             approved_at: item.approved_at ?? null,
-            tanggal: toDateString(item.tanggal),
+            tanggal: item.tanggal,
             created_at: item.created_at,
             updated_at: item.updated_at,
             kategori: item.kategori,

@@ -198,7 +198,7 @@ export class AchievementService implements IAchievementService {
         }
 
         for (const n of notified) {
-            await this.sendNotification(n.ob_id, n.nama, null);
+            await this.sendNotification(n.ob_id, n.nama, "system");
         }
 
         return unlockedCount;
@@ -229,7 +229,7 @@ export class AchievementService implements IAchievementService {
         return count;
     }
 
-    private async sendNotification(penerimaId: string, nama: string, pengirimId: string | null): Promise<void> {
+    private async sendNotification(penerimaId: string, nama: string, pengirimId: string): Promise<void> {
         const notifData: BulkNotificationData = {
             penerima_ids: [penerimaId],
             pengirim_id: pengirimId,

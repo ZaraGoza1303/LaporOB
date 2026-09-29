@@ -24,12 +24,10 @@ export class KategoriRepository implements IKategoriRepository {
         return kategori;
     }
 
-    async insert(req: KategoriCreateInput): Promise<string> {
-        const created = await this.db.kategori.create({
-            data: req,
-            select: { id: true },
-        });
-        return created.id;
+    async insert(req: KategoriCreateInput): Promise<void> {
+        await this.db.kategori.create({
+            data: req
+        })
     }
 
     async update(kategoriId: string, req: KategoriUpdateInput): Promise<void> {

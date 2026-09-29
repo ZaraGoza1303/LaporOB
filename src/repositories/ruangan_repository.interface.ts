@@ -4,7 +4,7 @@ import type { RuanganCreateInput, RuanganUpdateInput } from "../generated/prisma
 export interface IRuanganRepository {
     getAll(lantaiId?: string): Promise<Ruangan[]>;
     getById(lantaiId: string | undefined, ruanganId: string): Promise<Ruangan | null>;
-    insert(req: RuanganCreateInput): Promise<string>;
+    insert(req: RuanganCreateInput): Promise<void>;
     update(lantaiId: string | undefined, ruanganId: string, req: RuanganUpdateInput): Promise<void>;
     delete(lantaiId: string | undefined, ruanganId: string): Promise<void>;
 }

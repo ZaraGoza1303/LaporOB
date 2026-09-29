@@ -7,7 +7,7 @@ import type { IStorageService } from "../services/storage_service.interface.js";
 import { sendSuccessfullResponse, sendErrorResponse } from "../utils/response.js";
 import { CreateHistoriSchema, ChecklistIdParamSchema, ObTugasIdParamSchema } from "../dto/ob.js";
 import { LaporanIdParamSchema } from "../dto/users.js";
-import { processImageFile } from "../utils/validate_file.js";
+import { compressImageIfNeeded, validateImageFile } from "../utils/validate_file.js";
 import { z } from "zod";
 import { AppError } from "../utils/error.js";
 
@@ -91,9 +91,15 @@ export class ObController {
 
             const fotoUrls: string[] = [];
             for (const file of fotoFiles) {
-                const processed = await processImageFile(file);
-                if (!processed.ok) {
-                    return res.status(processed.status).json(sendErrorResponse(processed.message));
+                const validation = await validateImageFile(file);
+                if (!validation.ok) {
+                    return res.status(400).json(sendErrorResponse(validation.message));
+                }
+
+                try {
+                    await compressImageIfNeeded(file);
+                } catch (err: unknown) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar", err instanceof Error ? err.message : "Unknown error"));
                 }
 
                 const url = await this.storageService.uploadFile(file);
@@ -132,9 +138,15 @@ export class ObController {
 
             const fotoUrls: string[] = [];
             for (const file of fotoFiles) {
-                const processed = await processImageFile(file);
-                if (!processed.ok) {
-                    return res.status(processed.status).json(sendErrorResponse(processed.message));
+                const validation = await validateImageFile(file);
+                if (!validation.ok) {
+                    return res.status(400).json(sendErrorResponse(validation.message));
+                }
+
+                try {
+                    await compressImageIfNeeded(file);
+                } catch (err: unknown) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar", err instanceof Error ? err.message : "Unknown error"));
                 }
 
                 const url = await this.storageService.uploadFile(file);
@@ -255,9 +267,15 @@ export class ObController {
 
             const fotoUrls: string[] = [];
             for (const file of fotoFiles) {
-                const processed = await processImageFile(file);
-                if (!processed.ok) {
-                    return res.status(processed.status).json(sendErrorResponse(processed.message));
+                const validation = await validateImageFile(file);
+                if (!validation.ok) {
+                    return res.status(400).json(sendErrorResponse(validation.message));
+                }
+
+                try {
+                    await compressImageIfNeeded(file);
+                } catch (err: unknown) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar"));
                 }
 
                 const url = await this.storageService.uploadFile(file);
@@ -294,9 +312,15 @@ export class ObController {
 
             const fotoUrls: string[] = [];
             for (const file of fotoFiles) {
-                const processed = await processImageFile(file);
-                if (!processed.ok) {
-                    return res.status(processed.status).json(sendErrorResponse(processed.message));
+                const validation = await validateImageFile(file);
+                if (!validation.ok) {
+                    return res.status(400).json(sendErrorResponse(validation.message));
+                }
+
+                try {
+                    await compressImageIfNeeded(file);
+                } catch (err: unknown) {
+                    return res.status(500).json(sendErrorResponse("Gagal memproses gambar"));
                 }
 
                 const url = await this.storageService.uploadFile(file);

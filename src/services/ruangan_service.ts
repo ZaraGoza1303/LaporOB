@@ -41,7 +41,7 @@ export class RuanganService implements IRuanganService {
         }
     }
 
-    async create(req: CreateRuanganReq): Promise<{ id: string }> {
+    async create(req: CreateRuanganReq): Promise<void> {
         try {
             const ruanganReq: RuanganCreateInput = {
                 lantai: {
@@ -50,10 +50,9 @@ export class RuanganService implements IRuanganService {
                 nama: req.nama
             }
 
-            const id = await this.ruanganRepo.insert(ruanganReq);
+            await this.ruanganRepo.insert(ruanganReq)
             await this.redis.del(`ruangan:all:${req.lantai_id}`);
             await this.redis.del("ruangan:all:all");
-            return { id };
 
         } catch (err) {
             handlePrismaError(err)

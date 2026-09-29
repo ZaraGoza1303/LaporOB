@@ -1,5 +1,6 @@
 import { Prisma } from "../generated/prisma/client.js";
 import type { Checklist_harianUncheckedCreateInput, Checklist_harianUncheckedUpdateInput } from "../generated/prisma/models.js";
+import type { JadwalChecklist } from "../generated/prisma/client.js";
 import type { PaginatedResponse } from "../types/response.js";
 
 export type ChecklistHarianWithRelations = Prisma.Checklist_harianGetPayload<{
@@ -33,7 +34,10 @@ export interface IChecklistHarianRepository {
     update(checklist_harianId: string, req: Checklist_harianUncheckedUpdateInput): Promise<void>;
     delete(checklist_harianId: string): Promise<void>;
 
-    insertMany(data: Checklist_harianUncheckedCreateInput[]): Promise<number>;
+    insertMany(data: Checklist_harianUncheckedCreateInput[]): Promise<void>;
+
+    insertFromJadwal(jadwal: JadwalChecklist): Promise<void>;
+    getExistingInstanceKeys(today: Date): Promise<Array<{ nama_tugas: string; lantai_id: string; ob_id: string | null }>>;
 
     getTodayChecklists(obId: string, tanggal: Date): Promise<ChecklistHarianWithDetails[]>;
     countTodayChecklists(obId: string, tanggal: Date): Promise<number>;
@@ -41,5 +45,5 @@ export interface IChecklistHarianRepository {
 
     getCompletedChecklistByOb(): Promise<Array<{ ob_id: string; nama_tugas: string }>>;
     getPendingApproval(period: { start: Date; end: Date }, lokasiId?: string): Promise<ChecklistHarianApprovalItem[]>;
-    approve(checklistId: string): Promise<void>;
+    approve(checklistId: string, adminId: string): Promise<void>;
 }
