@@ -3,3 +3,8 @@ npm-debug.log
 dist
 .git
 src/generated/prisma
+.env
+.env.*
+!.env.example
+!.env.staging.example
+!.env.prod.example
