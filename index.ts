@@ -24,7 +24,6 @@ import tugasRouter from './src/routes/tugas.js';
 import notifikasiRouter from './src/routes/notifikasi.js';
 import obKolaborasiRouter from './src/routes/obKolaborasi.js';
 import settingRouter from './src/routes/setting.js';
-import hrRouter from './src/routes/hr.js';
 import swaggerUi from 'swagger-ui-express';
 import path from 'node:path';
 import YAML from 'yamljs';
@@ -34,6 +33,7 @@ import { initWebSocket } from './src/services/websocket_service.js';
 import { setBaseUrlMiddleware } from './src/middleware/setBaseUrl.js';
 import { checklistHarianService, jadwalChecklistService, skillService, achievementService } from './src/container.js';
 import cron from 'node-cron';
+import hrTugasRouter from './src/routes/hrTugas';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -124,7 +124,7 @@ const initRouter = () => {
     app.use('/api/skill', skillRouter);
     app.use('/api/achievement', achievementRouter);
     app.use('/api/admin/settings', settingRouter);
-    app.use('/api/hr', hrRouter);
+    app.use('/api/hr', hrTugasRouter);
 }
 
 const startApp = async () => {
