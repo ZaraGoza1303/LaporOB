@@ -4,6 +4,7 @@ import redisClient from "../database/redis.js";
 import { sendErrorResponse } from "../utils/response.js";
 
 export const loginLimiter = rateLimit({
+    skip: () => process.env.NODE_ENV === "test",
     store: new RedisStore({
         sendCommand: (...args: string[]) => redisClient.sendCommand(args),
     }),

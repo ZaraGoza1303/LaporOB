@@ -150,9 +150,10 @@ const initRouter = () => {
     });
 }
 
+initRouter();
+
 const startApp = async () => {
     await connectDB();
-    initRouter();
     initWebSocket(server);
     initCron();
 
