@@ -39,7 +39,7 @@ function createFakeJadwal(overrides?: Partial<JadwalChecklist>): JadwalChecklist
         lantai_id: 'e2fbdc6f-ec0d-4547-a51d-a81b69741ed2',
         kategori_id: 'f6e0481d-67d4-449b-b3dc-376e72bdcf28',
         ob_id: null,
-        hari: ['senin'],
+        hari: [],
         created_at: new Date('2026-01-01T00:00:00Z'),
         updated_at: new Date('2026-01-01T00:00:00Z'),
         ...overrides,
