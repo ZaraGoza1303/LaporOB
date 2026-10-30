@@ -7,7 +7,7 @@ import { USER_ROLE } from "../utils/constants.js";
 const lokasiRouter = Router();
 lokasiRouter.use(verifyJWTToken);
 const readAccess = requireRole(USER_ROLE.ADMIN, USER_ROLE.KARYAWAN, USER_ROLE.HR);
-const writeAccess = requireRole(USER_ROLE.ADMIN, USER_ROLE.KARYAWAN);
+const writeAccess = requireRole(USER_ROLE.ADMIN);
 
 lokasiRouter.get('/', readAccess, (req, res) => lokasiController.getAll(req, res));
 lokasiRouter.get('/:lokasi_id', readAccess, (req, res) => lokasiController.getByID(req, res));

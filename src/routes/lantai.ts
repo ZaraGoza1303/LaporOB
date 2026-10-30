@@ -7,7 +7,7 @@ import { USER_ROLE } from "../utils/constants.js";
 const lantaiRouter = Router();
 lantaiRouter.use(verifyJWTToken);
 const readAccess = requireRole(USER_ROLE.ADMIN, USER_ROLE.KARYAWAN, USER_ROLE.HR);
-const writeAccess = requireRole(USER_ROLE.ADMIN, USER_ROLE.KARYAWAN);
+const writeAccess = requireRole(USER_ROLE.ADMIN);
 
 lantaiRouter.get('/', readAccess, (req, res) => lantaiController.getAll(req, res));
 lantaiRouter.get('/:lantai_id', readAccess, (req, res) => lantaiController.getByID(req, res));
