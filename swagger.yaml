@@ -1797,7 +1797,7 @@ paths:
                   items:
                     type: string
                     format: binary
-                  description: Foto masalah (max 5)
+                  description: Foto masalah (max 5, maksimal 15MB per file)
       responses:
         '201':
           description: Laporan berhasil dibuat
@@ -2022,7 +2022,7 @@ paths:
                   items:
                     type: string
                     format: binary
-                  description: Foto bukti penyelesaian pekerjaan
+                  description: Foto bukti penyelesaian pekerjaan (max 5)
       responses:
         '200':
           description: Histori berhasil ditambahkan
@@ -2075,7 +2075,7 @@ paths:
                   items:
                     type: string
                     format: binary
-                  description: Foto bukti pembatalan laporan (opsional)
+                  description: Foto bukti pembatalan laporan (opsional, max 5)
       responses:
         '200':
           description: Laporan dibatalkan
@@ -6004,7 +6004,7 @@ paths:
                   items:
                     type: string
                     format: binary
-                  description: Foto masalah (max 5)
+                  description: Foto masalah (max 5, maksimal 15MB per file)
       responses:
         '201':
           description: Laporan berhasil dibuat

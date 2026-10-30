@@ -1,12 +1,13 @@
 import { fileTypeFromBuffer } from "file-type";
 import sharp from "sharp";
+import { COMPRESS_THRESHOLD, MAX_UPLOAD_FILE_SIZE, formatFileSize } from "./upload.js";
 
 const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp'];
-const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1mb
 
 export async function validateImageFile(file: Express.Multer.File) {
-  if (file.size > MAX_FILE_SIZE) {
-    return { ok: false, message: "Ukuran gambar maksimal adalah 1MB" };
+  // Batas ini sama dengan limit Multer, sehingga tidak ada lagi dua angka berbeda.
+  if (file.size > MAX_UPLOAD_FILE_SIZE) {
+    return { ok: false, message: `Ukuran gambar maksimal adalah ${formatFileSize(MAX_UPLOAD_FILE_SIZE)}` };
   }
 
   const detectedType = await fileTypeFromBuffer(file.buffer);
@@ -18,9 +19,7 @@ export async function validateImageFile(file: Express.Multer.File) {
 }
 
 export async function compressImageIfNeeded(file: Express.Multer.File) {
-  const ONE_MB = 1024 * 1024;
-
-    if (file.size <= ONE_MB) {
+    if (file.size <= COMPRESS_THRESHOLD) {
         return file;
     }
 
@@ -48,4 +47,3 @@ export async function compressImageIfNeeded(file: Express.Multer.File) {
 
     return file;
 }
-

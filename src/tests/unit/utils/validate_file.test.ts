@@ -13,17 +13,17 @@ function createFakeFile(overrides?: Partial<Express.Multer.File>): Express.Multe
 }
 
 describe('validateImageFile', () => {
-    it('menolak file lebih dari 1MB', async () => {
-        const file = createFakeFile({ size: 2 * 1024 * 1024 });
+    it('menolak file lebih dari batas upload 15MB', async () => {
+        const file = createFakeFile({ size: 16 * 1024 * 1024 });
 
         const result = await validateImageFile(file);
 
-        expect(result).toEqual({ ok: false, message: 'Ukuran gambar maksimal adalah 1MB' });
+        expect(result).toEqual({ ok: false, message: 'Ukuran gambar maksimal adalah 15MB' });
     });
 });
 
 describe('compressImageIfNeeded', () => {
-    it('mengembalikan file apa adanya jika ukuran di bawah 1MB', async () => {
+    it('mengembalikan file apa adanya jika ukuran di bawah ambang kompresi 1MB', async () => {
         const file = createFakeFile({ size: 500 * 1024 });
 
         const result = await compressImageIfNeeded(file);

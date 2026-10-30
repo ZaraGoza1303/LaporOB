@@ -41,6 +41,7 @@ import { createServer } from 'node:http';
 import { initWebSocket } from './services/websocket_service.js';
 import { setBaseUrlMiddleware } from './middleware/setBaseUrl.js';
 import { sendErrorResponse } from './utils/response.js';
+import { MAX_FILES_PER_REQUEST, MAX_UPLOAD_FILE_SIZE, formatFileSize } from './utils/upload.js';
 import { initCron } from './cron/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -50,7 +51,12 @@ const swaggerDocument = YAML.load(path.join(__dirname, '../swagger.yaml'));
 export const app = express();
 const server = createServer(app);
 
-const upload = multer({ limits: { fileSize: 15 * 1024 * 1024 } });
+const upload = multer({
+    limits: {
+        fileSize: MAX_UPLOAD_FILE_SIZE,
+        files: MAX_FILES_PER_REQUEST,
+    },
+});
 const ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://localhost:5173',
@@ -142,7 +148,10 @@ const initRouter = () => {
     app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
         if (err instanceof multer.MulterError) {
             if (err.code === "LIMIT_FILE_SIZE") {
-                return res.status(413).json(sendErrorResponse("Ukuran file terlalu besar (maksimal 15MB)"));
+                return res.status(413).json(sendErrorResponse(`Ukuran file terlalu besar (maksimal ${formatFileSize(MAX_UPLOAD_FILE_SIZE)})`));
+            }
+            if (err.code === "LIMIT_FILE_COUNT") {
+                return res.status(400).json(sendErrorResponse(`Jumlah file melebihi batas (maksimal ${MAX_FILES_PER_REQUEST} file)`));
             }
             return res.status(400).json(sendErrorResponse("Gagal mengunggah file"));
         }
